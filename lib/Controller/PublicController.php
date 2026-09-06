@@ -11,7 +11,7 @@ use OCA\Memories\Util;
 use OCP\AppFramework\AuthPublicShareController;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
-use OCP\AppFramework\Http\Template\LinkMenuAction;
+use OCP\AppFramework\Http\Template\SimpleMenuAction;
 use OCP\AppFramework\Http\Template\PublicTemplateResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -139,7 +139,8 @@ final class PublicController extends AuthPublicShareController
                 'token' => $this->getToken(),
                 'filename' => null,
             ]);
-            $dlAction = new LinkMenuAction($this->l10n->t('Download'), 'icon-download', $dlUrl);
+            // Not a LinkMenuAction: its 'directLink' id is rendered by Nextcloud 30+ as "copy link" instead of a download
+        $dlAction = new SimpleMenuAction('download', $this->l10n->t('Download'), 'icon-download', $dlUrl);
             $response->setHeaderActions([$dlAction]);
         }
 
