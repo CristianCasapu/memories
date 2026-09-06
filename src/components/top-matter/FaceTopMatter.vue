@@ -38,6 +38,25 @@
             <template #icon> <MergeIcon :size="20" /> </template>
           </NcActionButton>
           <NcActionButton
+            v-if="routeIsRecognize && personAlbum"
+            :aria-label="t('memories', 'Open the album of this person')"
+            @click="openPersonAlbum()"
+            close-after-click
+          >
+            {{ t('memories', 'Album of this person: {name}', { name: personAlbum.name }) }}
+            <template #icon> <AlbumIcon :size="20" /> </template>
+          </NcActionButton>
+          <NcActionButton
+            v-else-if="routeIsRecognize && personAlbumAvailable"
+            :aria-label="t('memories', 'Create an album of this person')"
+            :disabled="finding"
+            @click="createPersonAlbum()"
+            close-after-click
+          >
+            {{ t('memories', 'Create an album of this person (kept up to date, shareable)') }}
+            <template #icon> <AlbumIcon :size="20" /> </template>
+          </NcActionButton>
+          <NcActionButton
             v-if="routeIsRecognize"
             :aria-label="t('memories', 'Find this person in more photos')"
             :disabled="finding"
@@ -97,6 +116,7 @@ import DeleteIcon from 'vue-material-design-icons/Close.vue';
 import MergeIcon from 'vue-material-design-icons/Merge.vue';
 import UnassignedIcon from 'vue-material-design-icons/AccountQuestion.vue';
 import FindIcon from 'vue-material-design-icons/AccountSearch.vue';
+import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
 
 export default defineComponent({
   name: 'FaceTopMatter',
@@ -113,13 +133,25 @@ export default defineComponent({
     MergeIcon,
     UnassignedIcon,
     FindIcon,
+    AlbumIcon,
   },
 
   mixins: [UserConfig],
 
   data: () => ({
     finding: false,
+    personAlbum: null as { album_id: number; name: string } | null,
+    personAlbumAvailable: false,
   }),
+
+  watch: {
+    '$route.params.name': {
+      immediate: true,
+      handler() {
+        this.loadPersonAlbum();
+      },
+    },
+  },
 
   computed: {
     refs() {
@@ -132,6 +164,10 @@ export default defineComponent({
 
     name() {
       return this.$route.params.name || '';
+    },
+
+    user() {
+      return this.$route.params.user || '';
     },
 
     isReal() {
@@ -159,6 +195,54 @@ export default defineComponent({
       if (this.isReal) this.refs.editModal.open();
     },
 
+    /** Cluster id of the current person (the route name is the id for unnamed people) */
+    async resolveClusterId(): Promise<number> {
+      let clusterId = Number(this.name);
+      if (!Number.isInteger(clusterId)) {
+        const faces = (await axios.get(API.FACE_LIST('recognize'))).data as { cluster_id: number; name: string }[];
+        clusterId = faces.find((f) => f.name === this.name)?.cluster_id ?? NaN;
+      }
+      if (!Number.isInteger(clusterId)) throw new Error('unknown cluster');
+      return clusterId;
+    },
+
+    async loadPersonAlbum() {
+      this.personAlbum = null;
+      this.personAlbumAvailable = false;
+      if (!this.routeIsRecognize || !this.isReal || this.user !== utils.uid) return;
+      try {
+        const clusterId = await this.resolveClusterId();
+        const res = await axios.get(generateUrl(`/apps/memories/api/person-albums/${clusterId}`));
+        this.personAlbumAvailable = !!res.data.available;
+        this.personAlbum = res.data.album;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
+    /** Create the auto-updated album of this person and open it */
+    async createPersonAlbum() {
+      if (this.finding) return;
+      this.finding = true;
+      try {
+        const clusterId = await this.resolveClusterId();
+        const res = await axios.post(generateUrl(`/apps/memories/api/person-albums/${clusterId}`), {});
+        this.personAlbum = res.data;
+        showSuccess(this.t('memories', 'Album "{name}" created with {n} photos; new photos of this person are added automatically', { name: res.data.name, n: res.data.added }));
+        this.openPersonAlbum();
+      } catch (error) {
+        console.error(error);
+        showError(this.t('memories', 'Could not create the album'));
+      } finally {
+        this.finding = false;
+      }
+    },
+
+    openPersonAlbum() {
+      if (!this.personAlbum) return;
+      this.$router.push({ name: 'albums', params: { user: utils.uid!, name: this.personAlbum.name } });
+    },
+
     /**
      * Ask Recognize to pull every sufficiently similar unassigned / unnamed face into this
      * person right now (the fork's /api/faces/{id}/find endpoint), then refresh the timeline.
@@ -167,13 +251,7 @@ export default defineComponent({
       if (this.finding) return;
       this.finding = true;
       try {
-        // the route name is the cluster id for unnamed people; look the id up for named ones
-        let clusterId = Number(this.name);
-        if (!Number.isInteger(clusterId)) {
-          const faces = (await axios.get(API.FACE_LIST('recognize'))).data as { cluster_id: number; name: string }[];
-          clusterId = faces.find((f) => f.name === this.name)?.cluster_id ?? NaN;
-        }
-        if (!Number.isInteger(clusterId)) throw new Error('unknown cluster');
+        const clusterId = await this.resolveClusterId();
         const res = await axios.post(generateUrl(`/apps/recognize/api/faces/${clusterId}/find`), {});
         const n = res.data.assigned ?? 0;
         showSuccess(

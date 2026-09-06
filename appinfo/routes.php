@@ -50,6 +50,9 @@ return [
         ['name' => 'Clusters#preview', 'url' => '/api/clusters/{backend}/preview', 'verb' => 'GET'],
         ['name' => 'Clusters#setCover', 'url' => '/api/clusters/{backend}/set-cover', 'verb' => 'POST'],
         ['name' => 'Clusters#download', 'url' => '/api/clusters/{backend}/download', 'verb' => 'POST'],
+        ['name' => 'PersonAlbums#get', 'url' => '/api/person-albums/{clusterId}', 'verb' => 'GET'],
+        ['name' => 'PersonAlbums#create', 'url' => '/api/person-albums/{clusterId}', 'verb' => 'POST'],
+        ['name' => 'PersonAlbums#unlink', 'url' => '/api/person-albums/{clusterId}', 'verb' => 'DELETE'],
 
         ['name' => 'Tags#set', 'url' => '/api/tags/set/{id}', 'verb' => 'PATCH'],
 
