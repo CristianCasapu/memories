@@ -96,6 +96,7 @@ final class Application extends App implements IBootstrap
         ClustersBackend\PlacesBackend::register();
         ClustersBackend\RecognizeBackend::register();
         ClustersBackend\SimilarBackend::register();
+        ClustersBackend\EventsBackend::register();
         ClustersBackend\FaceRecognitionBackend::register();
 
         // Extra hooks for native extension calls

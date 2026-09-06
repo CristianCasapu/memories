@@ -115,6 +115,8 @@ export default defineComponent({
           this.items = await dav.getPlaces();
         } else if (this.routeIsSimilar) {
           this.items = (await axios.get<ICluster[]>(API.SIMILAR_LIST())).data;
+        } else if (this.routeIsEvents) {
+          this.items = (await axios.get<ICluster[]>(API.EVENT_LIST())).data;
         }
       } finally {
         this.loading--;

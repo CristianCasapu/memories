@@ -8,6 +8,7 @@ export const clusterIs = {
   place: (cluster: ICluster): cluster is IPlace => cluster.cluster_type === 'places',
   tag: (cluster: ICluster): cluster is ITag => cluster.cluster_type === 'tags',
   similar: (cluster: ICluster): boolean => cluster.cluster_type === 'similar',
+  event: (cluster: ICluster): boolean => cluster.cluster_type === 'events',
   recognize: (cluster: ICluster): cluster is IFace => cluster.cluster_type === 'recognize',
   facerecognition: (cluster: ICluster): cluster is IFace => cluster.cluster_type === 'facerecognition',
   face: (cluster: ICluster): cluster is IFace =>
@@ -78,6 +79,10 @@ export function getClusterLinkTarget(cluster: ICluster) {
 
   if (clusterIs.similar(cluster)) {
     return { name: _m.routes.Similar.name, params: { name: String(cluster.cluster_id) } };
+  }
+
+  if (clusterIs.event(cluster)) {
+    return { name: _m.routes.Events.name, params: { name: String(cluster.cluster_id) } };
   }
 
   return {};

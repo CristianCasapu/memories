@@ -639,6 +639,13 @@ export default defineComponent({
         set(DaysFilterType.SEARCH, String(this.$route.params.q || ''));
       }
 
+      // Automatic event
+      if (this.routeIsEvents) {
+        const name = this.$route.params.name;
+        if (!name) throw new Error('Invalid events route');
+        set(DaysFilterType.EVENT, name);
+      }
+
       // Duplicate / near-duplicate group
       if (this.routeIsSimilar) {
         const name = this.$route.params.name;

@@ -132,6 +132,7 @@ import PeopleIcon from 'vue-material-design-icons/AccountBoxMultiple.vue';
 import MarkerIcon from 'vue-material-design-icons/MapMarker.vue';
 import TagsIcon from 'vue-material-design-icons/Tag.vue';
 import SimilarIcon from 'vue-material-design-icons/ImageMultiple.vue';
+import EventsIcon from 'vue-material-design-icons/CalendarStar.vue';
 import MapIcon from 'vue-material-design-icons/Map.vue';
 import CogIcon from 'vue-material-design-icons/Cog.vue';
 import SearchIcon from 'vue-material-design-icons/Magnify.vue';
@@ -386,6 +387,11 @@ export default defineComponent({
           icon: TagsIcon,
           title: t('memories', 'Tags'),
           if: this.config.systemtags_enabled,
+        },
+        {
+          name: 'events',
+          icon: EventsIcon,
+          title: t('memories', 'Events'),
         },
         {
           name: 'similar',

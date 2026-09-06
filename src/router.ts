@@ -17,6 +17,7 @@ export type RouteId =
   | 'Base'
   | 'Search'
   | 'Similar'
+  | 'Events'
   | 'Folders'
   | 'Favorites'
   | 'Videos'
@@ -127,6 +128,13 @@ export const routes: { [key in RouteId]: RouteConfig } = {
     props: (route: Route) => ({ rootTitle: t('memories', 'Similar photos') }),
   },
 
+  Events: {
+    path: '/events/:name*',
+    component: ClusterView,
+    name: 'events',
+    props: (route: Route) => ({ rootTitle: t('memories', 'Events') }),
+  },
+
   FolderShare: {
     path: '/s/:token/:path*',
     component: Timeline,
@@ -223,5 +231,6 @@ defineRouteChecker('routeIsCluster', (route) =>
     routes.Places.name,
     routes.Tags.name,
     routes.Similar.name,
+    routes.Events.name,
   ].includes(route?.name ?? ''),
 );

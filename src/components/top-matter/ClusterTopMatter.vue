@@ -8,6 +8,14 @@
     </NcActions>
     <span class="name">{{ name || viewname }}</span>
 
+    <div class="right-actions" v-if="routeIsEvents && $route.params.name">
+      <NcActions :inline="1">
+        <NcActionButton :aria-label="t('memories', 'Save as album')" :disabled="cleaning" @click="saveEventAsAlbum()" close-after-click>
+          {{ t('memories', 'Save as album') }}
+          <template #icon> <AlbumIcon :size="20" /> </template>
+        </NcActionButton>
+      </NcActions>
+    </div>
     <div class="right-actions" v-if="routeIsSimilar && $route.params.name">
       <NcActions :inline="1">
         <NcActionButton
@@ -40,6 +48,7 @@ import * as utils from '@services/utils';
 
 import BackIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import DeleteSweepIcon from 'vue-material-design-icons/DeleteSweep.vue';
+import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
 
 import type { IPhoto } from '@typings';
 
@@ -50,6 +59,7 @@ export default defineComponent({
     NcActionButton,
     BackIcon,
     DeleteSweepIcon,
+    AlbumIcon,
   },
 
   data: () => ({
@@ -74,6 +84,22 @@ export default defineComponent({
   methods: {
     back() {
       this.$router.go(-1);
+    },
+
+    /** Automatic event → Photos album with the same photos */
+    async saveEventAsAlbum() {
+      if (this.cleaning) return;
+      this.cleaning = true;
+      try {
+        const res = await axios.post(generateUrl(`/apps/memories/api/events/${this.$route.params.name}/album`), {});
+        showSuccess(this.t('memories', 'Album "{name}" saved ({n} photos added)', { name: res.data.name, n: res.data.added }));
+        this.$router.push({ name: 'albums', params: { user: utils.uid!, name: res.data.name } });
+      } catch (error) {
+        console.error(error);
+        showError(this.t('memories', 'Could not save the album'));
+      } finally {
+        this.cleaning = false;
+      }
     },
 
     /**

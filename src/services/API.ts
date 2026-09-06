@@ -32,6 +32,8 @@ export const enum DaysFilterType {
   SEARCH = 'search',
   /** duplicate / near-duplicate group id (Recognize fork) */
   SIMILAR = 'similar',
+  /** automatic event id */
+  EVENT = 'events',
 
   FACE_RECT = 'facerect',
   RECURSIVE = 'recursive',
@@ -110,6 +112,10 @@ export class API {
 
   static SIMILAR_LIST() {
     return gen(`${BASE}/clusters/similar`);
+  }
+
+  static EVENT_LIST() {
+    return gen(`${BASE}/clusters/events`);
   }
 
   static TAG_SET(fileid: string | number) {

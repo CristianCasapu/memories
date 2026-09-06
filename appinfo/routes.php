@@ -53,6 +53,8 @@ return [
         ['name' => 'PersonAlbums#get', 'url' => '/api/person-albums/{clusterId}', 'verb' => 'GET'],
         ['name' => 'PersonAlbums#create', 'url' => '/api/person-albums/{clusterId}', 'verb' => 'POST'],
         ['name' => 'PersonAlbums#unlink', 'url' => '/api/person-albums/{clusterId}', 'verb' => 'DELETE'],
+        ['name' => 'Events#rebuild', 'url' => '/api/events/rebuild', 'verb' => 'POST'],
+        ['name' => 'Events#createAlbum', 'url' => '/api/events/{eventId}/album', 'verb' => 'POST'],
 
         ['name' => 'Tags#set', 'url' => '/api/tags/set/{id}', 'verb' => 'PATCH'],
 
