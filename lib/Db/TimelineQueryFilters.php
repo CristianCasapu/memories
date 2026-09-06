@@ -47,7 +47,9 @@ trait TimelineQueryFilters
 
             return;
         }
-        $query->andWhere($query->expr()->in('m.fileid', $query->createNamedParameter($fileIds, IQueryBuilder::PARAM_INT_ARRAY)));
+        // integer literals: array parameters do not survive the CTE re-binding of the days query
+        $ids = array_map('intval', $fileIds);
+        $query->andWhere($query->expr()->in('m.fileid', $query->createFunction(implode(',', $ids))));
     }
 
     public function transformVideoFilter(IQueryBuilder &$query, bool $aggregate): void
