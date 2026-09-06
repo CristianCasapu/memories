@@ -6,7 +6,7 @@ declare module '@typings' {
     name: string;
   }
 
-  export type ClusterTypes = 'tags' | 'albums' | 'places' | 'recognize' | 'facerecognition' | 'plus';
+  export type ClusterTypes = 'tags' | 'albums' | 'places' | 'recognize' | 'facerecognition' | 'similar' | 'plus';
 
   export interface ICluster {
     /** A unique identifier for the cluster */

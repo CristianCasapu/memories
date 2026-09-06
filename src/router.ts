@@ -16,6 +16,7 @@ import { constants as c } from '@services/utils';
 export type RouteId =
   | 'Base'
   | 'Search'
+  | 'Similar'
   | 'Folders'
   | 'Favorites'
   | 'Videos'
@@ -119,6 +120,13 @@ export const routes: { [key in RouteId]: RouteConfig } = {
     props: (route: Route) => ({ rootTitle: t('memories', 'Tags') }),
   },
 
+  Similar: {
+    path: '/similar/:name*',
+    component: ClusterView,
+    name: 'similar',
+    props: (route: Route) => ({ rootTitle: t('memories', 'Similar photos') }),
+  },
+
   FolderShare: {
     path: '/s/:token/:path*',
     component: Timeline,
@@ -214,5 +222,6 @@ defineRouteChecker('routeIsCluster', (route) =>
     routes.FaceRecognition.name,
     routes.Places.name,
     routes.Tags.name,
+    routes.Similar.name,
   ].includes(route?.name ?? ''),
 );

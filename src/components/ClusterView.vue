@@ -27,7 +27,9 @@ import Timeline from '@components/Timeline.vue';
 import EmptyContent from '@components/top-matter/EmptyContent.vue';
 import DynamicTopMatter from '@components/top-matter/DynamicTopMatter.vue';
 
+import axios from '@nextcloud/axios';
 import * as dav from '@services/dav';
+import { API } from '@services/API';
 import * as utils from '@services/utils';
 
 import type { ICluster } from '@typings';
@@ -111,6 +113,8 @@ export default defineComponent({
           this.items = await dav.getFaceList('facerecognition');
         } else if (this.routeIsPlaces) {
           this.items = await dav.getPlaces();
+        } else if (this.routeIsSimilar) {
+          this.items = (await axios.get<ICluster[]>(API.SIMILAR_LIST())).data;
         }
       } finally {
         this.loading--;

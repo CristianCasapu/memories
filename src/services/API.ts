@@ -30,6 +30,8 @@ export const enum DaysFilterType {
   MAP_BOUNDS = 'mapbounds',
   /** natural-language search text (Recognize fork, CLIP) */
   SEARCH = 'search',
+  /** duplicate / near-duplicate group id (Recognize fork) */
+  SIMILAR = 'similar',
 
   FACE_RECT = 'facerect',
   RECURSIVE = 'recursive',
@@ -104,6 +106,10 @@ export class API {
 
   static TAG_LIST() {
     return gen(`${BASE}/clusters/tags`);
+  }
+
+  static SIMILAR_LIST() {
+    return gen(`${BASE}/clusters/similar`);
   }
 
   static TAG_SET(fileid: string | number) {

@@ -51,6 +51,8 @@ export function viewName(routeName: string): string {
       return t('memories', 'Tags');
     case _m.routes.Places.name:
       return t('memories', 'Places');
+    case _m.routes.Similar.name:
+      return t('memories', 'Similar photos');
     default:
       return String();
   }

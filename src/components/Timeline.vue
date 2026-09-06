@@ -639,6 +639,13 @@ export default defineComponent({
         set(DaysFilterType.SEARCH, String(this.$route.params.q || ''));
       }
 
+      // Duplicate / near-duplicate group
+      if (this.routeIsSimilar) {
+        const name = this.$route.params.name;
+        if (!name) throw new Error('Invalid similar route');
+        set(DaysFilterType.SIMILAR, name);
+      }
+
       // Albums
       const { user, name } = this.$route.params;
       if (this.routeIsAlbums) {
