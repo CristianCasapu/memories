@@ -28,6 +28,8 @@ export const enum DaysFilterType {
   PLACE = 'places',
   TAG = 'tags',
   MAP_BOUNDS = 'mapbounds',
+  /** natural-language search text (Recognize fork, CLIP) */
+  SEARCH = 'search',
 
   FACE_RECT = 'facerect',
   RECURSIVE = 'recursive',

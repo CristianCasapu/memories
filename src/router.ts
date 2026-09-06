@@ -15,6 +15,7 @@ import { constants as c } from '@services/utils';
 // Routes are defined here
 export type RouteId =
   | 'Base'
+  | 'Search'
   | 'Folders'
   | 'Favorites'
   | 'Videos'
@@ -58,6 +59,15 @@ export const routes: { [key in RouteId]: RouteConfig } = {
     component: Timeline,
     name: 'videos',
     props: (route: Route) => ({ rootTitle: t('memories', 'Videos') }),
+  },
+
+  Search: {
+    path: '/search/:q*',
+    component: Timeline,
+    name: 'search',
+    props: (route: Route) => ({
+      rootTitle: route.params.q ? t('memories', 'Search: {query}', { query: String(route.params.q) }) : t('memories', 'Search'),
+    }),
   },
 
   Albums: {

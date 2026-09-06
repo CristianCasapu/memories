@@ -109,6 +109,11 @@ final class DaysController extends GenericApiController
             $transforms[] = [$this->tq, 'transformVideoFilter'];
         }
 
+        // Natural-language search (Recognize fork with CLIP embeddings)
+        if (\is_string($search = $this->request->getParam('search')) && '' !== trim($search)) {
+            $transforms[] = [$this->tq, 'transformSearchFilter', trim($search)];
+        }
+
         // Filter geological bounds
         if ($bounds = $this->request->getParam('mapbounds')) {
             $transforms[] = [$this->tq, 'transformMapBoundsFilter', $bounds];

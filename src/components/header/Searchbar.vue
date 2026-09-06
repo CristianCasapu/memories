@@ -20,12 +20,24 @@
         <div class="empty" v-if="prompt.length === 0">
           {{ t('memories', 'Start typing to find photos and albums') }}
         </div>
-        <div class="empty" v-else-if="!clusters && clustersLoad">
-          <XLoadingIcon class="fill-block" />
-        </div>
-        <div class="empty" v-else-if="clustersResult.length === 0">
-          {{ t('memories', 'No results found') }}
-        </div>
+        <template v-else>
+          <!-- natural-language photo search (Recognize fork with CLIP) -->
+          <router-link
+            v-if="config.recognize_enabled && !routeIsPublic"
+            class="cluster semantic"
+            :to="{ name: 'search', params: { q: prompt.trim() } }"
+            @click.native="select()"
+          >
+            <div class="icon"><ImageSearchIcon :size="22" /></div>
+            {{ t('memories', 'Search photos for "{query}"', { query: prompt.trim() }) }}
+          </router-link>
+          <div class="empty" v-if="!clusters && clustersLoad">
+            <XLoadingIcon class="fill-block" />
+          </div>
+          <div class="empty" v-else-if="clustersResult.length === 0 && !(config.recognize_enabled && !routeIsPublic)">
+            {{ t('memories', 'No results found') }}
+          </div>
+        </template>
 
         <template v-for="cluster of clustersResult">
           <router-link class="cluster" :to="clusterTarget(cluster)" @click.native="select()">
@@ -58,6 +70,7 @@ import * as dav from '@services/dav';
 import Fuse from 'fuse.js';
 
 import MagnifyIcon from 'vue-material-design-icons/Magnify.vue';
+import ImageSearchIcon from 'vue-material-design-icons/ImageSearch.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
 import LocationIcon from 'vue-material-design-icons/MapMarker.vue';
 import TagIcon from 'vue-material-design-icons/Tag.vue';
@@ -71,6 +84,7 @@ export default defineComponent({
     NcTextField,
     NcPopover,
     MagnifyIcon,
+    ImageSearchIcon,
     AlbumIcon,
     LocationIcon,
     TagIcon,

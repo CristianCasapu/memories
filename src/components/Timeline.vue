@@ -634,6 +634,11 @@ export default defineComponent({
         set(DaysFilterType.ARCHIVE);
       }
 
+      // Natural-language search
+      if (this.routeIsSearch) {
+        set(DaysFilterType.SEARCH, String(this.$route.params.q || ''));
+      }
+
       // Albums
       const { user, name } = this.$route.params;
       if (this.routeIsAlbums) {

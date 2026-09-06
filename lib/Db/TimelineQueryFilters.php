@@ -32,6 +32,24 @@ trait TimelineQueryFilters
         }
     }
 
+    /**
+     * Keep only the photos matching a natural-language query (CLIP similarity computed by the
+     * CristianCasapu Recognize fork). The timeline query is already scoped to the user's files.
+     */
+    public function transformSearchFilter(IQueryBuilder &$query, bool $aggregate, string $text): void
+    {
+        $fileIds = \OCA\Memories\Service\SemanticSearchBridge::fileIds($text);
+        if (null === $fileIds) {
+            throw \OCA\Memories\Exceptions::NotEnabled('natural-language search (Recognize fork with the CLIP model)');
+        }
+        if (0 === \count($fileIds)) {
+            $query->andWhere($query->expr()->eq('m.fileid', $query->expr()->literal(-1)));
+
+            return;
+        }
+        $query->andWhere($query->expr()->in('m.fileid', $query->createNamedParameter($fileIds, IQueryBuilder::PARAM_INT_ARRAY)));
+    }
+
     public function transformVideoFilter(IQueryBuilder &$query, bool $aggregate): void
     {
         $query->andWhere($query->expr()->eq('m.isvideo', $query->expr()->literal(1)));
