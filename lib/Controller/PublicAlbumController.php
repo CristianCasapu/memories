@@ -12,7 +12,7 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\RedirectResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\AppFramework\Http\Template\SimpleMenuAction;
+use OCA\Memories\Http\DownloadMenuAction;
 use OCP\AppFramework\Http\Template\PublicTemplateResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -99,8 +99,9 @@ final class PublicAlbumController extends Controller
             'token' => $token, // share identification
             'albums' => 1, // identify backend for share
         ]);
-        // Not a LinkMenuAction: its 'directLink' id is rendered by Nextcloud 30+ as "copy link" instead of a download
-        $dlAction = new SimpleMenuAction('download', $this->l10n->t('Download'), 'icon-download', $dlUrl);
+        // Custom HTML action: a plain download link (a SimpleMenuAction is rendered as "copy link" or as an
+        // external-app link with a confirmation dialog by Nextcloud 30+)
+        $dlAction = new DownloadMenuAction($this->l10n->t('Download'), $dlUrl);
         $response->setHeaderActions([$dlAction]);
 
         return $response;

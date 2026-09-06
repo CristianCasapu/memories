@@ -31,6 +31,7 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\UseSession;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\ICacheFactory;
 use OCP\ISession;
 use OCP\ITempManager;
 use OCP\Security\ISecureRandom;
@@ -65,9 +66,18 @@ final class DownloadController extends GenericApiController
     public static function createHandle(string $name, array $files): string
     {
         $handle = \OC::$server->get(ISecureRandom::class)->generate(16, ISecureRandom::CHAR_ALPHANUMERIC);
+        // Nextcloud does not persist the session of unauthenticated (public share) requests, so the
+        // handle would be gone when the browser follows the download link. Keep it in the
+        // distributed cache (shared by all PHP workers) and in the session as a fallback.
+        self::handleCache()->set("memories_download_{$handle}", [$name, $files], 3600);
         \OC::$server->get(ISession::class)->set("memories_download_{$handle}", [$name, $files]);
 
         return $handle;
+    }
+
+    private static function handleCache(): \OCP\ICache
+    {
+        return \OC::$server->get(ICacheFactory::class)->createDistributed('memories_download');
     }
 
     /**
@@ -81,11 +91,13 @@ final class DownloadController extends GenericApiController
         return Util::guardEx(function () use ($handle) {
             // Get ids from request
             $session = \OC::$server->get(ISession::class);
+            $cache = self::handleCache();
             $key = "memories_download_{$handle}";
-            $info = $session->get($key);
+            $info = $cache->get($key) ?? $session->get($key);
 
-            // Remove handle from session unless HEAD request
+            // Remove handle unless HEAD request
             if ('HEAD' !== $this->request->getMethod()) {
+                $cache->remove($key);
                 $session->remove($key);
             }
 
