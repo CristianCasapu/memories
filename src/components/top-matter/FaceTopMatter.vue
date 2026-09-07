@@ -181,6 +181,8 @@ export default defineComponent({
   mixins: [UserConfig],
 
   data: () => ({
+    progress: null as null | { running: boolean; scanned: number; total: number; percent: number | null; etaSeconds: number | null; waitingForClustering: number; faces: number; clusters: number },
+    progressTimer: null as null | number,
     finding: false,
     personAlbum: null as { album_id: number; name: string } | null,
     personAlbumAvailable: false,
@@ -193,6 +195,18 @@ export default defineComponent({
         this.loadPersonAlbum();
       },
     },
+  },
+
+  mounted() {
+    // admins see the live face-scan progress in the People header
+    if (utils.isAdmin && this.routeIsRecognize) {
+      this.loadProgress();
+      this.progressTimer = window.setInterval(() => this.loadProgress(), 15000);
+    }
+  },
+
+  beforeDestroy() {
+    if (this.progressTimer) window.clearInterval(this.progressTimer);
   },
 
   computed: {
@@ -226,11 +240,25 @@ export default defineComponent({
       return this.name && this.name !== this.c.FACE_NULL && !this.isTogether;
     },
 
+    /** "scanning 4,571 / 6,000 (76 %)" while a face scan runs, or the clustering backlog */
+    progressText(): string {
+      const p = this.progress;
+      if (!p) return '';
+      if (p.running) {
+        const eta = p.etaSeconds !== null ? ', ' + this.t('memories', '~{min} min left', { min: Math.ceil(p.etaSeconds / 60) }) : '';
+        return this.t('memories', 'scanning {scanned} / {total} photos ({percent} %){eta}', { scanned: p.scanned, total: p.total, percent: p.percent ?? 0, eta });
+      }
+      if (p.waitingForClustering > 0) {
+        return this.t('memories', '{n} faces waiting for clustering', { n: p.waitingForClustering });
+      }
+      return '';
+    },
+
     displayName() {
       if (this.routeIsRecognizeUnassigned) {
         return this.t('memories', 'Unassigned faces');
       } else if (!this.name) {
-        return this.t('memories', 'People');
+        return this.progressText ? this.t('memories', 'People') + ' · ' + this.progressText : this.t('memories', 'People');
       } else if (this.isTogether) {
         return String(this.name)
           .split('|')
@@ -269,6 +297,15 @@ export default defineComponent({
       }
       if (!Number.isInteger(clusterId)) throw new Error('unknown cluster');
       return clusterId;
+    },
+
+    async loadProgress() {
+      try {
+        const res = await axios.get(generateUrl('/apps/recognize/api/faces/progress'));
+        this.progress = res.data;
+      } catch (error) {
+        this.progress = null;
+      }
     },
 
     async loadPersonAlbum() {
