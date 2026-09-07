@@ -64,6 +64,11 @@ final class WeeklyRecapJob extends TimedJob
         if (0 === $count) {
             return 0;
         }
+        // one notification per week and user: drop an earlier one for the same week first
+        $previous = $this->notifications->createNotification();
+        $previous->setApp(Application::APPNAME)->setUser($uid)->setObject('weekly-recap', date('o-W'));
+        $this->notifications->markProcessed($previous);
+
         $notification = $this->notifications->createNotification();
         $notification->setApp(Application::APPNAME)
             ->setUser($uid)
