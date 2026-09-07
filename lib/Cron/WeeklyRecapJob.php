@@ -106,8 +106,7 @@ final class WeeklyRecapJob extends TimedJob
             $query->select($query->func()->count('m.fileid'))
                 ->from('memories', 'm')
                 ->innerJoin('m', 'filecache', 'f', $query->expr()->eq('f.fileid', 'm.fileid'))
-                ->where($query->expr()->eq('f.storage', $query->createNamedParameter((int) $storageId, IQueryBuilder::PARAM_INT)))
-                ->andWhere($query->expr()->like('f.path', $query->createNamedParameter('files/%')))
+                ->where(\OCA\Memories\Util::timelineScope($query, $uid, 'f'))
                 ->andWhere($query->expr()->gte('m.dayid', $query->createNamedParameter($dayStart, IQueryBuilder::PARAM_INT)))
                 ->andWhere($query->expr()->lte('m.dayid', $query->createNamedParameter($dayEnd, IQueryBuilder::PARAM_INT)))
             ;

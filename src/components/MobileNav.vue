@@ -4,11 +4,16 @@
       <component :is="link.icon" :size="22" />
       {{ link.text }}
     </router-link>
+    <a href="#" class="menu-button" @click.prevent="openMenu">
+      <MenuIcon :size="22" />
+      {{ t('memories', 'Menu') }}
+    </a>
+    <MobileMenu ref="menu" :items="items" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 
 import * as nativex from '@native';
 
@@ -17,6 +22,8 @@ import { translate as t } from '@services/l10n';
 import ImageMultipleIcon from 'vue-material-design-icons/ImageMultiple.vue';
 import SearchIcon from 'vue-material-design-icons/Magnify.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
+import MenuIcon from 'vue-material-design-icons/Menu.vue';
+import MobileMenu from '@components/MobileMenu.vue';
 
 export default defineComponent({
   name: 'MobileNav',
@@ -25,6 +32,15 @@ export default defineComponent({
     ImageMultipleIcon,
     SearchIcon,
     AlbumIcon,
+    MenuIcon,
+    MobileMenu,
+  },
+
+  props: {
+    items: {
+      type: Array as PropType<any[]>,
+      default: () => [],
+    },
   },
 
   computed: {
@@ -40,6 +56,11 @@ export default defineComponent({
   methods: {
     linkClick() {
       nativex.playTouchSound();
+    },
+
+    openMenu() {
+      nativex.playTouchSound();
+      (this.$refs.menu as any)?.toggle();
     },
   },
 });

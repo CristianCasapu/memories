@@ -309,6 +309,30 @@ final class Util
     }
 
     /**
+     * Restrict a query on the filecache to the user's timeline (e.g. only /Photos):
+     * home storage + path prefixes of the configured timeline folders.
+     *
+     * @param string $alias alias of the filecache table in the query
+     */
+    public static function timelineScope(\OCP\DB\QueryBuilder\IQueryBuilder $query, string $uid, string $alias = 'f'): \OCP\DB\QueryBuilder\ICompositeExpression
+    {
+        $storage = $query->getConnection()->getQueryBuilder();
+        $storage->select('numeric_id')->from('storages')->where($storage->expr()->eq('id', $storage->createNamedParameter('home::'.$uid)));
+        $storageId = (int) $storage->executeQuery()->fetchOne();
+
+        $paths = $query->expr()->orX();
+        foreach (self::getTimelinePaths($uid) as $path) {
+            $prefix = 'files'.('/' === $path ? '' : rtrim($path, '/')).'/';
+            $paths->add($query->expr()->like($alias.'.path', $query->createNamedParameter(str_replace(['%', '_'], ['\\%', '\\_'], $prefix).'%')));
+        }
+
+        return $query->expr()->andX(
+            $query->expr()->eq($alias.'.storage', $query->createNamedParameter($storageId, \OCP\DB\QueryBuilder\IQueryBuilder::PARAM_INT)),
+            $paths,
+        );
+    }
+
+    /**
      * Get list of timeline paths as array.
      *
      * @return string[] List of paths

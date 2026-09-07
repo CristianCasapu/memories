@@ -60,8 +60,7 @@ final class Events
         $query->select('m.fileid', 'm.datetaken', 'm.lat', 'm.lon', 'f.path')
             ->from('memories', 'm')
             ->innerJoin('m', 'filecache', 'f', $query->expr()->eq('f.fileid', 'm.fileid'))
-            ->where($query->expr()->eq('f.storage', $query->createNamedParameter($storageId, IQueryBuilder::PARAM_INT)))
-            ->andWhere($query->expr()->like('f.path', $query->createNamedParameter('files/%')))
+            ->where(\OCA\Memories\Util::timelineScope($query, $uid, 'f'))
             ->andWhere($query->expr()->eq('m.orphan', $query->expr()->literal(0, IQueryBuilder::PARAM_INT)))
             ->orderBy('m.datetaken', 'ASC')
         ;

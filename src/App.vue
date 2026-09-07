@@ -65,7 +65,7 @@
         </div>
 
         <MobileHeader v-if="hasMobileHeader" />
-        <MobileNav v-if="showNavigation" />
+        <MobileNav v-if="showNavigation" :items="navItems" />
       </NcAppContent>
 
       <Settings :open.sync="settingsOpen" />

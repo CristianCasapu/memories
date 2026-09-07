@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace OCA\Memories\Service;
 
+use OCA\Memories\Util;
+
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
@@ -130,19 +132,49 @@ final class PersonAlbums
             return 0;
         }
 
-        // photos of the person that are not in the album yet
+        // photos of the person, inside the user's timeline folders only (e.g. /Photos), not in the album yet
         $query = $this->db->getQueryBuilder();
         $query->selectDistinct('d.file_id')
             ->from('recognize_face_detections', 'd')
+            ->innerJoin('d', 'filecache', 'f', $query->expr()->eq('f.fileid', 'd.file_id'))
             ->leftJoin('d', 'photos_albums_files', 'paf', $query->expr()->andX(
                 $query->expr()->eq('paf.file_id', 'd.file_id'),
                 $query->expr()->eq('paf.album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)),
             ))
             ->where($query->expr()->eq('d.user_id', $query->createNamedParameter($uid)))
             ->andWhere($query->expr()->eq('d.cluster_id', $query->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)))
+            ->andWhere(Util::timelineScope($query, $uid, 'f'))
             ->andWhere($query->expr()->isNull('paf.album_file_id'))
         ;
         $fileIds = array_map('intval', $query->executeQuery()->fetchAll(\PDO::FETCH_COLUMN));
+
+        // files that ended up in the album but are outside the timeline folders (or no longer show the person): remove them
+        $query = $this->db->getQueryBuilder();
+        $query->select('paf.file_id')
+            ->from('photos_albums_files', 'paf')
+            ->leftJoin('paf', 'filecache', 'f', $query->expr()->eq('f.fileid', 'paf.file_id'))
+            ->where($query->expr()->eq('paf.album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)))
+        ;
+        $inAlbum = array_map('intval', $query->executeQuery()->fetchAll(\PDO::FETCH_COLUMN));
+        if (\count($inAlbum) > 0) {
+            $query = $this->db->getQueryBuilder();
+            $query->selectDistinct('d.file_id')
+                ->from('recognize_face_detections', 'd')
+                ->innerJoin('d', 'filecache', 'f', $query->expr()->eq('f.fileid', 'd.file_id'))
+                ->where($query->expr()->eq('d.user_id', $query->createNamedParameter($uid)))
+                ->andWhere($query->expr()->eq('d.cluster_id', $query->createNamedParameter($clusterId, IQueryBuilder::PARAM_INT)))
+                ->andWhere(Util::timelineScope($query, $uid, 'f'))
+            ;
+            $allowed = array_flip(array_map('intval', $query->executeQuery()->fetchAll(\PDO::FETCH_COLUMN)));
+            foreach ($inAlbum as $fileId) {
+                if (!isset($allowed[$fileId])) {
+                    try {
+                        $mapper->removeFile($albumId, $fileId);
+                    } catch (\Throwable $e) {
+                    }
+                }
+            }
+        }
 
         $added = 0;
         foreach ($fileIds as $fileId) {
