@@ -206,6 +206,28 @@ final class AdminController extends GenericApiController
     }
 
     /** @AdminRequired */
+    public function cleanupStatus(): Http\Response
+    {
+        return Util::guardEx(fn () => new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Cleanup::class)->status(), Http::STATUS_OK));
+    }
+
+    /** @AdminRequired */
+    public function cleanupConfig(array $config = []): Http\Response
+    {
+        return Util::guardEx(fn () => new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Cleanup::class)->setConfig($config), Http::STATUS_OK));
+    }
+
+    /** @AdminRequired */
+    public function cleanupRun(bool $dry_run = false): Http\Response
+    {
+        return Util::guardEx(function () use ($dry_run) {
+            set_time_limit(0);
+
+            return new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Cleanup::class)->run($dry_run, true), Http::STATUS_OK);
+        });
+    }
+
+    /** @AdminRequired */
     public function eventsRebuild(): Http\Response
     {
         return Util::guardEx(function () {

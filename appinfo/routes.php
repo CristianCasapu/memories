@@ -103,6 +103,9 @@ return [
         ['name' => 'Admin#personAlbumsSync', 'url' => '/api/admin/person-albums-sync', 'verb' => 'POST'],
         ['name' => 'Admin#weeklyRecapTest', 'url' => '/api/admin/weekly-recap-test', 'verb' => 'POST'],
         ['name' => 'Admin#indexNow', 'url' => '/api/admin/index', 'verb' => 'POST'],
+        ['name' => 'Admin#cleanupStatus', 'url' => '/api/admin/cleanup', 'verb' => 'GET'],
+        ['name' => 'Admin#cleanupConfig', 'url' => '/api/admin/cleanup/config', 'verb' => 'PUT'],
+        ['name' => 'Admin#cleanupRun', 'url' => '/api/admin/cleanup/run', 'verb' => 'POST'],
 
         // Service worker and assets
         ['name' => 'Other#static', 'url' => '/static/{name}', 'verb' => 'GET'],
