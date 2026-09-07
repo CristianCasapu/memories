@@ -2,6 +2,7 @@ import * as base from './base';
 
 import axios from '@nextcloud/axios';
 import { showError } from '@nextcloud/dialogs';
+import { generateUrl } from '@nextcloud/router';
 import { getLanguage } from '@nextcloud/l10n';
 
 import { translate as t, translatePlural as n } from '@services/l10n';
@@ -289,4 +290,27 @@ export function getAlbumSubtitle(album: IAlbum) {
   }
 
   return text;
+}
+
+/**
+ * Make sure the album has a public link and return it.
+ * The link is a collaborator of type "link" (3) on the album; Memories serves it at /a/{token}.
+ */
+export async function getOrCreatePublicLink(user: string, name: string): Promise<string> {
+  const LINK_TYPE = 3;
+  let album = await getAlbum(user, name);
+  let link = (album.collaborators ?? []).find((c: any) => Number(c.type) === LINK_TYPE);
+
+  if (!link) {
+    const collaborators = [...(album.collaborators ?? []), { id: '', label: '', type: LINK_TYPE }];
+    await updateAlbum(album, { albumName: name, properties: { collaborators } });
+    album = await getAlbum(user, name);
+    link = (album.collaborators ?? []).find((c: any) => Number(c.type) === LINK_TYPE);
+  }
+
+  if (!link?.id) {
+    throw new Error('the album has no public link');
+  }
+
+  return `${location.origin}${generateUrl(`apps/memories/a/${link.id}`)}`;
 }

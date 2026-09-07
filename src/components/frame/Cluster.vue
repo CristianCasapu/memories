@@ -17,12 +17,31 @@
       <div class="subtitle" v-if="subtitle">{{ subtitle }}</div>
     </div>
 
-    <!-- Album actions: on hover (desktop) / always (mobile) -->
-    <div class="tile-menu" v-if="isAlbum && link && !plus" @click.stop.prevent @keydown.stop>
-      <NcActions :inline="0" :aria-label="t('memories', 'Album actions')">
+    <!-- Actions on the tile: on hover (desktop), always visible on a touch screen -->
+    <div class="tile-menu" v-if="hasMenu" @click.stop.prevent @keydown.stop>
+      <NcActions :inline="0" :aria-label="t('memories', 'Actions')">
         <NcActionButton :aria-label="t('memories', 'Open')" @click="openAlbum" close-after-click>
           {{ t('memories', 'Open') }}
           <template #icon> <OpenIcon :size="20" /> </template>
+        </NcActionButton>
+
+        <!-- person -->
+        <template v-if="isFace">
+          <NcActionButton :aria-label="t('memories', 'Share with a public link')" :disabled="busy" @click="sharePersonLink" close-after-click>
+            {{ t('memories', 'Share with a public link') }}
+            <template #icon> <LinkIcon :size="20" /> </template>
+          </NcActionButton>
+          <NcActionButton :aria-label="t('memories', 'Create an album of this person')" :disabled="busy" @click="createPersonAlbum" close-after-click>
+            {{ t('memories', 'Create an album of this person') }}
+            <template #icon> <AlbumIcon :size="20" /> </template>
+          </NcActionButton>
+        </template>
+
+        <!-- album -->
+        <template v-if="isAlbum">
+        <NcActionButton :aria-label="t('memories', 'Share with a public link')" :disabled="busy" @click="shareAlbumLink" close-after-click>
+          {{ t('memories', 'Share with a public link') }}
+          <template #icon> <LinkIcon :size="20" /> </template>
         </NcActionButton>
         <NcActionButton :aria-label="t('memories', 'Share album')" @click="shareAlbum" close-after-click>
           {{ t('memories', 'Share album') }}
@@ -40,6 +59,7 @@
           {{ t('memories', 'Delete album') }}
           <template #icon> <DeleteIcon :size="20" /> </template>
         </NcActionButton>
+        </template>
       </NcActions>
     </div>
 
@@ -75,6 +95,9 @@ import ShareIcon from 'vue-material-design-icons/ShareVariant.vue';
 import EditIcon from 'vue-material-design-icons/Pencil.vue';
 import DownloadIcon from 'vue-material-design-icons/Download.vue';
 import DeleteIcon from 'vue-material-design-icons/TrashCanOutline.vue';
+import LinkIcon from 'vue-material-design-icons/LinkVariant.vue';
+import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
+import { showError, showSuccess } from '@nextcloud/dialogs';
 
 import errorsvg from '@assets/error.svg';
 import plussvg from '@assets/plus.svg';
@@ -96,7 +119,13 @@ export default defineComponent({
     EditIcon,
     DownloadIcon,
     DeleteIcon,
+    LinkIcon,
+    AlbumIcon,
   },
+
+  data: () => ({
+    busy: false,
+  }),
 
   props: {
     data: {
@@ -144,6 +173,20 @@ export default defineComponent({
       return dav.clusterIs.album(this.data);
     },
 
+    /** a named person from Recognize (not the "unassigned" pseudo cluster) */
+    isFace(): boolean {
+      return (
+        this.data.cluster_type === 'recognize'
+        && !this.plus
+        && String((this.data as any).name ?? '') !== 'NULL'
+        && (this.data as any).user_id === utils.uid
+      );
+    },
+
+    hasMenu(): boolean {
+      return this.link && !this.plus && (this.isAlbum || this.isFace);
+    },
+
     owned(): boolean {
       return this.isAlbum && (this.data as any).user === utils.uid;
     },
@@ -184,6 +227,70 @@ export default defineComponent({
     editAlbum() {
       const a = this.data as any;
       _m.modals.albumEdit(a.user, a.name);
+    },
+
+    /** Person → album kept up to date → public link, copied to the clipboard */
+    async sharePersonLink() {
+      if (this.busy) return;
+      this.busy = true;
+      try {
+        const album = await this.ensurePersonAlbum();
+        await this.copyLink(await dav.getOrCreatePublicLink(utils.uid as string, album.name));
+      } catch (error: any) {
+        console.error(error);
+        showError(error?.response?.data?.message || this.t('memories', 'Could not share this person'));
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    async createPersonAlbum() {
+      if (this.busy) return;
+      this.busy = true;
+      try {
+        const album = await this.ensurePersonAlbum();
+        showSuccess(this.t('memories', 'Album "{name}" is kept up to date with this person', { name: album.name }));
+        this.$router.push({ name: 'albums', params: { user: utils.uid as string, name: album.name } });
+      } catch (error: any) {
+        console.error(error);
+        showError(error?.response?.data?.message || this.t('memories', 'Could not create the album'));
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    /** The automatic album of this person, created on first use */
+    async ensurePersonAlbum(): Promise<{ album_id: number; name: string }> {
+      const clusterId = Number((this.data as any).cluster_id);
+      const res = await axios.post(API.PERSON_ALBUM(clusterId), {});
+      return res.data;
+    },
+
+    async shareAlbumLink() {
+      if (this.busy) return;
+      this.busy = true;
+      try {
+        const a = this.data as any;
+        await this.copyLink(await dav.getOrCreatePublicLink(a.user, a.name));
+      } catch (error) {
+        console.error(error);
+        showError(this.t('memories', 'Could not create the public link'));
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    async copyLink(link: string) {
+      try {
+        if (nativex.has()) {
+          await nativex.shareUrl(link);
+          return;
+        }
+        await navigator.clipboard.writeText(link);
+        showSuccess(this.t('memories', 'Public link copied to the clipboard'));
+      } catch (error) {
+        showSuccess(this.t('memories', 'Public link: {link}', { link }));
+      }
     },
 
     async downloadAlbum() {
