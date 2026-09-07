@@ -46,13 +46,22 @@ export default defineComponent({
 
   emits: [],
 
+  data: () => ({
+    overrideUser: null as string | null,
+    overrideName: null as string | null,
+  }),
+
+  created() {
+    _m.modals.albumDelete = this.open;
+  },
+
   computed: {
     user() {
-      return this.$route.params.user;
+      return this.overrideUser ?? this.$route.params.user;
     },
 
     name() {
-      return this.$route.params.name;
+      return this.overrideName ?? this.$route.params.name;
     },
 
     owned() {
@@ -61,18 +70,27 @@ export default defineComponent({
   },
 
   methods: {
-    open() {
+    /** From the album page (no arguments) or from an album tile (user + name) */
+    open(user?: string, name?: string) {
+      this.overrideUser = typeof user === 'string' ? user : null;
+      this.overrideName = typeof name === 'string' ? name : null;
       this.show = true;
     },
 
     cleanup() {
       this.show = false;
+      this.overrideUser = null;
+      this.overrideName = null;
     },
 
     async save() {
       try {
         await client.deleteFile(dav.getAlbumPath(this.user, this.name));
-        this.$router.push({ name: 'albums' });
+        if (this.$route.params.name) {
+          this.$router.push({ name: 'albums' });
+        } else {
+          utils.bus.emit('memories:clusters:refresh', null);
+        }
         this.close();
       } catch (error) {
         console.log(error);

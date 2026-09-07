@@ -39,18 +39,24 @@ export default defineComponent({
   emits: [],
 
   data: () => ({
+    fromList: false,
     album: null as any,
   }),
+
+  created() {
+    _m.modals.albumEdit = (user: string, name: string) => this.open(true, user, name);
+  },
 
   methods: {
     /**
      * Open the modal
      * @param edit If true, the modal will be opened in edit mode
      */
-    async open(edit: boolean) {
+    async open(edit: boolean, user?: string, name?: string) {
+      this.fromList = typeof name === 'string';
       if (edit) {
         try {
-          this.album = await dav.getAlbum(this.$route.params.user, this.$route.params.name);
+          this.album = await dav.getAlbum(user ?? this.$route.params.user, name ?? this.$route.params.name);
         } catch (e) {
           console.error(e);
           showError(this.t('memories', 'Could not load the selected album'));
@@ -71,6 +77,11 @@ export default defineComponent({
       // close modal first to pop fragments
       await this.close();
 
+      // edited from the album list: stay there and refresh the tiles
+      if (this.fromList) {
+        utils.bus.emit('memories:clusters:refresh', null);
+        return;
+      }
       // navigate to album if name changed
       if (!this.album || album.basename !== this.album.basename) {
         const user = album.filename.split('/')[2];

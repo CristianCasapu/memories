@@ -78,10 +78,12 @@ export default defineComponent({
 
   created() {
     utils.bus.on('memories:user-config-changed', this.refresh);
+    utils.bus.on('memories:clusters:refresh', this.refresh);
   },
 
   beforeDestroy() {
     utils.bus.off('memories:user-config-changed', this.refresh);
+    utils.bus.off('memories:clusters:refresh', this.refresh);
   },
 
   watch: {

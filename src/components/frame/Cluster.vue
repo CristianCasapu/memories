@@ -17,6 +17,32 @@
       <div class="subtitle" v-if="subtitle">{{ subtitle }}</div>
     </div>
 
+    <!-- Album actions: on hover (desktop) / always (mobile) -->
+    <div class="tile-menu" v-if="isAlbum && link && !plus" @click.stop.prevent @keydown.stop>
+      <NcActions :inline="0" :aria-label="t('memories', 'Album actions')">
+        <NcActionButton :aria-label="t('memories', 'Open')" @click="openAlbum" close-after-click>
+          {{ t('memories', 'Open') }}
+          <template #icon> <OpenIcon :size="20" /> </template>
+        </NcActionButton>
+        <NcActionButton :aria-label="t('memories', 'Share album')" @click="shareAlbum" close-after-click>
+          {{ t('memories', 'Share album') }}
+          <template #icon> <ShareIcon :size="20" /> </template>
+        </NcActionButton>
+        <NcActionButton v-if="owned" :aria-label="t('memories', 'Edit album')" @click="editAlbum" close-after-click>
+          {{ t('memories', 'Edit album') }}
+          <template #icon> <EditIcon :size="20" /> </template>
+        </NcActionButton>
+        <NcActionButton :aria-label="t('memories', 'Download album')" @click="downloadAlbum" close-after-click>
+          {{ t('memories', 'Download album') }}
+          <template #icon> <DownloadIcon :size="20" /> </template>
+        </NcActionButton>
+        <NcActionButton v-if="owned" :aria-label="t('memories', 'Delete album')" @click="deleteAlbum" close-after-click>
+          {{ t('memories', 'Delete album') }}
+          <template #icon> <DeleteIcon :size="20" /> </template>
+        </NcActionButton>
+      </NcActions>
+    </div>
+
     <div class="previews fill-block" ref="previews" @click="clickPreview">
       <div class="img-outer" :class="{ plus }">
         <XImg
@@ -38,6 +64,17 @@
 import Vue, { defineComponent, type PropType } from 'vue';
 
 import NcCounterBubble from '@nextcloud/vue/dist/Components/NcCounterBubble.js';
+import NcActions from '@nextcloud/vue/dist/Components/NcActions.js';
+import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js';
+
+import axios from '@nextcloud/axios';
+import { API } from '@services/API';
+
+import OpenIcon from 'vue-material-design-icons/OpenInNew.vue';
+import ShareIcon from 'vue-material-design-icons/ShareVariant.vue';
+import EditIcon from 'vue-material-design-icons/Pencil.vue';
+import DownloadIcon from 'vue-material-design-icons/Download.vue';
+import DeleteIcon from 'vue-material-design-icons/TrashCanOutline.vue';
 
 import errorsvg from '@assets/error.svg';
 import plussvg from '@assets/plus.svg';
@@ -52,6 +89,13 @@ export default defineComponent({
   name: 'Cluster',
   components: {
     NcCounterBubble,
+    NcActions,
+    NcActionButton,
+    OpenIcon,
+    ShareIcon,
+    EditIcon,
+    DownloadIcon,
+    DeleteIcon,
   },
 
   props: {
@@ -96,6 +140,14 @@ export default defineComponent({
       return this.data.cluster_type === 'plus';
     },
 
+    isAlbum(): boolean {
+      return dav.clusterIs.album(this.data);
+    },
+
+    owned(): boolean {
+      return this.isAlbum && (this.data as any).user === utils.uid;
+    },
+
     /** Target URL to navigate to */
     target() {
       if (!this.link || this.plus) return {};
@@ -119,11 +171,62 @@ export default defineComponent({
     clickPreview() {
       nativex.playTouchSound();
     },
+
+    openAlbum() {
+      this.$router.push(dav.getClusterLinkTarget(this.data) as any);
+    },
+
+    shareAlbum() {
+      const a = this.data as any;
+      _m.modals.albumShare(a.user, a.name);
+    },
+
+    editAlbum() {
+      const a = this.data as any;
+      _m.modals.albumEdit(a.user, a.name);
+    },
+
+    async downloadAlbum() {
+      const a = this.data as any;
+      const res = await axios.post(API.ALBUM_DOWNLOAD(a.user, a.name));
+      if (res.status === 200 && res.data.handle) {
+        dav.downloadWithHandle(res.data.handle);
+      }
+    },
+
+    deleteAlbum() {
+      const a = this.data as any;
+      _m.modals.albumDelete(a.user, a.name);
+    },
   },
 });
 </script>
 
 <style lang="scss" scoped>
+.tile-menu {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+
+  .cluster:hover &,
+  .cluster:focus-within & {
+    opacity: 1;
+  }
+
+  @media (max-width: 768px), (hover: none) {
+    opacity: 1;
+  }
+
+  :deep button {
+    color: #fff !important;
+  }
+}
+
 .cluster,
 .name,
 img {

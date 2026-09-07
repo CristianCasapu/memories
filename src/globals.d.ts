@@ -41,6 +41,8 @@ declare global {
       editMetadata: (photos: IPhoto[], sections?: number[]) => void;
       tagFaces: (photo: IPhoto) => void;
       shareAsAlbum: (source: IPhoto[] | (() => Promise<IPhoto[]>), defaultName?: string) => void;
+      albumEdit: (user: string, name: string) => void;
+      albumDelete: (user?: string, name?: string) => void;
       updateAlbums: (photos: IPhoto[]) => void;
       sharePhotos: (photo: IPhoto[]) => void;
       shareNodeLink: (path: string, immediate?: boolean) => Promise<void>;
