@@ -97,6 +97,9 @@ final class Application extends App implements IBootstrap
         ClustersBackend\RecognizeBackend::register();
         ClustersBackend\SimilarBackend::register();
         ClustersBackend\EventsBackend::register();
+
+        // Weekly "your memories from this week" notification
+        $context->registerNotifierService(\OCA\Memories\Notification\Notifier::class);
         ClustersBackend\FaceRecognitionBackend::register();
 
         // Extra hooks for native extension calls

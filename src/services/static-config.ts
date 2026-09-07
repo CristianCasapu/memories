@@ -162,6 +162,7 @@ class StaticConfig {
       square_thumbs: false,
       high_res_cond: null,
       show_face_rect: false,
+      weekly_recap: true,
     };
 
     const set = <K extends keyof IConfig, V extends IConfig[K]>(key: K, value: string | null) => {

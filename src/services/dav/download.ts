@@ -1,5 +1,5 @@
 import axios from '@nextcloud/axios';
-import { showError } from '@nextcloud/dialogs';
+import { showError, showSuccess } from '@nextcloud/dialogs';
 
 import { translate as t } from '@services/l10n';
 import { API } from '@services/API';
@@ -48,4 +48,26 @@ export function downloadFromUrl(url: string) {
   link.href = url;
   link.download = '';
   link.click();
+}
+
+/**
+ * Stitch photos into a short video (server side, ffmpeg); the file is saved next to the first photo.
+ * Shows a success / error toast; resolves to the new file id or null.
+ */
+export async function createBurstVideo(fileIds: number[], fps = 3): Promise<number | null> {
+  try {
+    const res = await axios.post(API.BURST_VIDEO(), { fileids: fileIds, fps });
+    showSuccess(
+      t('memories', 'Video "{name}" ({n} photos) saved in {folder}', {
+        name: res.data.name,
+        n: res.data.frames,
+        folder: res.data.folder || '/',
+      }),
+    );
+    return res.data.fileid as number;
+  } catch (error) {
+    console.error(error);
+    showError(t('memories', 'Could not create the video (is ffmpeg configured?)'));
+    return null;
+  }
 }

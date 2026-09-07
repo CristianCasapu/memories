@@ -29,6 +29,10 @@
           {{ t('memories', 'Show past photos on top of timeline') }}
         </NcCheckboxRadioSwitch>
 
+        <NcCheckboxRadioSwitch :checked.sync="config.weekly_recap" @update:checked="updateWeeklyRecap" type="switch">
+          {{ t('memories', 'Weekly notification with your memories from this week in past years') }}
+        </NcCheckboxRadioSwitch>
+
         <NcCheckboxRadioSwitch
           :checked.sync="config.stack_raw_files"
           @update:checked="updateStackRawFiles"
@@ -374,6 +378,10 @@ export default defineComponent({
 
     async updateEnableTopMemories() {
       await this.updateSetting('enable_top_memories', 'enableTopMemories');
+    },
+
+    async updateWeeklyRecap() {
+      await this.updateSetting('weekly_recap', 'weeklyRecap');
     },
 
     async updateStackRawFiles() {

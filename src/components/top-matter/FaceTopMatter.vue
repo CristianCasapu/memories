@@ -24,7 +24,26 @@
         </template>
 
         <!-- real cluster -->
+        <template v-if="isTogether">
+          <NcActionButton :aria-label="t('memories', 'Add another person')" @click="refs.togetherModal.open()" close-after-click>
+            {{ t('memories', 'Add another person') }}
+            <template #icon> <TogetherIcon :size="20" /> </template>
+          </NcActionButton>
+          <NcActionButton :aria-label="t('memories', 'Show only {name}', { name: firstName })" @click="showOnlyFirst" close-after-click>
+            {{ t('memories', 'Show only {name}', { name: firstName }) }}
+            <template #icon> <BackIcon :size="20" /> </template>
+          </NcActionButton>
+        </template>
         <template v-if="isReal">
+          <NcActionButton
+            v-if="routeIsRecognize"
+            :aria-label="t('memories', 'Together with …')"
+            @click="refs.togetherModal.open()"
+            close-after-click
+          >
+            {{ t('memories', 'Together with …') }}
+            <template #icon> <TogetherIcon :size="20" /> </template>
+          </NcActionButton>
           <NcActionButton :aria-label="t('memories', 'Rename person')" @click="rename" close-after-click>
             {{ t('memories', 'Rename person') }}
             <template #icon> <EditIcon :size="20" /> </template>
@@ -88,6 +107,7 @@
     <FaceEditModal ref="editModal" />
     <FaceDeleteModal ref="deleteModal" />
     <FaceMergeModal ref="mergeModal" />
+    <FaceTogetherModal ref="togetherModal" />
   </div>
 </template>
 
@@ -103,6 +123,7 @@ import NcActionCheckbox from '@nextcloud/vue/dist/Components/NcActionCheckbox.js
 import FaceEditModal from '@components/modal/FaceEditModal.vue';
 import FaceDeleteModal from '@components/modal/FaceDeleteModal.vue';
 import FaceMergeModal from '@components/modal/FaceMergeModal.vue';
+import FaceTogetherModal from '@components/modal/FaceTogetherModal.vue';
 
 import * as utils from '@services/utils';
 import { API } from '@services/API';
@@ -117,6 +138,7 @@ import MergeIcon from 'vue-material-design-icons/Merge.vue';
 import UnassignedIcon from 'vue-material-design-icons/AccountQuestion.vue';
 import FindIcon from 'vue-material-design-icons/AccountSearch.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
+import TogetherIcon from 'vue-material-design-icons/AccountMultiple.vue';
 
 export default defineComponent({
   name: 'FaceTopMatter',
@@ -127,6 +149,7 @@ export default defineComponent({
     FaceEditModal,
     FaceDeleteModal,
     FaceMergeModal,
+    FaceTogetherModal,
     BackIcon,
     EditIcon,
     DeleteIcon,
@@ -134,6 +157,7 @@ export default defineComponent({
     UnassignedIcon,
     FindIcon,
     AlbumIcon,
+    TogetherIcon,
   },
 
   mixins: [UserConfig],
@@ -159,6 +183,7 @@ export default defineComponent({
         editModal: InstanceType<typeof FaceEditModal>;
         deleteModal: InstanceType<typeof FaceDeleteModal>;
         mergeModal: InstanceType<typeof FaceMergeModal>;
+        togetherModal: InstanceType<typeof FaceTogetherModal>;
       };
     },
 
@@ -170,8 +195,17 @@ export default defineComponent({
       return this.$route.params.user || '';
     },
 
+    /** "A|B": photos in which all of these people appear */
+    isTogether(): boolean {
+      return String(this.name).includes('|');
+    },
+
+    firstName(): string {
+      return String(this.name).split('|')[0];
+    },
+
     isReal() {
-      return this.name && this.name !== this.c.FACE_NULL;
+      return this.name && this.name !== this.c.FACE_NULL && !this.isTogether;
     },
 
     displayName() {
@@ -179,6 +213,11 @@ export default defineComponent({
         return this.t('memories', 'Unassigned faces');
       } else if (!this.name) {
         return this.t('memories', 'People');
+      } else if (this.isTogether) {
+        return String(this.name)
+          .split('|')
+          .map((n) => (utils.isNumber(n) ? this.t('memories', 'Unnamed person') : n))
+          .join(' + ');
       } else if (utils.isNumber(this.name)) {
         return this.t('memories', 'Unnamed person');
       }
@@ -193,6 +232,10 @@ export default defineComponent({
 
     rename() {
       if (this.isReal) this.refs.editModal.open();
+    },
+
+    showOnlyFirst() {
+      this.$router.push({ name: this.$route.name as string, params: { user: this.user, name: this.firstName } });
     },
 
     /** Cluster id of the current person (the route name is the id for unnamed people) */

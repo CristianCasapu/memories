@@ -55,6 +55,7 @@ return [
         ['name' => 'PersonAlbums#unlink', 'url' => '/api/person-albums/{clusterId}', 'verb' => 'DELETE'],
         ['name' => 'Events#rebuild', 'url' => '/api/events/rebuild', 'verb' => 'POST'],
         ['name' => 'Events#createAlbum', 'url' => '/api/events/{eventId}/album', 'verb' => 'POST'],
+        ['name' => 'Burst#video', 'url' => '/api/burst/video', 'verb' => 'POST'],
 
         ['name' => 'Tags#set', 'url' => '/api/tags/set/{id}', 'verb' => 'PATCH'],
 

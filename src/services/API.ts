@@ -184,6 +184,10 @@ export class API {
     return tok(gen(`${BASE}/download`));
   }
 
+  static BURST_VIDEO() {
+    return gen(`${BASE}/burst/video`);
+  }
+
   static DOWNLOAD_FILE(handle: string) {
     return tok(gen(`${BASE}/download/{handle}`, { handle }));
   }

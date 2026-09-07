@@ -19,6 +19,15 @@
     <div class="right-actions" v-if="routeIsSimilar && $route.params.name">
       <NcActions :inline="1">
         <NcActionButton
+          :aria-label="t('memories', 'Create a video from the burst')"
+          :disabled="cleaning"
+          @click="burstVideo()"
+          close-after-click
+        >
+          {{ t('memories', 'Create a video from the burst') }}
+          <template #icon> <VideoIcon :size="20" /> </template>
+        </NcActionButton>
+        <NcActionButton
           :aria-label="t('memories', 'Keep the largest file, delete the others')"
           :disabled="cleaning"
           @click="cleanupGroup()"
@@ -49,6 +58,7 @@ import * as utils from '@services/utils';
 import BackIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import DeleteSweepIcon from 'vue-material-design-icons/DeleteSweep.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
+import VideoIcon from 'vue-material-design-icons/MovieOpenPlay.vue';
 
 import type { IPhoto } from '@typings';
 
@@ -60,6 +70,7 @@ export default defineComponent({
     BackIcon,
     DeleteSweepIcon,
     AlbumIcon,
+    VideoIcon,
   },
 
   data: () => ({
@@ -97,6 +108,27 @@ export default defineComponent({
       } catch (error) {
         console.error(error);
         showError(this.t('memories', 'Could not save the album'));
+      } finally {
+        this.cleaning = false;
+      }
+    },
+
+    /**
+     * Similar-photos group: stitch the burst into a short video (saved next to the photos).
+     */
+    async burstVideo() {
+      if (this.cleaning) return;
+      this.cleaning = true;
+      try {
+        const res = await axios.get(generateUrl('/apps/recognize/api/similar'));
+        const group = (res.data.groups as { id: string; files: { fileid: number }[] }[]).find(
+          (g) => g.id === this.$route.params.name,
+        );
+        if (!group || group.files.length < 2) {
+          showError(this.t('memories', 'Group not found (it may have changed); go back and reload'));
+          return;
+        }
+        await dav.createBurstVideo(group.files.map((f) => f.fileid));
       } finally {
         this.cleaning = false;
       }

@@ -49,6 +49,7 @@ import * as nativex from '@native';
 import ShareIcon from 'vue-material-design-icons/ShareVariant.vue';
 import StarIcon from 'vue-material-design-icons/Star.vue';
 import DownloadIcon from 'vue-material-design-icons/Download.vue';
+import VideoIcon from 'vue-material-design-icons/MovieOpenPlay.vue';
 import DeleteIcon from 'vue-material-design-icons/TrashCanOutline.vue';
 import EditFileIcon from 'vue-material-design-icons/FileEdit.vue';
 import ArchiveIcon from 'vue-material-design-icons/PackageDown.vue';
@@ -221,6 +222,15 @@ export default defineComponent({
         callback: this.downloadSelection.bind(this),
         allowPublic: true,
         if: () => !this.initstate.noDownload,
+      },
+      {
+        name: t('memories', 'Create a video'),
+        icon: VideoIcon,
+        callback: this.createVideoSelection.bind(this),
+        if: () =>
+          this.selection.size >= 2 &&
+          this.selection.size <= 200 &&
+          [...this.selection.values()].every((p) => !(p.flag & this.c.FLAG_IS_VIDEO)),
       },
       {
         name: t('memories', 'Favorite'),
@@ -841,6 +851,15 @@ export default defineComponent({
     /**
      * Download the currently selected files
      */
+    /** Stitch the selected photos into a short video (saved next to the first photo) */
+    async createVideoSelection(selection: Selection) {
+      const fileid = await dav.createBurstVideo(selection.photosNoDupFileId().map((p) => p.fileid));
+      if (fileid) {
+        this.clear();
+        utils.bus.emit('memories:timeline:soft-refresh', null);
+      }
+    },
+
     async downloadSelection(selection: Selection) {
       if (selection.size >= 100 && !(await utils.dialogs.downloadItems(selection.size))) return;
       await dav.downloadFiles(selection.photosNoDupFileId().map((p) => p.fileid));

@@ -78,6 +78,10 @@ final class RecognizeBackend extends Backend
         // this here for backwards compatibility + API consistency with Face Recognition
         [$faceUid, $faceName] = $faceNames;
 
+        // "A|B": photos in which every listed person appears (people together)
+        $together = array_values(array_filter(array_map('trim', explode('|', $faceName)), static fn ($n) => '' !== $n));
+        $faceName = $together[0] ?? $faceName;
+
         if (!$aggregate) {
             // Multiple detections for the same image
             $query->selectAlias('rfd.id', 'faceid');
@@ -113,6 +117,21 @@ final class RecognizeBackend extends Backend
             $query->expr()->eq('rfd.file_id', 'm.fileid'),
             $clusterQuery,
         ));
+
+        // Additional people that must also be in the photo
+        foreach (array_slice($together, 1) as $i => $other) {
+            $c = 'rfc_t'.$i;
+            $d = 'rfd_t'.$i;
+            $field = is_numeric($other) ? $c.'.id' : $c.'.title';
+            $query->innerJoin('m', 'recognize_face_clusters', $c, $query->expr()->andX(
+                $query->expr()->eq($c.'.user_id', $query->createNamedParameter(Util::getUID())),
+                $query->expr()->eq($field, $query->createNamedParameter($other)),
+            ));
+            $query->innerJoin('m', 'recognize_face_detections', $d, $query->expr()->andX(
+                $query->expr()->eq($d.'.file_id', 'm.fileid'),
+                $query->expr()->eq($d.'.cluster_id', $c.'.id'),
+            ));
+        }
     }
 
     #[\Override]
@@ -311,6 +330,8 @@ final class RecognizeBackend extends Backend
             }
 
             [$faceUid, $faceName] = $faceNames;
+            // "A|B" (people together): the first person represents the cluster
+            $faceName = trim(explode('|', $faceName)[0]);
 
             // Get cluster ID
             $nameField = is_numeric($faceName) ? 'rfc.id' : 'rfc.title';

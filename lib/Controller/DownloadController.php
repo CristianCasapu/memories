@@ -95,11 +95,9 @@ final class DownloadController extends GenericApiController
             $key = "memories_download_{$handle}";
             $info = $cache->get($key) ?? $session->get($key);
 
-            // Remove handle unless HEAD request
-            if ('HEAD' !== $this->request->getMethod()) {
-                $cache->remove($key);
-                $session->remove($key);
-            }
+            // The handle is NOT consumed on first use: in-app browsers (Messenger, Instagram …)
+            // request the URL once themselves and then hand it to the system browser, and
+            // download managers retry / resume. The handle simply expires (see createHandle).
 
             if (null === $info) {
                 throw Exceptions::NotFound('handle');
