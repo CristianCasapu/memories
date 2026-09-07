@@ -122,14 +122,52 @@ final class PersonAlbums
         return $added;
     }
 
+    private function findClusterByTitle(string $uid, string $title): ?int
+    {
+        $query = $this->db->getQueryBuilder();
+        $query->select('id')->from('recognize_face_clusters')
+            ->where($query->expr()->eq('user_id', $query->createNamedParameter($uid)))
+            ->andWhere($query->expr()->eq('title', $query->createNamedParameter($title)))
+        ;
+        $id = $query->executeQuery()->fetchOne();
+
+        return false === $id ? null : (int) $id;
+    }
+
+    private function relink(string $uid, int $oldClusterId, int $newClusterId, int $albumId): void
+    {
+        $query = $this->db->getQueryBuilder();
+        $query->update('memories_person_albums')
+            ->set('cluster_id', $query->createNamedParameter($newClusterId, IQueryBuilder::PARAM_INT))
+            ->where($query->expr()->eq('uid', $query->createNamedParameter($uid)))
+            ->andWhere($query->expr()->eq('cluster_id', $query->createNamedParameter($oldClusterId, IQueryBuilder::PARAM_INT)))
+            ->andWhere($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)))
+        ;
+        $query->executeStatement();
+    }
+
     private function syncOne(string $uid, int $clusterId, int $albumId): int
     {
         /** @var \OCA\Photos\Album\AlbumMapper $mapper */
         $mapper = \OC::$server->get(\OCA\Photos\Album\AlbumMapper::class);
-        if (null === $mapper->get($albumId)) {
+        $album = $mapper->get($albumId);
+        if (null === $album) {
             $this->unlink($uid, $clusterId);
 
             return 0;
+        }
+
+        // Recognize re-creates clusters (re-clustering, backend switch): follow the person by name
+        if (null === $this->getCluster($uid, $clusterId)) {
+            $byTitle = $this->findClusterByTitle($uid, $album->getTitle());
+            if (null === $byTitle) {
+                $this->logger->info('Person album "'.$album->getTitle().'": its person no longer exists, leaving the album untouched');
+
+                return 0;
+            }
+            $this->logger->info('Person album "'.$album->getTitle().'": relinked from cluster #'.$clusterId.' to #'.$byTitle);
+            $this->relink($uid, $clusterId, $byTitle, $albumId);
+            $clusterId = $byTitle;
         }
 
         // photos of the person, inside the user's timeline folders only (e.g. /Photos), not in the album yet
@@ -166,6 +204,10 @@ final class PersonAlbums
                 ->andWhere(Util::timelineScope($query, $uid, 'f'))
             ;
             $allowed = array_flip(array_map('intval', $query->executeQuery()->fetchAll(\PDO::FETCH_COLUMN)));
+            // safety: never empty an album because the person has no photos in scope right now
+            if (0 === \count($allowed)) {
+                return $added ?? 0;
+            }
             foreach ($inAlbum as $fileId) {
                 if (!isset($allowed[$fileId])) {
                     try {

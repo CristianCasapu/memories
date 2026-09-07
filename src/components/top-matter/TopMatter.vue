@@ -56,6 +56,8 @@ export default defineComponent({
         case _m.routes.Places.name:
           return PlacesTopMatter;
         case _m.routes.Tags.name:
+        case _m.routes.Similar.name:
+        case _m.routes.Events.name:
           return ClusterTopMatter;
         case _m.routes.Recognize.name:
         case _m.routes.FaceRecognition.name:
