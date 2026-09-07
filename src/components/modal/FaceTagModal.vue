@@ -5,8 +5,20 @@
     </template>
 
     <div class="outer">
-      <div class="stage" v-if="photo">
-        <img :src="previewUrl" class="image" @load="loaded = true" />
+      <div
+        class="stage"
+        v-if="photo"
+        ref="stage"
+        :class="{ drawing }"
+        @mousedown="startDraw"
+        @mousemove="moveDraw"
+        @mouseup="endDraw"
+        @mouseleave="endDraw"
+        @touchstart="startDraw"
+        @touchmove.prevent="moveDraw"
+        @touchend="endDraw"
+      >
+        <img :src="previewUrl" class="image" draggable="false" @load="loaded = true" />
         <div
           v-for="face in faces"
           :key="face.id"
@@ -18,16 +30,48 @@
         >
           <span class="label">{{ labelOf(face) }}</span>
         </div>
+        <div v-if="draft" class="box draft" :style="boxStyle(draft)">
+          <span class="label">{{ t('memories', 'New face') }}</span>
+        </div>
       </div>
 
       <div class="status" v-if="loading">{{ t('memories', 'Loading …') }}</div>
-      <div class="status" v-else-if="!faces.length">
-        {{ t('memories', 'No faces were detected in this photo (or it has not been scanned yet)') }}
-        <NcButton v-if="ignoredCount" @click="unignore" type="tertiary">{{ t('memories', 'Restore ignored faces') }}</NcButton>
-      </div>
-      <div class="status" v-else-if="!selected">{{ t('memories', 'Click a face to name it') }}</div>
+      <div class="status" v-else>
+        <template v-if="drawing && !draft">{{ t('memories', 'Drag a box around the face you want to add') }}</template>
+        <template v-else-if="draft">{{ t('memories', 'Name this person, then add the face') }}</template>
+        <template v-else-if="!faces.length">
+          {{ t('memories', 'No faces were detected in this photo (or it has not been scanned yet)') }}
+        </template>
+        <template v-else-if="!selected">{{ t('memories', 'Click a face to name it') }}</template>
 
-      <div class="editor" v-if="selected">
+        <NcButton v-if="!drawing && !draft" type="secondary" @click="drawing = true">
+          <template #icon> <PlusIcon :size="18" /> </template>
+          {{ t('memories', 'Add a face') }}
+        </NcButton>
+        <NcButton v-if="drawing || draft" type="tertiary" @click="cancelDraw">{{ t('memories', 'Cancel') }}</NcButton>
+        <NcButton v-if="ignoredCount && !drawing" @click="unignore" type="tertiary">
+          {{ t('memories', 'Restore ignored faces') }}
+        </NcButton>
+      </div>
+
+      <div class="editor" v-if="draft">
+        <NcTextField
+          :value.sync="draftName"
+          :label="t('memories', 'Name')"
+          :placeholder="t('memories', 'Existing person or a new name')"
+          list="memories-face-names"
+          @keydown.enter="addFace"
+        />
+        <div class="buttons">
+          <NcButton type="primary" :disabled="busy" @click="addFace">
+            {{ busy ? t('memories', 'Looking for the face …') : t('memories', 'Add face') }}
+          </NcButton>
+          <NcButton type="tertiary" :disabled="busy" @click="cancelDraw">{{ t('memories', 'Cancel') }}</NcButton>
+        </div>
+        <span class="hint">{{ t('memories', 'The face is detected inside the box so it can be recognized in other photos too. This takes a few seconds.') }}</span>
+      </div>
+
+      <div class="editor" v-if="selected && !draft">
         <NcTextField
           :value.sync="name"
           :label="t('memories', 'Name')"
@@ -67,6 +111,7 @@ import axios from '@nextcloud/axios';
 import { showError, showSuccess } from '@nextcloud/dialogs';
 
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
+import PlusIcon from 'vue-material-design-icons/Plus.vue';
 const NcTextField = () => import('@nextcloud/vue/dist/Components/NcTextField.js');
 
 import Modal from './Modal.vue';
@@ -98,6 +143,7 @@ export default defineComponent({
     NcButton,
     NcTextField,
     Modal,
+    PlusIcon,
   },
 
   mixins: [ModalMixin],
@@ -115,6 +161,10 @@ export default defineComponent({
     busy: false,
     changed: false,
     ignoredCount: 0,
+    drawing: false,
+    draft: null as null | { x: number; y: number; width: number; height: number },
+    draftName: '',
+    dragStart: null as null | { x: number; y: number },
   }),
 
   mounted() {
@@ -134,6 +184,7 @@ export default defineComponent({
       this.selected = null;
       this.name = '';
       this.changed = false;
+      this.cancelDraw();
       this.show = true;
       await this.refresh();
     },
@@ -244,6 +295,89 @@ export default defineComponent({
       }
     },
 
+    /* ---- drawing a new face ---- */
+
+    relativePoint(event: MouseEvent | TouchEvent): { x: number; y: number } | null {
+      const img = (this.$refs.stage as HTMLElement)?.querySelector('img');
+      if (!img) return null;
+      const rect = img.getBoundingClientRect();
+      const point = 'touches' in event ? event.touches[0] ?? (event as TouchEvent).changedTouches[0] : (event as MouseEvent);
+      if (!point) return null;
+      return {
+        x: Math.min(1, Math.max(0, (point.clientX - rect.left) / rect.width)),
+        y: Math.min(1, Math.max(0, (point.clientY - rect.top) / rect.height)),
+      };
+    },
+
+    startDraw(event: MouseEvent | TouchEvent) {
+      if (!this.drawing) return;
+      const p = this.relativePoint(event);
+      if (!p) return;
+      event.preventDefault();
+      this.dragStart = p;
+      this.draft = { x: p.x, y: p.y, width: 0, height: 0 };
+    },
+
+    moveDraw(event: MouseEvent | TouchEvent) {
+      if (!this.drawing || !this.dragStart) return;
+      const p = this.relativePoint(event);
+      if (!p) return;
+      this.draft = {
+        x: Math.min(this.dragStart.x, p.x),
+        y: Math.min(this.dragStart.y, p.y),
+        width: Math.abs(p.x - this.dragStart.x),
+        height: Math.abs(p.y - this.dragStart.y),
+      };
+    },
+
+    endDraw() {
+      if (!this.dragStart) return;
+      this.dragStart = null;
+      if (!this.draft || this.draft.width < 0.01 || this.draft.height < 0.01) {
+        this.draft = null;
+        return;
+      }
+      this.drawing = false;
+    },
+
+    cancelDraw() {
+      this.drawing = false;
+      this.draft = null;
+      this.dragStart = null;
+      this.draftName = '';
+    },
+
+    /** Send the drawn box to Recognize: it finds the face inside it and computes its descriptor */
+    async addFace() {
+      if (!this.photo || !this.draft || this.busy) return;
+      this.busy = true;
+      try {
+        const known = this.people.find((p) => p.name.toLowerCase() === this.draftName.trim().toLowerCase());
+        const res = await axios.post(API.RECOGNIZE_FILE_FACES(this.photo.fileid), {
+          x: this.draft.x,
+          y: this.draft.y,
+          width: this.draft.width,
+          height: this.draft.height,
+          cluster_id: known?.cluster_id ?? null,
+          title: this.draftName.trim() || null,
+        });
+        this.changed = true;
+        showSuccess(
+          res.data.title
+            ? this.t('memories', 'Face added to {name}', { name: res.data.title })
+            : this.t('memories', 'Face added (not assigned to anyone yet)'),
+        );
+        if (res.data.created) this.people.push({ cluster_id: res.data.cluster_id, name: res.data.title });
+        this.cancelDraw();
+        await this.refresh();
+      } catch (error: any) {
+        console.error(error);
+        showError(error?.response?.data?.message || this.t('memories', 'Could not add the face'));
+      } finally {
+        this.busy = false;
+      }
+    },
+
     async unignore() {
       if (!this.photo) return;
       try {
@@ -276,6 +410,12 @@ export default defineComponent({
     max-width: 100%;
     max-height: 65vh;
     display: block;
+    user-select: none;
+  }
+
+  &.drawing {
+    cursor: crosshair;
+    touch-action: none;
   }
 
   .box {
@@ -292,6 +432,11 @@ export default defineComponent({
     &.selected {
       border-color: var(--color-primary-element, #0082c9);
       border-width: 3px;
+    }
+    &.draft {
+      border: 2px dashed var(--color-primary-element, #0082c9);
+      background: rgba(0, 130, 201, 0.15);
+      pointer-events: none;
     }
 
     .label {
@@ -317,6 +462,8 @@ export default defineComponent({
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .editor {
@@ -330,6 +477,11 @@ export default defineComponent({
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+  }
+
+  .hint {
+    color: var(--color-text-maxcontrast);
+    font-size: 0.9em;
   }
 }
 </style>
