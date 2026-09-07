@@ -31,6 +31,7 @@ import * as utils from '@services/utils';
 import staticConfig from '@services/static-config';
 
 import Help from './sections/Help.vue';
+import Actions from './sections/Actions.vue';
 import Exif from './sections/Exif.vue';
 import Indexing from './sections/Indexing.vue';
 import FileSupport from './sections/FileSupport.vue';
@@ -57,6 +58,7 @@ export default defineComponent({
 
     components: [
       Help,
+      Actions,
       Exif,
       Indexing,
       FileSupport,

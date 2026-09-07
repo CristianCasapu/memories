@@ -1,6 +1,6 @@
 <template>
   <div class="top-matter">
-    <NcActions v-if="name">
+    <NcActions>
       <NcActionButton :aria-label="t('memories', 'Back')" @click="back()">
         {{ t('memories', 'Back') }}
         <template #icon> <BackIcon :size="20" /> </template>
@@ -8,8 +8,21 @@
     </NcActions>
     <span class="name">{{ name || viewname }}</span>
 
+    <div class="right-actions" v-if="$route.params.name && !routeIsEvents && !routeIsSimilar">
+      <NcActions :inline="1">
+        <NcActionButton :aria-label="t('memories', 'Share as album')" @click="shareThis()" close-after-click>
+          {{ t('memories', 'Share as album') }}
+          <template #icon> <ShareIcon :size="20" /> </template>
+        </NcActionButton>
+      </NcActions>
+    </div>
+
     <div class="right-actions" v-if="routeIsEvents && $route.params.name">
       <NcActions :inline="1">
+        <NcActionButton :aria-label="t('memories', 'Share as album')" @click="shareThis()" close-after-click>
+          {{ t('memories', 'Share as album') }}
+          <template #icon> <ShareIcon :size="20" /> </template>
+        </NcActionButton>
         <NcActionButton :aria-label="t('memories', 'Save as album')" :disabled="cleaning" @click="saveEventAsAlbum()" close-after-click>
           {{ t('memories', 'Save as album') }}
           <template #icon> <AlbumIcon :size="20" /> </template>
@@ -59,6 +72,8 @@ import BackIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import DeleteSweepIcon from 'vue-material-design-icons/DeleteSweep.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
 import VideoIcon from 'vue-material-design-icons/MovieOpenPlay.vue';
+import ShareIcon from 'vue-material-design-icons/ShareVariant.vue';
+import { shareView } from '@services/view-share';
 
 import type { IPhoto } from '@typings';
 
@@ -71,6 +86,7 @@ export default defineComponent({
     DeleteSweepIcon,
     AlbumIcon,
     VideoIcon,
+    ShareIcon,
   },
 
   data: () => ({
@@ -95,6 +111,10 @@ export default defineComponent({
   methods: {
     back() {
       this.$router.go(-1);
+    },
+
+    shareThis() {
+      shareView(this.$route, this.name || '');
     },
 
     /** Automatic event → Photos album with the same photos */

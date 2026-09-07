@@ -1,6 +1,6 @@
 <template>
   <div class="places-top-matter">
-    <NcActions v-if="name">
+    <NcActions>
       <NcActionButton :aria-label="t('memories', 'Back')" @click="back()">
         {{ t('memories', 'Back') }}
         <template #icon> <BackIcon :size="20" /> </template>
@@ -10,7 +10,11 @@
     <div class="name">{{ name || viewname }}</div>
 
     <div class="right-actions">
-      <NcActions :inline="0">
+      <NcActions :inline="1">
+        <NcActionButton v-if="name" :aria-label="t('memories', 'Share as album')" @click="shareView($route, name)" close-after-click>
+          {{ t('memories', 'Share as album') }}
+          <template #icon> <ShareIcon :size="20" /> </template>
+        </NcActionButton>
         <!-- root view (not cluster or unassigned) -->
         <template v-if="!name && !routeIsPlacesUnassigned">
           <NcActionButton
@@ -36,6 +40,8 @@ import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js';
 import * as strings from '@services/strings';
 
 import BackIcon from 'vue-material-design-icons/ArrowLeft.vue';
+import ShareIcon from 'vue-material-design-icons/ShareVariant.vue';
+import { shareView } from '@services/view-share';
 import UnassignedIcon from 'vue-material-design-icons/MapMarkerOff.vue';
 
 export default defineComponent({
@@ -44,6 +50,7 @@ export default defineComponent({
     NcActions,
     NcActionButton,
     BackIcon,
+    ShareIcon,
     UnassignedIcon,
   },
 
@@ -62,6 +69,8 @@ export default defineComponent({
   },
 
   methods: {
+    shareView,
+
     back() {
       this.$router.go(-1);
     },

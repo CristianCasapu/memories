@@ -205,6 +205,52 @@ final class AdminController extends GenericApiController
         });
     }
 
+    /** @AdminRequired */
+    public function eventsRebuild(): Http\Response
+    {
+        return Util::guardEx(function () {
+            $n = \OC::$server->get(\OCA\Memories\Service\Events::class)->rebuildAll();
+
+            return new JSONResponse(['message' => "{$n} events"], Http::STATUS_OK);
+        });
+    }
+
+    /** @AdminRequired */
+    public function personAlbumsSync(): Http\Response
+    {
+        return Util::guardEx(function () {
+            $n = \OC::$server->get(\OCA\Memories\Service\PersonAlbums::class)->syncAll();
+
+            return new JSONResponse(['message' => "{$n} photos added to person albums"], Http::STATUS_OK);
+        });
+    }
+
+    /** @AdminRequired */
+    public function weeklyRecapTest(): Http\Response
+    {
+        return Util::guardEx(function () {
+            $n = \OC::$server->get(\OCA\Memories\Cron\WeeklyRecapJob::class)->notifyUser(Util::getUID(), true);
+
+            return new JSONResponse(['message' => $n > 0 ? "notification sent ({$n} photos from this week in past years)" : 'no photos from this week in past years'], Http::STATUS_OK);
+        });
+    }
+
+    /** @AdminRequired */
+    public function indexNow(): Http\Response
+    {
+        return Util::guardEx(function () {
+            set_time_limit(0);
+            $indexer = \OC::$server->get(\OCA\Memories\Service\Index::class);
+            $users = 0;
+            \OC::$server->get(\OCP\IUserManager::class)->callForSeenUsers(static function (\OCP\IUser $user) use ($indexer, &$users): void {
+                $indexer->indexUser($user);
+                ++$users;
+            });
+
+            return new JSONResponse(['message' => "indexing finished for {$users} users"], Http::STATUS_OK);
+        });
+    }
+
     /**
      * @AdminRequired
      */

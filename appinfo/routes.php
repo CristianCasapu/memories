@@ -99,6 +99,10 @@ return [
         ['name' => 'Admin#setSystemConfig', 'url' => '/api/system-config/{key}', 'verb' => 'PUT'],
         ['name' => 'Admin#getFailureLogs', 'url' => '/api/failure-logs', 'verb' => 'GET'],
         ['name' => 'Admin#placesSetup', 'url' => '/api/occ/places-setup', 'verb' => 'POST'],
+        ['name' => 'Admin#eventsRebuild', 'url' => '/api/admin/events-rebuild', 'verb' => 'POST'],
+        ['name' => 'Admin#personAlbumsSync', 'url' => '/api/admin/person-albums-sync', 'verb' => 'POST'],
+        ['name' => 'Admin#weeklyRecapTest', 'url' => '/api/admin/weekly-recap-test', 'verb' => 'POST'],
+        ['name' => 'Admin#indexNow', 'url' => '/api/admin/index', 'verb' => 'POST'],
 
         // Service worker and assets
         ['name' => 'Other#static', 'url' => '/static/{name}', 'verb' => 'GET'],

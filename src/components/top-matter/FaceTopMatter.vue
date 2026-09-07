@@ -1,6 +1,6 @@
 <template>
   <div class="face-top-matter">
-    <NcActions v-if="name">
+    <NcActions>
       <NcActionButton :aria-label="t('memories', 'Back')" @click="back()">
         {{ t('memories', 'Back') }}
         <template #icon> <BackIcon :size="20" /> </template>
@@ -14,7 +14,16 @@
     </div>
 
     <div class="right-actions">
-      <NcActions :inline="0">
+      <NcActions :inline="1">
+        <NcActionButton
+          v-if="name"
+          :aria-label="isReal ? t('memories', 'Share (album of this person)') : t('memories', 'Share as album')"
+          @click="shareThis()"
+          close-after-click
+        >
+          {{ isReal ? t('memories', 'Share (album of this person)') : t('memories', 'Share as album') }}
+          <template #icon> <ShareIcon :size="20" /> </template>
+        </NcActionButton>
         <!-- root view (not cluster or unassigned) -->
         <template v-if="!name && routeIsRecognize && !routeIsRecognizeUnassigned">
           <NcActionButton :aria-label="t('memories', 'Review unnamed people')" @click="$router.push({ name: 'people-review' })" close-after-click>
@@ -144,6 +153,8 @@ import FindIcon from 'vue-material-design-icons/AccountSearch.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
 import TogetherIcon from 'vue-material-design-icons/AccountMultiple.vue';
 import ReviewIcon from 'vue-material-design-icons/AccountCheck.vue';
+import ShareIcon from 'vue-material-design-icons/ShareVariant.vue';
+import { shareView } from '@services/view-share';
 
 export default defineComponent({
   name: 'FaceTopMatter',
@@ -164,6 +175,7 @@ export default defineComponent({
     AlbumIcon,
     TogetherIcon,
     ReviewIcon,
+    ShareIcon,
   },
 
   mixins: [UserConfig],
@@ -238,6 +250,10 @@ export default defineComponent({
 
     rename() {
       if (this.isReal) this.refs.editModal.open();
+    },
+
+    shareThis() {
+      shareView(this.$route, this.isTogether ? this.displayName : '');
     },
 
     showOnlyFirst() {

@@ -1,6 +1,6 @@
 <template>
   <div class="top-matter">
-    <NcActions v-if="!isAlbumList">
+    <NcActions>
       <NcActionButton :aria-label="t('memories', 'Back')" @click="back()">
         {{ t('memories', 'Back') }}
         <template #icon> <BackIcon :size="20" /> </template>
@@ -232,7 +232,25 @@ export default defineComponent({
     },
   },
 
+  mounted() {
+    this.openShareFromQuery();
+  },
+
+  watch: {
+    '$route.query.share'() {
+      this.openShareFromQuery();
+    },
+  },
+
   methods: {
+    /** /albums/user/name?share=1 (after "Share as album" / person album): open the share dialog */
+    openShareFromQuery() {
+      if (!this.$route.query.share || this.isAlbumList) return;
+      const { user, name } = this.$route.params;
+      this.$router.replace({ ...this.$route, query: {} } as any).catch(() => {});
+      setTimeout(() => _m.modals.albumShare(user, name), 300);
+    },
+
     back() {
       this.$router.go(-1);
     },

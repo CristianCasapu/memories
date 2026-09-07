@@ -40,6 +40,7 @@ declare global {
     modals: {
       editMetadata: (photos: IPhoto[], sections?: number[]) => void;
       tagFaces: (photo: IPhoto) => void;
+      shareAsAlbum: (source: IPhoto[] | (() => Promise<IPhoto[]>), defaultName?: string) => void;
       updateAlbums: (photos: IPhoto[]) => void;
       sharePhotos: (photo: IPhoto[]) => void;
       shareNodeLink: (path: string, immediate?: boolean) => Promise<void>;
@@ -60,6 +61,8 @@ declare global {
       getWidth: () => number;
     };
 
+    /** the mounted Timeline (query of the current view) */
+    timeline: { getQuery: () => Record<string, string> } | null;
     viewer: {
       open: (photo: IPhoto) => void;
       openDynamic: (anchorPhoto: IPhoto, timeline: TimelineState) => Promise<void>;

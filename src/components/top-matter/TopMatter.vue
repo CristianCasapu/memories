@@ -18,6 +18,7 @@ import ClusterTopMatter from './ClusterTopMatter.vue';
 import FaceTopMatter from './FaceTopMatter.vue';
 import AlbumTopMatter from './AlbumTopMatter.vue';
 import PlacesTopMatter from './PlacesTopMatter.vue';
+import GenericTopMatter from './GenericTopMatter.vue';
 
 import * as utils from '@services/utils';
 
@@ -28,6 +29,7 @@ export default defineComponent({
     ClusterTopMatter,
     FaceTopMatter,
     AlbumTopMatter,
+    GenericTopMatter,
   },
 
   data: () => ({
@@ -48,7 +50,7 @@ export default defineComponent({
         case _m.routes.Folders.name:
           return FolderTopMatter;
         case _m.routes.FolderShare.name:
-          return this.initstate.shareType === 'folder' ? FolderTopMatter : null;
+          return this.initstate.shareType === 'folder' ? FolderTopMatter : GenericTopMatter;
         case _m.routes.Albums.name:
           return AlbumTopMatter;
         case _m.routes.Places.name:
@@ -58,8 +60,10 @@ export default defineComponent({
         case _m.routes.Recognize.name:
         case _m.routes.FaceRecognition.name:
           return FaceTopMatter;
+        case _m.routes.PeopleReview.name:
+          return null; // has its own header
         default:
-          return null;
+          return GenericTopMatter;
       }
     },
   },

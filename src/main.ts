@@ -24,6 +24,7 @@ globalThis._m = {
   routes: routes,
 
   modals: {} as any,
+  timeline: null,
   sidebar: {} as any,
   viewer: {} as any,
   video: {} as any,

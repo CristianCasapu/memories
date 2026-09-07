@@ -1,5 +1,11 @@
 <template>
   <div class="top-matter">
+    <NcActions>
+      <NcActionButton :aria-label="t('memories', 'Back')" @click="$router.go(-1)">
+        {{ t('memories', 'Back') }}
+        <template #icon> <BackIcon :size="20" /> </template>
+      </NcActionButton>
+    </NcActions>
     <NcBreadcrumbs :key="$route.path">
       <NcBreadcrumb :name="rootFolderName" :to="getRoute([])" :force-icon-text="routeIsPublic">
         <template #icon>
@@ -22,6 +28,15 @@
           close-after-click
         >
           {{ t('memories', 'Share folder') }}
+          <template #icon> <ShareIcon :size="20" /> </template>
+        </NcActionButton>
+
+        <NcActionButton
+          :aria-label="routeIsPublic ? t('memories', 'Share link') : t('memories', 'Share as album')"
+          @click="shareView($route, routeIsPublic ? '' : folderName)"
+          close-after-click
+        >
+          {{ routeIsPublic ? t('memories', 'Share link') : t('memories', 'Share as album') }}
           <template #icon> <ShareIcon :size="20" /> </template>
         </NcActionButton>
 
@@ -84,6 +99,8 @@ import axios from '@nextcloud/axios';
 import { showError, showInfo } from '@nextcloud/dialogs';
 
 import * as utils from '@services/utils';
+import { shareView } from '@services/view-share';
+import BackIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import * as dav from '@services/dav';
 import * as nativex from '@native';
 import { API, DaysFilterType } from '@services/API';
@@ -100,6 +117,7 @@ export default defineComponent({
   name: 'FolderTopMatter',
 
   components: {
+    BackIcon,
     NcBreadcrumbs,
     NcBreadcrumb,
     NcActions,
@@ -119,6 +137,11 @@ export default defineComponent({
   }),
 
   computed: {
+    folderName(): string {
+      const parts = String(this.$route.params.path || '').split('/').filter(Boolean);
+      return parts.length ? parts[parts.length - 1] : this.initstate.shareTitle || this.t('memories', 'Photos');
+    },
+
     list(): {
       text: string;
       path: string[];
@@ -155,6 +178,8 @@ export default defineComponent({
   },
 
   methods: {
+    shareView,
+
     share(): void {
       _m.modals.shareNodeLink(utils.getFolderRoutePath(this.config.folders_path));
     },

@@ -184,6 +184,10 @@ export class API {
     return tok(gen(`${BASE}/download`));
   }
 
+  static PERSON_ALBUM(clusterId: number) {
+    return gen(`${BASE}/person-albums/{clusterId}`, { clusterId });
+  }
+
   // CristianCasapu Recognize fork: manual tagging / review
   static RECOGNIZE_FILE_FACES(fileid: number) {
     return gen(`/apps/recognize/api/files/{fileid}/faces`, { fileid });

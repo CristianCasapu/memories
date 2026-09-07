@@ -75,6 +75,7 @@
 
       <EditMetadataModal />
       <FaceTagModal />
+      <ShareAsAlbumModal />
       <AddToAlbumModal />
       <NodeShareModal />
       <ShareModal />
@@ -109,6 +110,7 @@ import MobileHeader from '@components/MobileHeader.vue';
 
 import EditMetadataModal from '@components/modal/EditMetadataModal.vue';
 import FaceTagModal from '@components/modal/FaceTagModal.vue';
+import ShareAsAlbumModal from '@components/modal/ShareAsAlbumModal.vue';
 import AddToAlbumModal from '@components/modal/AddToAlbumModal.vue';
 import NodeShareModal from '@components/modal/NodeShareModal.vue';
 import ShareModal from '@components/modal/ShareModal.vue';
@@ -165,6 +167,7 @@ export default defineComponent({
 
     EditMetadataModal,
     FaceTagModal,
+    ShareAsAlbumModal,
     AddToAlbumModal,
     NodeShareModal,
     ShareModal,

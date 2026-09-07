@@ -217,6 +217,12 @@ export default defineComponent({
         if: () => !this.routeIsAlbums,
       },
       {
+        name: t('memories', 'Share as album'),
+        icon: AlbumsIcon,
+        callback: this.shareAsAlbumSelection.bind(this),
+        if: () => !this.routeIsPublic,
+      },
+      {
         name: t('memories', 'Download'),
         icon: DownloadIcon,
         callback: this.downloadSelection.bind(this),
@@ -899,6 +905,14 @@ export default defineComponent({
     /**
      * Share the currently selected photos
      */
+    shareAsAlbumSelection(selection: Selection) {
+      const defaultName = this.routeIsPeople && this.$route.params.name && !/^\d+$/.test(String(this.$route.params.name))
+        ? String(this.$route.params.name)
+        : '';
+      _m.modals.shareAsAlbum(selection.photosNoDupFileId(), defaultName);
+      this.clear();
+    },
+
     shareSelection(selection: Selection) {
       _m.modals.sharePhotos(selection.photosNoDupFileId());
     },

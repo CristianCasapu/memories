@@ -208,6 +208,7 @@ export default defineComponent({
   }),
 
   mounted() {
+    _m.timeline = this as any;
     // Trigger initial state load
     this.routeChange(this.$route);
 
