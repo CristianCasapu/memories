@@ -74,6 +74,7 @@
       <Sidebar />
 
       <EditMetadataModal />
+      <FaceTagModal />
       <AddToAlbumModal />
       <NodeShareModal />
       <ShareModal />
@@ -107,6 +108,7 @@ import MobileNav from '@components/MobileNav.vue';
 import MobileHeader from '@components/MobileHeader.vue';
 
 import EditMetadataModal from '@components/modal/EditMetadataModal.vue';
+import FaceTagModal from '@components/modal/FaceTagModal.vue';
 import AddToAlbumModal from '@components/modal/AddToAlbumModal.vue';
 import NodeShareModal from '@components/modal/NodeShareModal.vue';
 import ShareModal from '@components/modal/ShareModal.vue';
@@ -162,6 +164,7 @@ export default defineComponent({
     SearchModal,
 
     EditMetadataModal,
+    FaceTagModal,
     AddToAlbumModal,
     NodeShareModal,
     ShareModal,

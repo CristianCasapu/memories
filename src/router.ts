@@ -7,6 +7,7 @@ import Timeline from '@components/Timeline.vue';
 import Explore from '@components/Explore.vue';
 import SplitTimeline from '@components/SplitTimeline.vue';
 import ClusterView from '@components/ClusterView.vue';
+import PeopleReview from '@components/PeopleReview.vue';
 import NativeXSetup from '@native/Setup.vue';
 
 import { translate as t } from '@services/l10n';
@@ -18,6 +19,7 @@ export type RouteId =
   | 'Search'
   | 'Similar'
   | 'Events'
+  | 'PeopleReview'
   | 'Folders'
   | 'Favorites'
   | 'Videos'
@@ -119,6 +121,13 @@ export const routes: { [key in RouteId]: RouteConfig } = {
     component: ClusterView,
     name: 'tags',
     props: (route: Route) => ({ rootTitle: t('memories', 'Tags') }),
+  },
+
+  PeopleReview: {
+    path: '/people-review',
+    component: PeopleReview,
+    name: 'people-review',
+    props: () => ({ rootTitle: t('memories', 'Review unnamed people') }),
   },
 
   Similar: {

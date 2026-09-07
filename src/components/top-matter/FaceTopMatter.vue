@@ -17,6 +17,10 @@
       <NcActions :inline="0">
         <!-- root view (not cluster or unassigned) -->
         <template v-if="!name && routeIsRecognize && !routeIsRecognizeUnassigned">
+          <NcActionButton :aria-label="t('memories', 'Review unnamed people')" @click="$router.push({ name: 'people-review' })" close-after-click>
+            {{ t('memories', 'Review unnamed people') }}
+            <template #icon> <ReviewIcon :size="20" /> </template>
+          </NcActionButton>
           <NcActionButton :aria-label="t('memories', 'Unassigned faces')" @click="openUnassigned" close-after-click>
             {{ t('memories', 'Unassigned faces') }}
             <template #icon> <UnassignedIcon :size="20" /> </template>
@@ -139,6 +143,7 @@ import UnassignedIcon from 'vue-material-design-icons/AccountQuestion.vue';
 import FindIcon from 'vue-material-design-icons/AccountSearch.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
 import TogetherIcon from 'vue-material-design-icons/AccountMultiple.vue';
+import ReviewIcon from 'vue-material-design-icons/AccountCheck.vue';
 
 export default defineComponent({
   name: 'FaceTopMatter',
@@ -158,6 +163,7 @@ export default defineComponent({
     FindIcon,
     AlbumIcon,
     TogetherIcon,
+    ReviewIcon,
   },
 
   mixins: [UserConfig],

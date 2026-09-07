@@ -39,6 +39,7 @@ declare global {
 
     modals: {
       editMetadata: (photos: IPhoto[], sections?: number[]) => void;
+      tagFaces: (photo: IPhoto) => void;
       updateAlbums: (photos: IPhoto[]) => void;
       sharePhotos: (photo: IPhoto[]) => void;
       shareNodeLink: (path: string, immediate?: boolean) => Promise<void>;

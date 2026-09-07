@@ -86,6 +86,7 @@ import OpenInNewIcon from 'vue-material-design-icons/OpenInNew.vue';
 import TuneIcon from 'vue-material-design-icons/Tune.vue';
 import SlideshowIcon from 'vue-material-design-icons/PlayBox.vue';
 import EditFileIcon from 'vue-material-design-icons/FileEdit.vue';
+import FacesIcon from 'vue-material-design-icons/FaceRecognition.vue';
 import AlbumRemoveIcon from 'vue-material-design-icons/BookRemove.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
 import RotateLeftIcon from 'vue-material-design-icons/RotateLeft.vue';
@@ -318,6 +319,13 @@ export default defineComponent({
           icon: SlideshowIcon,
           callback: this.startSlideshow,
           if: this.globalCount > 1,
+        },
+        {
+          id: 'tag-faces',
+          name: this.t('memories', 'People in this photo'),
+          icon: FacesIcon,
+          callback: () => _m.modals.tagFaces(this.currentPhoto!),
+          if: this.canEdit && !this.isVideo && !this.isLocal && !this.routeIsPublic && this.config.recognize_enabled,
         },
         {
           id: 'edit-metadata',

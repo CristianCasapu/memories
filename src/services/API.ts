@@ -184,6 +184,32 @@ export class API {
     return tok(gen(`${BASE}/download`));
   }
 
+  // CristianCasapu Recognize fork: manual tagging / review
+  static RECOGNIZE_FILE_FACES(fileid: number) {
+    return gen(`/apps/recognize/api/files/{fileid}/faces`, { fileid });
+  }
+  static RECOGNIZE_FILE_FACES_UNIGNORE(fileid: number) {
+    return gen(`/apps/recognize/api/files/{fileid}/faces/unignore`, { fileid });
+  }
+  static RECOGNIZE_DETECTION(id: number, action: 'assign' | 'detach' | 'ignore') {
+    return gen(`/apps/recognize/api/faces/detections/{id}/{action}`, { id, action });
+  }
+  static RECOGNIZE_REVIEW() {
+    return gen(`/apps/recognize/api/faces/review`);
+  }
+  static RECOGNIZE_CLUSTER(id: number) {
+    return gen(`/apps/recognize/api/faces/{id}`, { id });
+  }
+  static RECOGNIZE_MERGE(id: number, target: number) {
+    return gen(`/apps/recognize/api/faces/{id}/merge/{target}`, { id, target });
+  }
+  static RECOGNIZE_IGNORE_CLUSTER(id: number) {
+    return gen(`/apps/recognize/api/faces/{id}/ignore`, { id });
+  }
+  static RECOGNIZE_TRACK() {
+    return gen(`/apps/recognize/api/faces/track`);
+  }
+
   static BURST_VIDEO() {
     return gen(`${BASE}/burst/video`);
   }
