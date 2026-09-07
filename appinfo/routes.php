@@ -30,6 +30,11 @@ return [
         w(['name' => 'Page#facerecognition', 'url' => '/facerecognition/{name}', 'verb' => 'GET'], 'name'),
         w(['name' => 'Page#places', 'url' => '/places/{id}', 'verb' => 'GET'], 'id'),
         w(['name' => 'Page#tags', 'url' => '/tags/{name}', 'verb' => 'GET'], 'name'),
+        // fork pages (direct links / reloads)
+        ['name' => 'Page#peopleReview', 'url' => '/people-review', 'verb' => 'GET'],
+        w(['name' => 'Page#similar', 'url' => '/similar/{name}', 'verb' => 'GET'], 'name'),
+        w(['name' => 'Page#events', 'url' => '/events/{name}', 'verb' => 'GET'], 'name'),
+        w(['name' => 'Page#search', 'url' => '/search/{q}', 'verb' => 'GET'], 'q'),
 
         // Public folder share
         ['name' => 'Public#showAuthenticate', 'url' => '/s/{token}/authenticate/{redirect}', 'verb' => 'GET'],

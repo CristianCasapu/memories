@@ -208,6 +208,34 @@ final class PageController extends Controller
 
     #[NoAdminRequired]
     #[NoCSRFRequired]
+    public function peopleReview(): Response
+    {
+        return $this->main();
+    }
+
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
+    public function similar(): Response
+    {
+        return $this->main();
+    }
+
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
+    public function events(): Response
+    {
+        return $this->main();
+    }
+
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
+    public function search(): Response
+    {
+        return $this->main();
+    }
+
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function nxsetup(): Response
     {
         return $this->main();
