@@ -7,36 +7,36 @@
         t(
           'memories',
           'Removes the scratch files Nextcloud and its helpers leave behind (temporary directory, system /tmp leftovers of Nextcloud, PHP, ImageMagick, exiftool and go-vod, the video transcode cache), and optionally runs the trash bin and file version expiration. Runs every {h} hours in the background; you can also run it here or with "occ memories:cleanup".',
-          { h: status?.job_interval_hours ?? 6 },
+          { h: cleanup?.job_interval_hours ?? 6 },
         )
       }}
     </p>
 
-    <div v-if="!status" class="muted">{{ loading ? t('memories', 'Loading …') : t('memories', 'Could not load the cleanup status') }}</div>
+    <div v-if="!cleanup" class="muted">{{ loading ? t('memories', 'Loading …') : t('memories', 'Could not load the cleanup status') }}</div>
 
     <template v-else>
-      <NcCheckboxRadioSwitch :checked.sync="status.config.enabled" @update:checked="save()" type="switch">
+      <NcCheckboxRadioSwitch :checked.sync="cleanup.config.enabled" @update:checked="save()" type="switch">
         {{ t('memories', 'Automatic cleanup (background job)') }}
       </NcCheckboxRadioSwitch>
-      <NcCheckboxRadioSwitch :checked.sync="status.config.systemTmp" @update:checked="save()" type="switch">
+      <NcCheckboxRadioSwitch :checked.sync="cleanup.config.systemTmp" @update:checked="save()" type="switch">
         {{ t('memories', 'Also clean Nextcloud-related files in the system temporary directory') }}
       </NcCheckboxRadioSwitch>
-      <NcCheckboxRadioSwitch :checked.sync="status.config.expireTrash" @update:checked="save()" type="switch">
+      <NcCheckboxRadioSwitch :checked.sync="cleanup.config.expireTrash" @update:checked="save()" type="switch">
         {{ t('memories', 'Run the trash bin expiration (Nextcloud retention rules)') }}
       </NcCheckboxRadioSwitch>
-      <NcCheckboxRadioSwitch :checked.sync="status.config.expireVersions" @update:checked="save()" type="switch">
+      <NcCheckboxRadioSwitch :checked.sync="cleanup.config.expireVersions" @update:checked="save()" type="switch">
         {{ t('memories', 'Run the file versions expiration (Nextcloud retention rules)') }}
       </NcCheckboxRadioSwitch>
 
       <div class="fields">
         <NcTextField
-          :value.sync="status.config.tmpMaxAgeHours"
+          :value.sync="cleanup.config.tmpMaxAgeHours"
           type="number"
           :label="t('memories', 'Delete temporary files older than (hours)')"
           @change="save()"
         />
         <NcTextField
-          :value.sync="status.config.vodMaxAgeDays"
+          :value.sync="cleanup.config.vodMaxAgeDays"
           type="number"
           :label="t('memories', 'Delete transcode cache older than (days)')"
           @change="save()"
@@ -74,7 +74,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="tg in status.targets" :key="tg.id" :class="{ disabled: !tg.enabled }">
+            <tr v-for="tg in cleanup.targets" :key="tg.id" :class="{ disabled: !tg.enabled }">
               <td>{{ tg.label }}<span v-if="!tg.enabled" class="muted"> ({{ t('memories', 'off') }})</span></td>
               <td><code v-if="tg.path">{{ tg.path }}</code><span v-else class="muted">—</span></td>
               <td class="muted">{{ tg.rule }}</td>
@@ -92,7 +92,7 @@
       </div>
 
       <h3>{{ t('memories', 'History') }}</h3>
-      <div class="muted" v-if="!status.history.length">{{ t('memories', 'The cleanup has not run yet.') }}</div>
+      <div class="muted" v-if="!cleanup.history.length">{{ t('memories', 'The cleanup has not run yet.') }}</div>
       <div class="table-wrap" v-else>
         <table class="history">
           <thead>
@@ -105,7 +105,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(h, i) in status.history" :key="i">
+            <tr v-for="(h, i) in cleanup.history" :key="i">
               <td>{{ formatTime(h.time) }}</td>
               <td>{{ h.files }}</td>
               <td>{{ human(h.bytes) }}</td>
@@ -150,7 +150,7 @@ export default defineComponent({
   mixins: [AdminMixin],
 
   data: () => ({
-    status: null as ICleanupStatus | null,
+    cleanup: null as ICleanupStatus | null,
     lastRun: null as any,
     loading: false,
     busy: false,
@@ -165,7 +165,7 @@ export default defineComponent({
       this.loading = true;
       try {
         const res = await axios.get(generateUrl('/apps/memories/api/admin/cleanup'));
-        this.status = res.data;
+        this.cleanup = res.data;
         this.lastRun = res.data.last;
       } catch (error) {
         console.error(error);
@@ -176,14 +176,14 @@ export default defineComponent({
     },
 
     async save() {
-      if (!this.status) return;
+      if (!this.cleanup) return;
       try {
-        const res = await axios.put(generateUrl('/apps/memories/api/admin/cleanup/config'), { config: this.status.config });
-        this.status.config = res.data;
+        const res = await axios.put(generateUrl('/apps/memories/api/admin/cleanup/config'), { config: this.cleanup.config });
+        this.cleanup.config = res.data;
         showSuccess(t('memories', 'Cleanup settings saved'));
         // rules / previews depend on the settings
         const st = await axios.get(generateUrl('/apps/memories/api/admin/cleanup'));
-        this.status.targets = st.data.targets;
+        this.cleanup.targets = st.data.targets;
       } catch (error) {
         console.error(error);
         showError(t('memories', 'Could not save the cleanup settings'));
@@ -202,7 +202,7 @@ export default defineComponent({
         );
         if (!dryRun) {
           const st = await axios.get(generateUrl('/apps/memories/api/admin/cleanup'));
-          this.status = st.data;
+          this.cleanup = st.data;
           this.lastRun = res.data;
         }
       } catch (error: any) {
