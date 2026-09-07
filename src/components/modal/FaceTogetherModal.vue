@@ -58,13 +58,16 @@ export default defineComponent({
       this.show = false;
     },
 
-    clickFace(face: IFace) {
+    async clickFace(face: IFace) {
       const current = String(this.$route.params.name || '')
         .split('|')
         .filter(Boolean);
       const other = String(face.name || face.cluster_id);
       if (!other || current.includes(other)) return;
-      this.close();
+
+      // Closing pops the modal's history entry, so it has to finish before we navigate;
+      // otherwise that pop lands after our push and takes the user back where they were.
+      await this.close();
       this.$router.push({
         name: this.$route.name as string,
         params: { user: this.$route.params.user, name: [...current, other].join('|') },

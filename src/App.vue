@@ -304,6 +304,17 @@ export default defineComponent({
 
   async beforeMount() {
     if ('serviceWorker' in navigator) {
+      // Was a worker already in charge? Then a change of worker means the app was updated
+      // and the page has to be loaded again to run the new code.
+      const hadController = !!navigator.serviceWorker.controller;
+      let reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadController || reloading) return;
+        reloading = true;
+        console.info('Memories was updated, loading the new version');
+        window.location.reload();
+      });
+
       // Use the window load event to keep the page load performant
       window.addEventListener('load', async () => {
         try {
@@ -313,10 +324,16 @@ export default defineComponent({
           });
           console.info('SW registered: ', registration);
 
-          // Check for updates
-          if (await staticConfig.versionChanged()) {
-            await registration.update();
-          }
+          // Always ask whether a newer worker exists; a waiting one is told to take over.
+          await registration.update();
+          registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+          registration.addEventListener('updatefound', () => {
+            registration.installing?.addEventListener('statechange', function () {
+              if (this.state === 'installed') {
+                registration.waiting?.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
         } catch (error) {
           console.error('SW registration failed: ', error);
         }

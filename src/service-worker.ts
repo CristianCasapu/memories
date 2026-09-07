@@ -67,6 +67,19 @@ registerRoute(
   }),
 );
 
+// A new version has to take over straight away. Without this the browser keeps the new worker
+// in "waiting" for as long as a tab of the app is open, and goes on serving the JavaScript it
+// cached earlier — so an updated app looks unchanged until every tab is closed.
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('activate', (event) => {
   // Take control of all pages under this SW's scope immediately,
   // instead of waiting for reload/navigation.
