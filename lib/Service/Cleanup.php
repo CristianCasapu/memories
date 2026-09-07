@@ -201,20 +201,28 @@ final class Cleanup
         $uid = \function_exists('posix_geteuid') ? posix_geteuid() : null;
         $result = ['files' => 0, 'bytes' => 0, 'errors' => []];
 
-        $items = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_PATHNAME),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
+        // Only descend into what we may touch: in the system temp dir only top-level entries with
+        // known Nextcloud-related names, and never into folders we cannot read (other services' private dirs).
+        $directory = new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::CURRENT_AS_PATHNAME);
+        $filter = new \RecursiveCallbackFilterIterator($directory, static function ($current, $key, \RecursiveDirectoryIterator $iterator) use ($patterns): bool {
+            $path = (string) $current;
+            $name = basename($path);
+            if (null !== $patterns && '' === $iterator->getSubPath() && !self::matchesAny($name, $patterns)) {
+                return false;
+            }
+            if (!is_link($path) && is_dir($path) && !is_readable($path)) {
+                return false;
+            }
+
+            return true;
+        });
+        $items = new \RecursiveIteratorIterator($filter, \RecursiveIteratorIterator::CHILD_FIRST);
+
+        try {
         /** @var string $path */
         foreach ($items as $path) {
             $name = basename($path);
-            $top = ltrim(substr($path, \strlen($root)), '/');
-            $topName = explode('/', $top)[0];
             if (\in_array($name, self::NEVER_DELETE, true)) {
-                continue;
-            }
-            // in the system temp dir only known Nextcloud-related names (checked on the top-level entry)
-            if (null !== $patterns && !self::matchesAny($topName, $patterns)) {
                 continue;
             }
             $stat = @lstat($path);
@@ -253,6 +261,9 @@ final class Cleanup
             } else {
                 $result['errors'][] = 'could not delete '.$path;
             }
+        }
+        } catch (\Throwable $e) {
+            $result['errors'][] = $e->getMessage();
         }
 
         return $result;
