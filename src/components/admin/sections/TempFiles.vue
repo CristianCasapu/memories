@@ -18,7 +18,7 @@
       @change="update('memories.tmp.base', $event.target.value)"
     />
     <NcTextField
-      :label="t('memories', 'Transcode cache of go-vod (empty: <base>/go-vod/)')"
+      :label="t('memories', 'Transcode cache of go-vod (empty: go-vod/ under the base directory)')"
       :label-visible="true"
       :model-value="config['memories.vod.tempdir']"
       @change="update('memories.vod.tempdir', $event.target.value)"
