@@ -5,7 +5,7 @@
     tabindex="1"
     :aria-label="title"
     class="cluster fill-block"
-    :class="{ error }"
+    :class="{ error, 'has-actions': showActionBar }"
     :to="target"
     @click="click"
   >
@@ -17,8 +17,30 @@
       <div class="subtitle" v-if="subtitle">{{ subtitle }}</div>
     </div>
 
-    <!-- Actions on the tile: on hover (desktop), always visible on a touch screen -->
-    <div class="tile-menu" v-if="hasMenu" @click.stop.prevent @keydown.stop>
+    <!-- Phone: a row of buttons under the picture -->
+    <div class="tile-actions" v-if="showActionBar" @click.stop.prevent @keydown.stop>
+      <button type="button" :title="t('memories', 'Share with a public link')" :disabled="busy" @click="isFace ? sharePersonLink() : shareAlbumLink()">
+        <LinkIcon :size="22" />
+      </button>
+      <button v-if="isFace" type="button" :title="t('memories', 'Create an album of this person')" :disabled="busy" @click="createPersonAlbum">
+        <AlbumIcon :size="22" />
+      </button>
+      <button v-if="isAlbum" type="button" :title="t('memories', 'Share album')" @click="shareAlbum">
+        <ShareIcon :size="22" />
+      </button>
+      <button v-if="isAlbum && owned" type="button" :title="t('memories', 'Edit album')" @click="editAlbum">
+        <EditIcon :size="22" />
+      </button>
+      <button v-if="isAlbum" type="button" :title="t('memories', 'Download album')" @click="downloadAlbum">
+        <DownloadIcon :size="22" />
+      </button>
+      <button v-if="isAlbum && owned" type="button" class="danger" :title="t('memories', 'Delete album')" @click="deleteAlbum">
+        <DeleteIcon :size="22" />
+      </button>
+    </div>
+
+    <!-- Desktop: a menu in the corner, shown on hover (top-left: the counter sits top-right) -->
+    <div class="tile-menu" v-if="hasMenu && !showActionBar" @click.stop.prevent @keydown.stop>
       <NcActions :inline="0" :aria-label="t('memories', 'Actions')">
         <NcActionButton :aria-label="t('memories', 'Open')" @click="openAlbum" close-after-click>
           {{ t('memories', 'Open') }}
@@ -187,6 +209,11 @@ export default defineComponent({
       return this.link && !this.plus && (this.isAlbum || this.isFace);
     },
 
+    /** on a phone the actions live in a bar under the card, where a thumb can reach them */
+    showActionBar(): boolean {
+      return this.hasMenu && utils.isMobile();
+    },
+
     owned(): boolean {
       return this.isAlbum && (this.data as any).user === utils.uid;
     },
@@ -313,25 +340,64 @@ export default defineComponent({
 .tile-menu {
   position: absolute;
   top: 4px;
-  right: 4px;
-  z-index: 3;
+  left: 4px; // the counter bubble owns the top-right corner
+  z-index: 200; // above the name (100) and the counter (100)
   opacity: 0;
   transition: opacity 0.15s ease-in-out;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.55);
 
   .cluster:hover &,
   .cluster:focus-within & {
     opacity: 1;
   }
 
-  @media (max-width: 768px), (hover: none) {
+  @media (hover: none) {
     opacity: 1;
   }
 
   :deep button {
     color: #fff !important;
   }
+}
+
+// the button row under the card (phone)
+$actionbar: 44px;
+.tile-actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: $actionbar;
+  z-index: 200;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  background: var(--color-main-background);
+  border-top: 1px solid var(--color-border);
+
+  button {
+    width: 40px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 8px;
+    background: var(--color-background-dark);
+    color: var(--color-main-text);
+    padding: 0;
+    margin: 0;
+
+    &.danger { color: var(--color-error); }
+    &:disabled { opacity: 0.5; }
+  }
+}
+
+.has-actions {
+  :deep .previews { height: calc(100% - #{$actionbar}); }
+  .name { bottom: $actionbar; }
+  .count-bubble { top: 6px; }
 }
 
 .cluster,

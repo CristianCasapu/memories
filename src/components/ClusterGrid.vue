@@ -99,13 +99,18 @@ export default defineComponent({
 
     /** Height of the cluster */
     height() {
+      let height = this.width;
       if (this.routeIsAlbums) {
         // album view: add gap for text below album
         // 4px extra on mobile for mark#2147915
-        return this.width + (utils.isMobile() ? 46 : 42);
+        height += utils.isMobile() ? 46 : 42;
+      }
+      // phone: people and albums carry a row of action buttons under the card
+      if (utils.isMobile() && (this.routeIsAlbums || this.routeIsPeople)) {
+        height += 44;
       }
 
-      return this.width;
+      return height;
     },
 
     /** Width of the cluster */
