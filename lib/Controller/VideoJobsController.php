@@ -41,6 +41,67 @@ final class VideoJobsController extends GenericApiController
         return $this->act($id, 'delete', false);
     }
 
+    /**
+     * Which photos go into the clip: from a selection, an album or an event; all, the best or random.
+     *
+     * @param list<int> $fileids
+     */
+    #[NoAdminRequired]
+    public function pick(array $fileids = [], string $albumUser = '', string $albumName = '', int $event = 0, string $mode = 'best', int $n = 24): Http\Response
+    {
+        return Util::guardEx(static function () use ($fileids, $albumUser, $albumName, $event, $mode, $n) {
+            $picker = \OC::$server->get(\OCA\Memories\Service\ClipPicker::class);
+
+            /** @var list<int> $candidates */
+            $candidates = [];
+            foreach ($fileids as $id) {
+                $candidates[] = (int) $id;
+            }
+            if ('' !== $albumName) {
+                $candidates = $picker->albumPhotos('' !== $albumUser ? $albumUser : Util::getUID(), $albumName);
+            } elseif ($event > 0) {
+                $candidates = $picker->eventPhotos($event);
+            }
+            if (\count($candidates) < 2) {
+                throw Exceptions::BadRequest('not enough photos');
+            }
+
+            return new JSONResponse(['fileids' => $picker->pick($candidates, $mode, $n), 'total' => \count($candidates)], Http::STATUS_OK);
+        });
+    }
+
+    /** A track for the mood, to hear in the preview (the same one is used for the clip). */
+    #[NoAdminRequired]
+    public function musicPick(string $mood = 'calm', int $seconds = 30, array $fileids = []): Http\Response
+    {
+        return Util::guardEx(static function () use ($mood, $seconds, $fileids) {
+            $music = \OC::$server->get(\OCA\Memories\Service\Music\MusicService::class);
+            if (!$music->enabled()) {
+                return new JSONResponse(['track' => null, 'mood' => $mood], Http::STATUS_OK);
+            }
+            $chosen = $music->mood($mood, array_values(array_map('intval', $fileids)));
+            $track = $music->pick($chosen['mood'], max(10, min(600, $seconds)));
+
+            return new JSONResponse(['track' => $track?->toArray(), 'mood' => $chosen['mood'], 'detected' => $chosen['detected']], Http::STATUS_OK);
+        });
+    }
+
+    /** Remove a clip together with its video file. */
+    #[NoAdminRequired]
+    public function removeWithFile(int $id): Http\Response
+    {
+        return Util::guardEx(function () use ($id) {
+            $jobs = $this->jobs();
+            $job = $jobs->get($id);
+            if (null === $job || $job->getUid() !== Util::getUID()) {
+                throw Exceptions::NotFound('clip');
+            }
+            $jobs->remove($job, true);
+
+            return new JSONResponse(['ok' => true], Http::STATUS_OK);
+        });
+    }
+
     // ---- administrator: every user's videos ----
 
     public function listAll(): Http\Response

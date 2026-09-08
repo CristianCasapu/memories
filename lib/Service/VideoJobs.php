@@ -29,11 +29,18 @@ final class VideoJobs
         private VideoMaker $maker,
         private IJobList $jobList,
         private IManager $notifications,
+        private \OCP\Share\IManager $shares,
+        private \OCP\Files\IRootFolder $rootFolder,
+        private \OCP\IUserManager $userManager,
+        private \OCP\IDBConnection $db,
         private LoggerInterface $logger,
     ) {}
 
-    /** @param list<int> $fileIds */
-    public function create(string $uid, array $fileIds, float $fps, string $music, string $title = ''): VideoJob
+    /**
+     * @param list<int>            $fileIds
+     * @param array<string, mixed> $options caption, location, mentions, texts, kind, source, track
+     */
+    public function create(string $uid, array $fileIds, float $fps, string $music, string $title = '', array $options = []): VideoJob
     {
         $job = new VideoJob();
         $job->setUid($uid);
@@ -45,10 +52,69 @@ final class VideoJobs
         $job->setMusic($music);
         $job->setStep('Waiting to start');
         $job->setCreated(time());
+        $job->setCaption(mb_substr(trim((string) ($options['caption'] ?? '')), 0, 1000));
+        $job->setLocation(mb_substr(trim((string) ($options['location'] ?? '')), 0, 250));
+        $mentions = [];
+        $rawMentions = $options['mentions'] ?? null;
+        foreach (\is_array($rawMentions) ? $rawMentions : [] as $m) {
+            if (\is_array($m) && '' !== trim((string) ($m['name'] ?? ''))) {
+                $mentions[] = ['uid' => mb_substr((string) ($m['uid'] ?? ''), 0, 64), 'name' => mb_substr(trim((string) $m['name']), 0, 100)];
+            }
+            if (\count($mentions) >= 20) {
+                break;
+            }
+        }
+        $job->setMentions(\count($mentions) ? (json_encode($mentions) ?: null) : null);
+        $rawTexts = $options['texts'] ?? null;
+        $texts = array_values(array_filter(array_map(static fn ($t) => mb_substr(trim((string) $t), 0, 200), \is_array($rawTexts) ? $rawTexts : []), static fn ($t) => '' !== $t));
+        $job->setTexts(\count($texts) ? (json_encode(\array_slice($texts, 0, 60)) ?: null) : null);
+        $kind = (string) ($options['kind'] ?? 'manual');
+        $job->setKind(\in_array($kind, ['manual', 'album', 'event', 'auto'], true) ? $kind : 'manual');
+        $rawSource = $options['source'] ?? null;
+        $job->setSource(\is_array($rawSource) ? (json_encode($rawSource) ?: null) : null);
+        $rawTrack = $options['track'] ?? null;
+        if (\is_array($rawTrack) && '' !== (string) ($rawTrack['url'] ?? '')) {
+            $job->setTrack(json_encode($rawTrack) ?: null);
+        }
         $job = $this->mapper->insert($job);
         $this->schedule($job);
 
         return $job;
+    }
+
+    /** The result files of these jobs, with what the Memories viewer needs to show them. */
+    public function decorate(array $jobs): array
+    {
+        $ids = array_values(array_filter(array_map(static fn ($j) => (int) ($j['result_fileid'] ?? 0), $jobs)));
+        $files = [];
+        if (\count($ids) > 0) {
+            $query = $this->db->getQueryBuilder();
+            $query->select('f.fileid', 'f.etag', 'f.mtime', 'f.size', 'm.dayid', 'm.w', 'm.h')
+                ->from('filecache', 'f')
+                ->leftJoin('f', 'memories', 'm', $query->expr()->eq('m.fileid', 'f.fileid'))
+                ->where($query->expr()->in('f.fileid', $query->createNamedParameter($ids, \OCP\DB\QueryBuilder\IQueryBuilder::PARAM_INT_ARRAY)))
+            ;
+            foreach ($query->executeQuery()->fetchAll() as $row) {
+                $files[(int) $row['fileid']] = [
+                    'etag' => (string) $row['etag'],
+                    'dayid' => null !== $row['dayid'] ? (int) $row['dayid'] : (int) floor(((int) $row['mtime']) / 86400),
+                    'size' => (int) $row['size'],
+                    'w' => (int) ($row['w'] ?? 0),
+                    'h' => (int) ($row['h'] ?? 0),
+                ];
+            }
+        }
+        foreach ($jobs as &$job) {
+            $f = $files[(int) ($job['result_fileid'] ?? 0)] ?? null;
+            $job['result_etag'] = $f['etag'] ?? '';
+            $job['result_dayid'] = $f['dayid'] ?? 0;
+            $job['result_size'] = $f['size'] ?? 0;
+            $job['result_w'] = $f['w'] ?? 0;
+            $job['result_h'] = $f['h'] ?? 0;
+            $job['result_exists'] = null !== $f;
+        }
+
+        return $jobs;
     }
 
     /** Run one job now (worker / cron). */
@@ -90,16 +156,44 @@ final class VideoJobs
         return $done;
     }
 
-    /** @return list<array> */
+    /** @return array<int, array> */
     public function listForUser(string $uid): array
     {
-        return array_map(static fn (VideoJob $j) => $j->toArray(), $this->mapper->findForUser($uid));
+        return $this->decorate(array_map(static fn (VideoJob $j) => $j->toArray(), $this->mapper->findForUser($uid, 200)));
     }
 
-    /** @return list<array> */
+    /** @return array<int, array> */
     public function listAll(): array
     {
-        return array_map(static fn (VideoJob $j) => $j->toArray(), $this->mapper->findAll());
+        return $this->decorate(array_map(static fn (VideoJob $j) => $j->toArray(), $this->mapper->findAll()));
+    }
+
+    /** Has this source (album / event) got a clip already? */
+    public function existsForSource(string $uid, string $kind, array $source): bool
+    {
+        $needle = json_encode($source) ?: '';
+        foreach ($this->mapper->findForUser($uid, 500) as $job) {
+            if ($job->getKind() === $kind && $job->getSource() === $needle && VideoJob::FAILED !== $job->getStatus() && VideoJob::CANCELLED !== $job->getStatus()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Remove the clip: the row and, when asked, the video file. */
+    public function remove(VideoJob $job, bool $withFile): void
+    {
+        if ($withFile && null !== $job->getResultFileid()) {
+            try {
+                $folder = $this->rootFolder->getUserFolder($job->getUid());
+                $node = $folder->getFirstNodeById((int) $job->getResultFileid());
+                $node?->delete();
+            } catch (\Throwable $e) {
+                $this->logger->warning('Clip: the file could not be removed', ['exception' => $e]);
+            }
+        }
+        $this->mapper->delete($job);
     }
 
     public function get(int $id): ?VideoJob
@@ -144,6 +238,51 @@ final class VideoJobs
         $this->mapper->delete($job);
     }
 
+    /**
+     * The people tagged in the clip get to see it: the file is shared with them (read only)
+     * and they are told about it.
+     */
+    private function shareWithMentioned(VideoJob $job): void
+    {
+        $fileId = (int) $job->getResultFileid();
+        if ($fileId <= 0) {
+            return;
+        }
+        foreach ($job->mentionList() as $mention) {
+            $uid = $mention['uid'];
+            if ('' === $uid || $uid === $job->getUid() || null === $this->userManager->get($uid)) {
+                continue;
+            }
+
+            try {
+                $node = $this->rootFolder->getUserFolder($job->getUid())->getFirstNodeById($fileId);
+                if (null === $node) {
+                    return;
+                }
+                $share = $this->shares->newShare();
+                $share->setNode($node)->setShareType(\OCP\Share\IShare::TYPE_USER)->setSharedWith($uid)
+                    ->setSharedBy($job->getUid())->setPermissions(\OCP\Constants::PERMISSION_READ)
+                ;
+                $this->shares->createShare($share);
+            } catch (\Throwable $e) {
+                $this->logger->info('Clip: could not share with '.$uid.': '.$e->getMessage());
+            }
+
+            try {
+                $notification = $this->notifications->createNotification();
+                $notification->setApp(Application::APPNAME)
+                    ->setUser($uid)
+                    ->setObject('video-mention', (string) $job->getId())
+                    ->setDateTime(new \DateTime())
+                    ->setSubject(Notifier::SUBJECT_VIDEO_MENTION, ['name' => $job->getResultName(), 'by' => $job->getUid(), 'fileid' => $fileId])
+                ;
+                $this->notifications->notify($notification);
+            } catch (\Throwable $e) {
+                $this->logger->info('Clip: could not notify '.$uid.': '.$e->getMessage());
+            }
+        }
+    }
+
     /** Put the job on the job list and, when possible, start a worker now. */
     private function schedule(VideoJob $job): void
     {
@@ -185,6 +324,9 @@ final class VideoJobs
     {
         if (!\in_array($job->getStatus(), [VideoJob::DONE, VideoJob::FAILED], true)) {
             return;
+        }
+        if (VideoJob::DONE === $job->getStatus()) {
+            $this->shareWithMentioned($job);
         }
 
         try {

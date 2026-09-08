@@ -29,7 +29,7 @@ Memories is a *batteries-included* photo management solution for Nextcloud with 
 1. Run `php occ memories:index` to generate metadata indices for existing photos.
 1. Open the 📷 Memories app in Nextcloud and set the directory containing your photos.
 ]]></description>
-    <version>8.4.0</version>
+    <version>8.5.0</version>
     <licence>agpl</licence>
     <author mail="radialapps@gmail.com">Varun Patil</author>
     <namespace>Memories</namespace>
@@ -55,6 +55,7 @@ Memories is a *batteries-included* photo management solution for Nextcloud with 
         <command>OCA\Memories\Command\WeeklyRecap</command>
         <command>OCA\Memories\Command\CleanupCommand</command>
         <command>OCA\Memories\Command\VideoRun</command>
+        <command>OCA\Memories\Command\AutoClipsCommand</command>
     </commands>
     <settings>
         <admin>OCA\Memories\Settings\Admin</admin>
@@ -81,5 +82,6 @@ Memories is a *batteries-included* photo management solution for Nextcloud with 
         <job>OCA\Memories\Cron\WeeklyRecapJob</job>
         <job>OCA\Memories\Cron\CleanupJob</job>
         <job>OCA\Memories\Cron\VideoQueueJob</job>
+        <job>OCA\Memories\Cron\AutoClipsJob</job>
     </background-jobs>
 </info>

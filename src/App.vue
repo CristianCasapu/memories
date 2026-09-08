@@ -143,6 +143,7 @@ import MarkerIcon from 'vue-material-design-icons/MapMarker.vue';
 import TagsIcon from 'vue-material-design-icons/Tag.vue';
 import SimilarIcon from 'vue-material-design-icons/ImageMultiple.vue';
 import EventsIcon from 'vue-material-design-icons/CalendarStar.vue';
+import ClipsIcon from 'vue-material-design-icons/MovieOpenPlay.vue';
 import MapIcon from 'vue-material-design-icons/Map.vue';
 import CogIcon from 'vue-material-design-icons/Cog.vue';
 import SearchIcon from 'vue-material-design-icons/Magnify.vue';
@@ -422,6 +423,11 @@ export default defineComponent({
           name: 'events',
           icon: EventsIcon,
           title: t('memories', 'Events'),
+        },
+        {
+          name: 'clips',
+          icon: ClipsIcon,
+          title: t('memories', 'Clips'),
         },
         {
           name: 'similar',

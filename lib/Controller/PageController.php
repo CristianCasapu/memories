@@ -152,6 +152,13 @@ final class PageController extends Controller
 
     #[NoAdminRequired]
     #[NoCSRFRequired]
+    public function clips(): Response
+    {
+        return $this->main();
+    }
+
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function archive(): Response
     {
         return $this->main();

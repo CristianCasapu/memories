@@ -16,6 +16,23 @@ final class Track
         public readonly int $seconds,
     ) {}
 
+    /** A track sent back by the browser (the one heard in the preview), or null */
+    public static function fromArray(mixed $data): ?self
+    {
+        if (!\is_array($data) || '' === (string) ($data['url'] ?? '')) {
+            return null;
+        }
+
+        return new self(
+            (string) ($data['provider'] ?? ''),
+            (string) $data['url'],
+            (string) ($data['title'] ?? ''),
+            (string) ($data['artist'] ?? ''),
+            (string) ($data['license'] ?? ''),
+            (int) ($data['seconds'] ?? 0),
+        );
+    }
+
     /** "Title — Artist (license, via Provider)" for the video's metadata and the toast */
     public function credit(): string
     {
@@ -27,6 +44,6 @@ final class Track
 
     public function toArray(): array
     {
-        return ['provider' => $this->provider, 'title' => $this->title, 'artist' => $this->artist, 'license' => $this->license, 'seconds' => $this->seconds, 'credit' => $this->credit()];
+        return ['provider' => $this->provider, 'url' => $this->url, 'title' => $this->title, 'artist' => $this->artist, 'license' => $this->license, 'seconds' => $this->seconds, 'credit' => $this->credit()];
     }
 }

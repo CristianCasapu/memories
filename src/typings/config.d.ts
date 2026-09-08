@@ -50,6 +50,7 @@ declare module '@typings' {
     high_res_cond: HighResCond | null;
     show_face_rect: boolean;
     weekly_recap: boolean;
+    auto_clips: boolean;
     album_list_sort: number;
   };
 }

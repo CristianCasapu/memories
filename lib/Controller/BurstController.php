@@ -29,9 +29,9 @@ final class BurstController extends GenericApiController
      * @param string    $music   'auto' (mood from the photos), 'none', or a mood id
      */
     #[NoAdminRequired]
-    public function video(array $fileids = [], float $fps = 3.0, string $name = '', string $music = 'auto'): Http\Response
+    public function video(array $fileids = [], float $fps = 3.0, string $name = '', string $music = 'auto', array $options = []): Http\Response
     {
-        return Util::guardEx(static function () use ($fileids, $fps, $name, $music) {
+        return Util::guardEx(static function () use ($fileids, $fps, $name, $music, $options) {
             $fileids = array_values(array_unique(array_map('intval', $fileids)));
             if (\count($fileids) < 2) {
                 throw Exceptions::MissingParameter('at least 2 photos');
@@ -43,7 +43,16 @@ final class BurstController extends GenericApiController
             if ('' === $ffmpeg || !is_executable($ffmpeg)) {
                 throw Exceptions::NotEnabled('ffmpeg (set memories.vod.ffmpeg)');
             }
-            $job = \OC::$server->get(\OCA\Memories\Service\VideoJobs::class)->create(Util::getUID(), $fileids, max(0.25, min(15.0, $fps)), $music, $name);
+            $jobs = \OC::$server->get(\OCA\Memories\Service\VideoJobs::class);
+            $job = $jobs->create(Util::getUID(), $fileids, max(0.25, min(15.0, $fps)), $music, $name, $options);
+            // "edit and make again": the clip this one replaces goes away, file included
+            $replace = (int) ($options['replace'] ?? 0);
+            if ($replace > 0) {
+                $old = $jobs->get($replace);
+                if (null !== $old && $old->getUid() === Util::getUID() && $old->getId() !== $job->getId()) {
+                    $jobs->remove($old, true);
+                }
+            }
 
             return new JSONResponse(['queued' => true, 'job' => $job->toArray()], Http::STATUS_OK);
         });

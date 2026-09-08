@@ -95,6 +95,15 @@
           <template #icon> <PlusIcon :size="20" /> </template>
         </NcActionButton>
         <NcActionButton
+          v-if="!isAlbumList"
+          :aria-label="t('memories', 'Make a clip from this album')"
+          @click="makeClip()"
+          close-after-click
+        >
+          {{ t('memories', 'Make a clip from this album') }}
+          <template #icon> <ClipIcon :size="20" /> </template>
+        </NcActionButton>
+        <NcActionButton
           :aria-label="t('memories', 'Share album')"
           :title="t('memories', 'Share album')"
           @click="openShareModal()"
@@ -155,6 +164,7 @@ import NcActionSeparator from '@nextcloud/vue/components/NcActionSeparator';
 import axios from '@nextcloud/axios';
 
 import AlbumCreateModal from '@components/modal/AlbumCreateModal.vue';
+import ClipIcon from 'vue-material-design-icons/MovieOpenPlay.vue';
 import AlbumDeleteModal from '@components/modal/AlbumDeleteModal.vue';
 
 import { downloadWithHandle } from '@services/dav';
@@ -183,6 +193,7 @@ export default defineComponent({
     NcActionSeparator,
 
     AlbumCreateModal,
+    ClipIcon,
     AlbumDeleteModal,
 
     BackIcon,
@@ -256,6 +267,12 @@ export default defineComponent({
         createModal: InstanceType<typeof AlbumCreateModal>;
         deleteModal: InstanceType<typeof AlbumDeleteModal>;
       };
+    },
+
+    /** the album's photos, best ones first, into the clip dialog */
+    makeClip() {
+      const { user, name } = this.$route.params;
+      _m.modals.createVideo([], { albumUser: String(user), albumName: String(name), title: String(name) });
     },
 
     /** /albums/user/name?share=1 (after "Share as album" / person album): open the share dialog */

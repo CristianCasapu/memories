@@ -64,6 +64,23 @@ final class VideoMaker
         return $this->jobs->update($job);
     }
 
+    /** A bold font ffmpeg can draw with, or null when the host has none */
+    public static function font(): ?string
+    {
+        foreach ([
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+            '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf',
+        ] as $path) {
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
     private function make(VideoJob $job): void
     {
         $ffmpeg = (string) SystemConfig::get('memories.vod.ffmpeg');
@@ -125,25 +142,48 @@ final class VideoMaker
 
         $this->progress($job, 62, 'Encoding the video');
         $out = $dir.'/burst.mp4';
-        $cmd = [
-            $ffmpeg, '-y', '-loglevel', 'error', '-framerate', (string) $fps, '-i', $dir.'/frame_%04d.jpg',
-            '-vf', \sprintf('scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv420p', self::FRAME_SIZE, 1080, self::FRAME_SIZE, 1080),
-            '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', '-r', '30', '-movflags', '+faststart', $out,
-        ];
-        [, $stderr] = Util::execSafe2($cmd, 300000, null, false, true);
+        $seconds = (float) $n / $fps;
+        $filter = \sprintf('scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv420p', self::FRAME_SIZE, 1080, self::FRAME_SIZE, 1080);
+        $filter .= $this->overlays($job, $dir, $seconds);
+        $encode = static function (bool $gpu) use ($ffmpeg, $fps, $dir, $filter, $out): string {
+            $codec = $gpu
+                ? ['-c:v', 'h264_nvenc', '-preset', 'p4', '-rc', 'vbr', '-cq', '23', '-b:v', '0']
+                : ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20'];
+            $cmd = array_merge(
+                [$ffmpeg, '-y', '-loglevel', 'error', '-framerate', (string) $fps, '-i', $dir.'/frame_%04d.jpg', '-vf', $filter],
+                $codec,
+                ['-r', '30', '-movflags', '+faststart', $out],
+            );
+            [, $stderr] = Util::execSafe2($cmd, 300000, null, false, true);
+
+            return trim((string) $stderr);
+        };
+        $stderr = '';
+        if ($this->gpuEncoder($ffmpeg)) {
+            $this->progress($job, 63, 'Encoding the video (GPU)');
+            $stderr = $encode(true);
+        }
         if (!is_file($out) || filesize($out) < 100) {
-            throw new \Exception('ffmpeg failed: '.trim((string) $stderr));
+            if ('' !== $stderr) {
+                $this->logger->info('Video job: NVENC failed, using the CPU: '.$stderr);
+            }
+            $stderr = $encode(false);
+        }
+        if (!is_file($out) || filesize($out) < 100) {
+            throw new \Exception('ffmpeg failed: '.$stderr);
         }
 
         // background music, chosen by the mood of the photos (or the one asked for)
         if ('none' !== $job->getMusic() && $this->music->enabled()) {
             try {
                 $this->progress($job, 78, 'Reading the mood of the photos');
-                $seconds = (float) $n / $fps;
                 $chosen = $this->music->mood($job->getMusic(), $ordered);
                 $job->setMood($chosen['mood']);
-                $this->progress($job, 84, 'Looking for music: '.Music\Mood::label($chosen['mood']));
-                $track = $this->music->pick($chosen['mood'], (int) ceil($seconds));
+                // the track heard in the preview is the one used; otherwise one is picked now
+                $rawTrack = $job->getTrack();
+                $preset = Music\Track::fromArray(null !== $rawTrack ? json_decode($rawTrack, true) : null);
+                $this->progress($job, 84, null !== $preset ? 'Adding the music' : 'Looking for music: '.Music\Mood::label($chosen['mood']));
+                $track = $preset ?? $this->music->pick($chosen['mood'], (int) ceil($seconds));
                 if (null !== $track) {
                     $this->progress($job, 90, 'Adding the music: '.$track->credit());
                     $out = $this->music->mux($ffmpeg, $out, $track, $seconds, $chosen['mood']);
@@ -174,6 +214,86 @@ final class VideoMaker
         $job->setResultName($file->getName());
         $job->setResultFolder((string) $userFolder->getRelativePath($parent->getPath()));
         $job->setPhotos($n);
+
+        // into the timeline right away (the top of the home page, the Videos page), not at the next index run
+        try {
+            \OC::$server->get(Index::class)->indexFile($file);
+        } catch (\Throwable $e) {
+            $this->logger->debug('Video job: the new file will be indexed by cron: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Text over the video: a title card during the first seconds (title, location, caption,
+     * the people mentioned) and the text lines spread over the duration. Each text goes through
+     * a file, so nothing has to be escaped for the filter.
+     */
+    private function overlays(VideoJob $job, string $dir, float $seconds): string
+    {
+        $font = self::font();
+        if (null === $font) {
+            return '';
+        }
+        $filters = [];
+        $write = static function (string $name, string $text) use ($dir): string {
+            $path = $dir.'/'.$name.'.txt';
+            file_put_contents($path, $text);
+
+            return $path;
+        };
+        $draw = static function (string $file, int $size, string $y, string $enable) use ($font): string {
+            return \sprintf(
+                "drawtext=fontfile='%s':textfile='%s':fontsize=%d:fontcolor=white:borderw=2:bordercolor=black@0.8:x=(w-text_w)/2:y=%s:enable='%s'",
+                $font,
+                $file,
+                $size,
+                $y,
+                $enable,
+            );
+        };
+        $mentions = array_map(static fn ($m) => '@'.$m['name'], $job->mentionList());
+        $title = trim($job->getTitle());
+        $sub = implode('  ·  ', array_filter([trim($job->getLocation()), trim($job->getCaption())]));
+        $card = \sprintf('%.2f', min(3.5, max(1.5, $seconds * 0.3)));
+        if ('' !== $title || '' !== $sub || \count($mentions) > 0) {
+            $filters[] = "drawbox=x=0:y=ih*0.62:w=iw:h=ih*0.38:color=black@0.45:t=fill:enable='lt(t,{$card})'";
+            if ('' !== $title) {
+                $filters[] = $draw($write('title', $title), 64, 'h*0.66', 'lt(t,'.$card.')');
+            }
+            if ('' !== $sub) {
+                $filters[] = $draw($write('sub', $sub), 40, 'h*0.66+90', 'lt(t,'.$card.')');
+            }
+            if (\count($mentions) > 0) {
+                $filters[] = $draw($write('with', implode('  ', $mentions)), 36, 'h*0.66+150', 'lt(t,'.$card.')');
+            }
+        }
+        $lines = $job->textList();
+        if (\count($lines) > 0) {
+            $start = ('' !== $title || '' !== $sub) ? (float) $card : 0.0;
+            $slice = max(1.0, ($seconds - $start) / (float) \count($lines));
+            foreach ($lines as $i => $line) {
+                $from = $start + (float) $i * $slice;
+                $to = $i === \count($lines) - 1 ? $seconds + 1.0 : $from + $slice;
+                $filters[] = $draw($write('line'.$i, $line), 48, 'h-140', \sprintf('between(t,%.2f,%.2f)', $from, $to));
+            }
+        }
+
+        return \count($filters) > 0 ? ','.implode(',', $filters) : '';
+    }
+
+    /** Can this process encode on the NVIDIA GPU? (device reachable and ffmpeg built with NVENC) */
+    private function gpuEncoder(string $ffmpeg): bool
+    {
+        static $hasEncoder = null;
+        if (!SystemConfig::get('memories.vod.nvenc') || !@is_readable('/dev/nvidia0') || !@is_readable('/dev/nvidiactl')) {
+            return false;
+        }
+        if (null === $hasEncoder) {
+            [$stdout] = Util::execSafe2([$ffmpeg, '-hide_banner', '-encoders'], 20000, null, true, false);
+            $hasEncoder = str_contains((string) $stdout, 'h264_nvenc');
+        }
+
+        return $hasEncoder;
     }
 
     private function progress(VideoJob $job, int $percent, string $step): void

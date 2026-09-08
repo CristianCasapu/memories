@@ -45,6 +45,18 @@ use OCP\AppFramework\Db\Entity;
  * @method void        setStarted(int $started)
  * @method int         getFinished()
  * @method void        setFinished(int $finished)
+ * @method string      getCaption()
+ * @method void        setCaption(string $caption)
+ * @method string      getLocation()
+ * @method void        setLocation(string $location)
+ * @method null|string getMentions()
+ * @method void        setMentions(?string $mentions)
+ * @method null|string getTexts()
+ * @method void        setTexts(?string $texts)
+ * @method string      getKind()
+ * @method void        setKind(string $kind)
+ * @method null|string getSource()
+ * @method void        setSource(?string $source)
  */
 final class VideoJob extends Entity
 {
@@ -72,6 +84,12 @@ final class VideoJob extends Entity
     protected int $created = 0;
     protected int $started = 0;
     protected int $finished = 0;
+    protected string $caption = '';
+    protected string $location = '';
+    protected ?string $mentions = null;
+    protected ?string $texts = null;
+    protected string $kind = 'manual';
+    protected ?string $source = null;
 
     public function __construct()
     {
@@ -93,10 +111,36 @@ final class VideoJob extends Entity
         return \is_array($ids) ? array_values(array_map('intval', $ids)) : [];
     }
 
+    /** @return list<array{uid:string, name:string}> */
+    public function mentionList(): array
+    {
+        $raw = $this->getMentions();
+        $list = null !== $raw ? json_decode($raw, true) : null;
+        $out = [];
+        foreach (\is_array($list) ? $list : [] as $m) {
+            if (\is_array($m) && '' !== trim((string) ($m['name'] ?? ''))) {
+                $out[] = ['uid' => (string) ($m['uid'] ?? ''), 'name' => trim((string) $m['name'])];
+            }
+        }
+
+        return $out;
+    }
+
+    /** @return list<string> */
+    public function textList(): array
+    {
+        $raw = $this->getTexts();
+        $list = null !== $raw ? json_decode($raw, true) : null;
+
+        return array_values(array_filter(array_map(static fn ($t) => trim((string) $t), \is_array($list) ? $list : []), static fn ($t) => '' !== $t));
+    }
+
     public function toArray(): array
     {
         $rawTrack = $this->getTrack();
         $track = null !== $rawTrack ? json_decode($rawTrack, true) : null;
+        $rawSource = $this->getSource();
+        $source = null !== $rawSource ? json_decode($rawSource, true) : null;
 
         return [
             'id' => $this->getId(),
@@ -117,6 +161,13 @@ final class VideoJob extends Entity
             'created' => $this->getCreated(),
             'started' => $this->getStarted(),
             'finished' => $this->getFinished(),
+            'caption' => $this->getCaption(),
+            'location' => $this->getLocation(),
+            'mentions' => $this->mentionList(),
+            'texts' => $this->textList(),
+            'kind' => $this->getKind(),
+            'source' => \is_array($source) ? $source : null,
+            'file_ids' => $this->fileIdList(),
         ];
     }
 }

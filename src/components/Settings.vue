@@ -33,6 +33,12 @@
           {{ t('memories', 'Weekly notification with your memories from this week in past years') }}
         </NcCheckboxRadioSwitch>
 
+        <NcCheckboxRadioSwitch v-model="config.auto_clips" @update:model-value="updateAutoClips" type="switch">
+          {{
+            t('memories', 'Automatic clips: a short video with music of every event, from its best photos (Clips page)')
+          }}
+        </NcCheckboxRadioSwitch>
+
         <NcCheckboxRadioSwitch v-model="config.stack_raw_files" @update:model-value="updateStackRawFiles" type="switch">
           {{ t('memories', 'Stack RAW files with same name') }}
         </NcCheckboxRadioSwitch>
@@ -359,6 +365,10 @@ export default defineComponent({
 
     async updateWeeklyRecap() {
       await this.updateSetting('weekly_recap', 'weeklyRecap');
+    },
+
+    async updateAutoClips() {
+      await this.updateSetting('auto_clips', 'autoClips');
     },
 
     async updateStackRawFiles() {

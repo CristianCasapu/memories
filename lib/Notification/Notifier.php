@@ -19,10 +19,12 @@ final class Notifier implements INotifier
     public const SUBJECT_WEEKLY_RECAP = 'weekly-recap';
     public const SUBJECT_VIDEO_READY = 'video-ready';
     public const SUBJECT_VIDEO_FAILED = 'video-failed';
+    public const SUBJECT_VIDEO_MENTION = 'video-mention';
 
     public function __construct(
         private IFactory $l10nFactory,
         private IURLGenerator $urlGenerator,
+        private \OCP\IUserManager $userManager,
     ) {}
 
     #[\Override]
@@ -40,14 +42,21 @@ final class Notifier implements INotifier
     #[\Override]
     public function prepare(INotification $notification, string $languageCode): INotification
     {
-        if (Application::APPNAME === $notification->getApp() && \in_array($notification->getSubject(), [self::SUBJECT_VIDEO_READY, self::SUBJECT_VIDEO_FAILED], true)) {
+        if (Application::APPNAME === $notification->getApp() && \in_array($notification->getSubject(), [self::SUBJECT_VIDEO_READY, self::SUBJECT_VIDEO_FAILED, self::SUBJECT_VIDEO_MENTION], true)) {
             $l = $this->l10nFactory->get(Application::APPNAME, $languageCode);
             $p = $notification->getSubjectParameters();
             $name = (string) ($p['name'] ?? '');
-            if (self::SUBJECT_VIDEO_READY === $notification->getSubject()) {
+            if (self::SUBJECT_VIDEO_MENTION === $notification->getSubject()) {
+                $by = (string) ($p['by'] ?? '');
+                $byName = $this->userManager->get($by)?->getDisplayName() ?? $by;
+                $notification->setParsedSubject($l->t('%1$s tagged you in the clip "%2$s"', [$byName, $name]))
+                    ->setParsedMessage($l->t('The clip was shared with you.'))
+                    ->setLink($this->urlGenerator->linkToRouteAbsolute('memories.Page.clips'))
+                ;
+            } elseif (self::SUBJECT_VIDEO_READY === $notification->getSubject()) {
                 $notification->setParsedSubject($l->t('Your video "%s" is ready', [$name]))
                     ->setParsedMessage($l->t('Saved in %s. Open Memories › Videos to watch it.', [(string) ($p['folder'] ?? '/')]))
-                    ->setLink($this->urlGenerator->linkToRouteAbsolute('memories.Page.videos'))
+                    ->setLink($this->urlGenerator->linkToRouteAbsolute('memories.Page.clips'))
                 ;
             } else {
                 $notification->setParsedSubject($l->t('Your video could not be made'))

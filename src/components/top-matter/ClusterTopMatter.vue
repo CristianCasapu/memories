@@ -24,6 +24,14 @@
           <template #icon> <ShareIcon :size="20" /> </template>
         </NcActionButton>
         <NcActionButton
+          :aria-label="t('memories', 'Make a clip of this event')"
+          @click="makeEventClip()"
+          close-after-click
+        >
+          {{ t('memories', 'Make a clip of this event') }}
+          <template #icon> <VideoIcon :size="20" /> </template>
+        </NcActionButton>
+        <NcActionButton
           :aria-label="t('memories', 'Save as album')"
           :disabled="cleaning"
           @click="saveEventAsAlbum()"
@@ -120,6 +128,10 @@ export default defineComponent({
 
     shareThis() {
       shareView(this.$route, this.name || '');
+    },
+
+    makeEventClip() {
+      _m.modals.createVideo([], { event: Number(this.$route.params.name), title: this.name || '' });
     },
 
     /** Automatic event → Photos album with the same photos */

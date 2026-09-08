@@ -38,7 +38,7 @@ declare global {
       tagFaces: (photo: IPhoto) => void;
       shareAsAlbum: (source: IPhoto[] | (() => Promise<IPhoto[]>), defaultName?: string) => void;
       /** pace + background music, then the video (CristianCasapu fork) */
-      createVideo: (fileIds: number[]) => void;
+      createVideo: (fileIds: number[], preset?: Record<string, any>) => void;
       /** the person's videos in the making */
       videoJobs: () => void;
       albumEdit: (user: string, name: string) => void;

@@ -38,6 +38,8 @@ export type BusEvent = {
   'memories:timeline:soft-refresh': null;
   /** re-fetch the cluster list (album renamed / deleted from a tile) */
   'memories:clusters:refresh': null;
+  /** the Clips page re-reads the list */
+  'memories:clips:refresh': null;
   /** Hard-refresh the timeline */
   'memories:timeline:hard-refresh': null;
   /** Timeline recycler scrolling */

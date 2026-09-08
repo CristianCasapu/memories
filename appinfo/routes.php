@@ -17,6 +17,7 @@ return [
         ['name' => 'Page#main', 'url' => '/', 'verb' => 'GET'],
         ['name' => 'Page#favorites', 'url' => '/favorites', 'verb' => 'GET'],
         ['name' => 'Page#videos', 'url' => '/videos', 'verb' => 'GET'],
+        ['name' => 'Page#clips', 'url' => '/clips', 'verb' => 'GET'],
         ['name' => 'Page#archive', 'url' => '/archive', 'verb' => 'GET'],
         ['name' => 'Page#thisday', 'url' => '/thisday', 'verb' => 'GET'],
         ['name' => 'Page#map', 'url' => '/map', 'verb' => 'GET'],
@@ -72,6 +73,9 @@ return [
         ['name' => 'VideoJobs#cancelAny', 'url' => '/api/admin/videos/jobs/{id}/cancel', 'verb' => 'POST'],
         ['name' => 'VideoJobs#retryAny', 'url' => '/api/admin/videos/jobs/{id}/retry', 'verb' => 'POST'],
         ['name' => 'VideoJobs#deleteAny', 'url' => '/api/admin/videos/jobs/{id}', 'verb' => 'DELETE'],
+        ['name' => 'VideoJobs#pick', 'url' => '/api/clips/pick', 'verb' => 'POST'],
+        ['name' => 'VideoJobs#musicPick', 'url' => '/api/clips/music', 'verb' => 'GET'],
+        ['name' => 'VideoJobs#removeWithFile', 'url' => '/api/clips/{id}/remove', 'verb' => 'POST'],
 
         ['name' => 'Tags#set', 'url' => '/api/tags/set/{id}', 'verb' => 'PATCH'],
 
