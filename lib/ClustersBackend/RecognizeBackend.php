@@ -86,6 +86,12 @@ final class RecognizeBackend extends Backend
             // Multiple detections for the same image
             $query->selectAlias('rfd.id', 'faceid');
 
+            // Best photos of the person first: order by the prominence score of the face
+            // (NULL for faces scored by an older Recognize sorts last)
+            if ('prominence' === $this->request->getParam('sort')) {
+                $query->selectAlias($query->createFunction('COALESCE(rfd.quality, 0)'), 'prominence');
+            }
+
             // Face Rect
             if ($this->request->getParam('facerect')) {
                 $query->selectAlias('rfd.width', 'face_w')

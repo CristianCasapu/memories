@@ -47,6 +47,15 @@
             <template #icon> <BackIcon :size="20" /> </template>
           </NcActionButton>
         </template>
+        <!-- any person (named or not): best photos of the person first -->
+        <NcActionCheckbox
+          v-if="name && routeIsRecognize && !routeIsRecognizeUnassigned"
+          :aria-label="t('memories', 'Best photos first')"
+          :model-value="sortByProminence"
+          @change="toggleProminence"
+        >
+          {{ t('memories', 'Best photos first (large, sharp, well lit, facing the camera)') }}
+        </NcActionCheckbox>
         <template v-if="isReal">
           <NcActionButton
             v-if="routeIsRecognize"
@@ -227,6 +236,11 @@ export default defineComponent({
       return String(this.name).split('|')[0];
     },
 
+    /** ?sort=prominence: the photos of this person ordered by how prominent the face is */
+    sortByProminence(): boolean {
+      return this.$route.query.sort === 'prominence';
+    },
+
     isReal() {
       return this.name && this.name !== this.c.FACE_NULL && !this.isTogether;
     },
@@ -263,6 +277,16 @@ export default defineComponent({
   },
 
   methods: {
+    toggleProminence() {
+      const query = { ...this.$route.query };
+      if (this.sortByProminence) {
+        delete query.sort;
+      } else {
+        query.sort = 'prominence';
+      }
+      this.$router.replace({ ...this.$route, query } as any).catch(() => {});
+    },
+
     refs() {
       return this.$refs as {
         editModal: InstanceType<typeof FaceEditModal>;

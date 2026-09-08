@@ -45,6 +45,12 @@ final class DaysController extends GenericApiController
                 $this->getTransformations(),
             );
 
+            // Sorted by prominence: everything in one virtual day, best photos first
+            if ($this->isProminence()) {
+                $count = array_sum(array_map(static fn ($d) => (int) $d['count'], $list));
+                $list = $count > 0 ? [['dayid' => TimelineQuery::PROMINENCE_DAYID, 'count' => $count]] : [];
+            }
+
             // Preload some day responses
             $this->preloadDays($list);
 
@@ -69,6 +75,7 @@ final class DaysController extends GenericApiController
                 $this->isMonthView(),
                 $this->isReverse(),
                 $this->getTransformations(),
+                $this->isProminence(),
             );
 
             return new JSONResponse($list, Http::STATUS_OK);
@@ -174,6 +181,7 @@ final class DaysController extends GenericApiController
             $this->isMonthView(),
             $this->isReverse(),
             $this->getTransformations(),
+            $this->isProminence(),
         );
 
         // Load details into map byref
@@ -189,6 +197,12 @@ final class DaysController extends GenericApiController
 
             $drefMap[$dayId]['detail'][] = $photo;
         }
+    }
+
+    /** ?sort=prominence on a person: best photos of the person first (Recognize fork scores) */
+    private function isProminence(): bool
+    {
+        return 'prominence' === $this->request->getParam('sort') && null !== $this->request->getParam('recognize');
     }
 
     private function isRecursive(): bool

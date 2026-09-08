@@ -687,6 +687,10 @@ export default defineComponent({
         if (this.config.show_face_rect || this.routeIsRecognizeUnassigned) {
           set(DaysFilterType.FACE_RECT);
         }
+        // best photos of the person first (?sort=prominence)
+        if (this.routeIsRecognize && this.$route.query.sort === 'prominence') {
+          set(DaysFilterType.SORT, 'prominence');
+        }
       }
 
       // Places
@@ -860,6 +864,10 @@ export default defineComponent({
         if (this.isMonthView) head.ismonth = true;
 
         // Special headers
+        if (day.dayid === this.c.PROMINENCE_DAYID) {
+          // one virtual day holding all the photos of the person, best first
+          head.name = this.t('memories', 'Best photos of this person first');
+        }
         if (this.routeIsThisDay && (!prevDay || Math.abs(prevDay.dayid - day.dayid) > 30)) {
           // thisday view with new year title
           head.size = 67;

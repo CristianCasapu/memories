@@ -34,6 +34,8 @@ export const enum DaysFilterType {
   SIMILAR = 'similar',
   /** automatic event id */
   EVENT = 'events',
+  /** photo order inside a person: 'prominence' = best photos of the person first (Recognize fork) */
+  SORT = 'sort',
 
   FACE_RECT = 'facerect',
   RECURSIVE = 'recursive',

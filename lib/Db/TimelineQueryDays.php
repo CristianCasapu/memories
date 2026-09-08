@@ -89,6 +89,7 @@ trait TimelineQueryDays
         bool $monthView,
         bool $reverse,
         array $queryTransforms = [],
+        bool $prominence = false,
     ): array {
         // Check if we have any dayIds
         if (empty($dayIds)) {
@@ -121,7 +122,10 @@ trait TimelineQueryDays
         // JOIN with mimetypes to get the mimetype
         $query->join('f', 'mimetypes', 'mimetypes', $query->expr()->eq('f.mimetype', 'mimetypes.id'));
 
-        if ($monthView) {
+        if ($prominence) {
+            // All days at once, best photos of the person first (see RecognizeBackend: 'prominence' column)
+            $query->addOrderBy('prominence', 'DESC');
+        } elseif ($monthView) {
             // Convert monthIds to dayIds
             $query->andWhere($query->expr()->orX(...array_map(fn ($monthId) => $query->expr()->andX(
                 $query->expr()->gte('m.dayid', $query->createNamedParameter($monthId, IQueryBuilder::PARAM_INT)),
@@ -162,6 +166,9 @@ trait TimelineQueryDays
         // Post process the day in-place
         foreach ($day as &$photo) {
             $this->postProcessDayPhoto($photo, $monthView);
+            if ($prominence) {
+                $photo['dayid'] = TimelineQuery::PROMINENCE_DAYID;
+            }
         }
 
         // Reverse order if needed
@@ -333,7 +340,7 @@ trait TimelineQueryDays
         if ($row['hidden'] ?? null) {
             $row['ishidden'] = 1;
         }
-        unset($row['hidden']);
+        unset($row['hidden'], $row['prominence']);
 
         // All cluster transformations
         ClustersBackend\Manager::applyDayPostTransforms($this->request, $row);
