@@ -177,7 +177,7 @@ final class Takeout
      *
      * @return list<string>
      */
-    public static function applyAfterLocation(array &$exif, array $meta): array
+    public static function applyAfterLocation(array &$exif, array $meta, ?string $ownerUid = null): array
     {
         if (null === $meta['epoch']) {
             return [];
@@ -190,8 +190,12 @@ final class Takeout
         } catch (\Throwable) {
         }
 
+        // the zone of the place, else the owner's own zone (the timestamps of Google are UTC), else the server's
+        $userTz = null !== $ownerUid && '' !== $ownerUid
+            ? \OC::$server->get(\OCP\IConfig::class)->getUserValue($ownerUid, 'core', 'timezone', '')
+            : '';
         $tz = null;
-        foreach ([$exif['LocationTZID'] ?? null, SystemConfig::get('default_timezone') ?: null, getenv('TZ') ?: null, date_default_timezone_get()] as $name) {
+        foreach ([$exif['LocationTZID'] ?? null, $userTz ?: null, SystemConfig::get('default_timezone') ?: null, getenv('TZ') ?: null, date_default_timezone_get()] as $name) {
             if (\is_string($name) && '' !== $name) {
                 try {
                     $tz = new \DateTimeZone($name);

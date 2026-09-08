@@ -138,7 +138,7 @@ final class TimelineWrite
 
         // The time from the sidecar, in the zone of the place, when EXIF has no date
         if (null !== $takeout) {
-            $takeoutApplied = array_merge($takeoutApplied, Takeout::applyAfterLocation($exif, $takeout));
+            $takeoutApplied = array_merge($takeoutApplied, Takeout::applyAfterLocation($exif, $takeout, $file->getOwner()?->getUID()));
             if ($takeout['favorited'] && \OC::$server->get(Takeout::class)->favourite($file)) {
                 $takeoutApplied[] = 'favorite';
             }

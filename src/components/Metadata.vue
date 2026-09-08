@@ -96,6 +96,7 @@ import CameraIrisIcon from 'vue-material-design-icons/CameraIris.vue';
 import ImageIcon from 'vue-material-design-icons/Image.vue';
 import LocationIcon from 'vue-material-design-icons/MapMarker.vue';
 import TagIcon from 'vue-material-design-icons/Tag.vue';
+import AccountGroupIcon from 'vue-material-design-icons/AccountGroup.vue';
 
 import * as utils from '@services/utils';
 import * as dav from '@services/dav';
@@ -220,6 +221,15 @@ export default defineComponent({
         });
       }
 
+      if (this.peopleNamed) {
+        list.push({
+          id: 'people-named',
+          title: this.peopleNamed,
+          subtitle: [this.t('memories', 'People named in the photo (Google Photos)')],
+          icon: markRaw(AccountGroupIcon),
+        });
+      }
+
       if (this.address || this.canEdit) {
         list.push({
           title: this.address || this.t('memories', 'No coordinates'),
@@ -235,6 +245,13 @@ export default defineComponent({
 
     canEdit(): boolean {
       return this.baseInfo?.permissions?.includes('U');
+    },
+
+    /** People named in the metadata (PersonInImage, e.g. from a Google Takeout sidecar) */
+    peopleNamed(): string | null {
+      const v = this.exif.PersonInImage;
+      if (!v) return null;
+      return Array.isArray(v) ? v.join(', ') : String(v);
     },
 
     /** Title EXIF value */
