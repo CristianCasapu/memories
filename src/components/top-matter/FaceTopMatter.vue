@@ -272,14 +272,6 @@ export default defineComponent({
       };
     },
 
-    refs() {
-      return this.$refs as {
-        editModal: InstanceType<typeof FaceEditModal>;
-        deleteModal: InstanceType<typeof FaceDeleteModal>;
-        mergeModal: InstanceType<typeof FaceMergeModal>;
-      };
-    },
-
     back() {
       this.$router.go(-1);
     },
