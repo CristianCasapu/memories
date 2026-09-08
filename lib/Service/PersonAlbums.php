@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\Memories\Service;
 
 use OCA\Memories\Util;
-
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
@@ -44,6 +43,7 @@ final class PersonAlbums
         }
 
         $existing = $this->getForCluster($uid, $clusterId);
+
         /** @var \OCA\Photos\Album\AlbumMapper $mapper */
         $mapper = \OC::$server->get(\OCA\Photos\Album\AlbumMapper::class);
         $album = null;

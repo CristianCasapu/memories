@@ -38,18 +38,6 @@ final class WeeklyRecapJob extends TimedJob
         $this->setTimeSensitivity(self::TIME_INSENSITIVE);
     }
 
-    #[\Override]
-    protected function run(mixed $argument): void
-    {
-        $this->userManager->callForSeenUsers(function ($user): void {
-            try {
-                $this->notifyUser($user->getUID());
-            } catch (\Throwable $e) {
-                $this->logger->warning('Weekly recap failed for '.$user->getUID(), ['exception' => $e]);
-            }
-        });
-    }
-
     /** @return int number of photos in the recap (0 = nothing sent) */
     public function notifyUser(string $uid, bool $force = false): int
     {
@@ -79,6 +67,18 @@ final class WeeklyRecapJob extends TimedJob
         $this->notifications->notify($notification);
 
         return $count;
+    }
+
+    #[\Override]
+    protected function run(mixed $argument): void
+    {
+        $this->userManager->callForSeenUsers(function ($user): void {
+            try {
+                $this->notifyUser($user->getUID());
+            } catch (\Throwable $e) {
+                $this->logger->warning('Weekly recap failed for '.$user->getUID(), ['exception' => $e]);
+            }
+        });
     }
 
     /**

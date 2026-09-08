@@ -75,11 +75,6 @@ final class DownloadController extends GenericApiController
         return $handle;
     }
 
-    private static function handleCache(): \OCP\ICache
-    {
-        return \OC::$server->get(ICacheFactory::class)->createDistributed('memories_download');
-    }
-
     /**
      * Download one or more files.
      */
@@ -294,6 +289,11 @@ final class DownloadController extends GenericApiController
             // Close file
             fclose($res);
         });
+    }
+
+    private static function handleCache(): \OCP\ICache
+    {
+        return \OC::$server->get(ICacheFactory::class)->createDistributed('memories_download');
     }
 
     /**

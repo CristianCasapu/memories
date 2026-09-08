@@ -18,7 +18,7 @@ final class PersonAlbumsController extends GenericApiController
     #[NoAdminRequired]
     public function get(int $clusterId): Http\Response
     {
-        return Util::guardEx(function () use ($clusterId) {
+        return Util::guardEx(static function () use ($clusterId) {
             $uid = Util::getUID();
             $service = \OC::$server->get(PersonAlbums::class);
 
@@ -32,7 +32,7 @@ final class PersonAlbumsController extends GenericApiController
     #[NoAdminRequired]
     public function create(int $clusterId): Http\Response
     {
-        return Util::guardEx(function () use ($clusterId) {
+        return Util::guardEx(static function () use ($clusterId) {
             $uid = Util::getUID();
             $service = \OC::$server->get(PersonAlbums::class);
 
@@ -43,7 +43,7 @@ final class PersonAlbumsController extends GenericApiController
     #[NoAdminRequired]
     public function unlink(int $clusterId): Http\Response
     {
-        return Util::guardEx(function () use ($clusterId) {
+        return Util::guardEx(static function () use ($clusterId) {
             $uid = Util::getUID();
             \OC::$server->get(PersonAlbums::class)->unlink($uid, $clusterId);
 

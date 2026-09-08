@@ -323,7 +323,7 @@ final class Util
         $paths = $query->expr()->orX();
         foreach (self::getTimelinePaths($uid) as $path) {
             $prefix = 'files'.('/' === $path ? '' : rtrim($path, '/')).'/';
-            $paths->add($query->expr()->like($alias.'.path', $query->createNamedParameter(str_replace(['%', '_'], ['\\%', '\\_'], $prefix).'%')));
+            $paths->add($query->expr()->like($alias.'.path', $query->createNamedParameter(str_replace(['%', '_'], ['\%', '\_'], $prefix).'%')));
         }
 
         return $query->expr()->andX(

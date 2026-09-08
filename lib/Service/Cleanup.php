@@ -27,6 +27,7 @@ final class Cleanup
         'expireVersions' => false,
     ];
     public const HISTORY_SIZE = 30;
+
     /** file names Nextcloud, PHP, ImageMagick, exiftool and go-vod create in the system temp dir */
     public const SYSTEM_TMP_PATTERNS = [
         '/^magick-/', '/^oc_tmp_/', '/^oc-tmp-/', '/^oc_tmp/', '/^go-vod-/', '/^exiftool-/',
@@ -219,49 +220,50 @@ final class Cleanup
         $items = new \RecursiveIteratorIterator($filter, \RecursiveIteratorIterator::CHILD_FIRST);
 
         try {
-        /** @var string $path */
-        foreach ($items as $path) {
-            $name = basename($path);
-            if (\in_array($name, self::NEVER_DELETE, true)) {
-                continue;
-            }
-            $stat = @lstat($path);
-            if (false === $stat) {
-                continue;
-            }
-            if (null !== $uid && $stat['uid'] !== $uid) {
-                continue;
-            }
-            $age = $now - max($stat['mtime'], $stat['ctime']);
-            $isLink = is_link($path);
-            if ($isLink) {
-                // dangling links (ImageMagick leaves them behind) go right away, others are left alone
-                if (false !== @stat($path)) {
+            /** @var string $path */
+            foreach ($items as $path) {
+                $name = basename($path);
+                if (\in_array($name, self::NEVER_DELETE, true)) {
                     continue;
                 }
-            } elseif (is_dir($path)) {
-                if ($age < $maxAge) {
+                $stat = @lstat($path);
+                if (false === $stat) {
                     continue;
                 }
-                $empty = !(new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS))->valid();
-                if (!$empty) {
+                if (null !== $uid && $stat['uid'] !== $uid) {
                     continue;
                 }
-                if (!$dryRun && !@rmdir($path)) {
-                    $result['errors'][] = 'could not remove folder '.$path;
+                $age = $now - max($stat['mtime'], $stat['ctime']);
+                $isLink = is_link($path);
+                if ($isLink) {
+                    // dangling links (ImageMagick leaves them behind) go right away, others are left alone
+                    if (false !== @stat($path)) {
+                        continue;
+                    }
+                } elseif (is_dir($path)) {
+                    if ($age < $maxAge) {
+                        continue;
+                    }
+                    $empty = !(new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS))->valid();
+                    if (!$empty) {
+                        continue;
+                    }
+                    if (!$dryRun && !@rmdir($path)) {
+                        $result['errors'][] = 'could not remove folder '.$path;
+                    }
+
+                    continue;
+                } elseif ($age < $maxAge) {
+                    continue;
                 }
-                continue;
-            } elseif ($age < $maxAge) {
-                continue;
+                $size = $isLink ? 0 : $stat['size'];
+                if ($dryRun || @unlink($path)) {
+                    ++$result['files'];
+                    $result['bytes'] += $size;
+                } else {
+                    $result['errors'][] = 'could not delete '.$path;
+                }
             }
-            $size = $isLink ? 0 : $stat['size'];
-            if ($dryRun || @unlink($path)) {
-                ++$result['files'];
-                $result['bytes'] += $size;
-            } else {
-                $result['errors'][] = 'could not delete '.$path;
-            }
-        }
         } catch (\Throwable $e) {
             $result['errors'][] = $e->getMessage();
         }
@@ -310,6 +312,7 @@ final class Cleanup
         if (!class_exists($class)) {
             throw new \RuntimeException('app not enabled');
         }
+
         /** @var \OCP\BackgroundJob\Job $job */
         $job = \OC::$server->get($class);
         $job->start(\OC::$server->get(\OCP\BackgroundJob\IJobList::class));

@@ -44,6 +44,7 @@ final class FreesoundProvider implements ProviderInterface
         ];
         $response = $client->get(self::API, ['query' => $query, 'timeout' => 20]);
         $data = json_decode((string) $response->getBody(), true);
+
         /** @var list<array<string, mixed>> $results */
         $results = [];
         if (\is_array($data) && \is_array($data['results'] ?? null)) {

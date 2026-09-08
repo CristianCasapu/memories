@@ -20,7 +20,7 @@ final class EventsController extends GenericApiController
     #[NoAdminRequired]
     public function rebuild(): Http\Response
     {
-        return Util::guardEx(function () {
+        return Util::guardEx(static function () {
             $uid = Util::getUID();
             $n = \OC::$server->get(Events::class)->rebuild($uid);
 
@@ -55,6 +55,7 @@ final class EventsController extends GenericApiController
             $fileIds = array_map('intval', $query->executeQuery()->fetchAll(\PDO::FETCH_COLUMN));
 
             $name = trim(('' !== (string) $event['title'] ? $event['title'].' ' : '').date('Y-m-d', (int) $event['start']));
+
             /** @var \OCA\Photos\Album\AlbumMapper $mapper */
             $mapper = \OC::$server->get(\OCA\Photos\Album\AlbumMapper::class);
             $album = $mapper->getByName($name, $uid) ?? $mapper->create($uid, $name);

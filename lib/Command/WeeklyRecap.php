@@ -35,7 +35,7 @@ final class WeeklyRecap extends Command
         $uid = $input->getOption('user');
         $users = null !== $uid ? [(string) $uid] : [];
         if (null === $uid) {
-            $this->userManager->callForSeenUsers(function ($user) use (&$users): void { $users[] = $user->getUID(); });
+            $this->userManager->callForSeenUsers(static function ($user) use (&$users): void { $users[] = $user->getUID(); });
         }
         foreach ($users as $u) {
             $n = $this->job->notifyUser($u, $force);

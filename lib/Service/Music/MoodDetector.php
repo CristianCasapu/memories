@@ -37,7 +37,7 @@ final class MoodDetector
      */
     public function detect(array $fileIds): array
     {
-        $fileIds = array_slice(array_values(array_unique(array_map('intval', $fileIds))), 0, 200);
+        $fileIds = \array_slice(array_values(array_unique(array_map('intval', $fileIds))), 0, 200);
         if (!$this->available() || 0 === \count($fileIds)) {
             return ['mood' => self::FALLBACK, 'scores' => [], 'detected' => false];
         }
@@ -66,7 +66,7 @@ final class MoodDetector
         foreach ($matrix as $t => $perFile) {
             foreach ($perFile as $fileId => $score) {
                 $seen[$fileId] = true;
-                $mood = $owner[$t] ?? MoodDetector::FALLBACK;
+                $mood = $owner[$t] ?? self::FALLBACK;
                 $key = $fileId.'|'.$mood;
                 $perPhoto[$key] = max($perPhoto[$key] ?? -1.0, (float) $score);
             }
@@ -85,7 +85,7 @@ final class MoodDetector
         }
         arsort($scores);
         $mood = (string) array_key_first($scores);
-        $this->logger->debug('Music mood: '.$mood.' for '.$count.' photos '.(json_encode(array_slice($scores, 0, 4, true)) ?: ''));
+        $this->logger->debug('Music mood: '.$mood.' for '.$count.' photos '.(json_encode(\array_slice($scores, 0, 4, true)) ?: ''));
 
         return ['mood' => $mood, 'scores' => $scores, 'detected' => true];
     }

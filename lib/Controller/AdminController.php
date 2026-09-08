@@ -88,7 +88,7 @@ final class AdminController extends GenericApiController
      */
     public function musicTest(string $mood = 'calm'): Http\Response
     {
-        return Util::guardEx(function () use ($mood) {
+        return Util::guardEx(static function () use ($mood) {
             $music = \OC::$server->get(\OCA\Memories\Service\Music\MusicService::class);
             $status = $music->status();
             if (0 === \count($status['providers'])) {
@@ -110,7 +110,7 @@ final class AdminController extends GenericApiController
     #[NoAdminRequired]
     public function musicStatus(): Http\Response
     {
-        return Util::guardEx(function () {
+        return Util::guardEx(static function () {
             return new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Music\MusicService::class)->status(), Http::STATUS_OK);
         });
     }
@@ -243,19 +243,19 @@ final class AdminController extends GenericApiController
     /** @AdminRequired */
     public function cleanupStatus(): Http\Response
     {
-        return Util::guardEx(fn () => new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Cleanup::class)->status(), Http::STATUS_OK));
+        return Util::guardEx(static fn () => new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Cleanup::class)->status(), Http::STATUS_OK));
     }
 
     /** @AdminRequired */
     public function cleanupConfig(array $config = []): Http\Response
     {
-        return Util::guardEx(fn () => new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Cleanup::class)->setConfig($config), Http::STATUS_OK));
+        return Util::guardEx(static fn () => new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Cleanup::class)->setConfig($config), Http::STATUS_OK));
     }
 
     /** @AdminRequired */
     public function cleanupRun(bool $dry_run = false): Http\Response
     {
-        return Util::guardEx(function () use ($dry_run) {
+        return Util::guardEx(static function () use ($dry_run) {
             set_time_limit(0);
 
             return new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Cleanup::class)->run($dry_run, true), Http::STATUS_OK);
@@ -265,7 +265,7 @@ final class AdminController extends GenericApiController
     /** @AdminRequired */
     public function eventsRebuild(): Http\Response
     {
-        return Util::guardEx(function () {
+        return Util::guardEx(static function () {
             $n = \OC::$server->get(\OCA\Memories\Service\Events::class)->rebuildAll();
 
             return new JSONResponse(['message' => "{$n} events"], Http::STATUS_OK);
@@ -275,7 +275,7 @@ final class AdminController extends GenericApiController
     /** @AdminRequired */
     public function personAlbumsSync(): Http\Response
     {
-        return Util::guardEx(function () {
+        return Util::guardEx(static function () {
             $n = \OC::$server->get(\OCA\Memories\Service\PersonAlbums::class)->syncAll();
 
             return new JSONResponse(['message' => "{$n} photos added to person albums"], Http::STATUS_OK);
@@ -285,7 +285,7 @@ final class AdminController extends GenericApiController
     /** @AdminRequired */
     public function weeklyRecapTest(): Http\Response
     {
-        return Util::guardEx(function () {
+        return Util::guardEx(static function () {
             $n = \OC::$server->get(\OCA\Memories\Cron\WeeklyRecapJob::class)->notifyUser(Util::getUID(), true);
 
             return new JSONResponse(['message' => $n > 0 ? "notification sent ({$n} photos from this week in past years)" : 'no photos from this week in past years'], Http::STATUS_OK);
@@ -295,7 +295,7 @@ final class AdminController extends GenericApiController
     /** @AdminRequired */
     public function indexNow(): Http\Response
     {
-        return Util::guardEx(function () {
+        return Util::guardEx(static function () {
             set_time_limit(0);
             $indexer = \OC::$server->get(\OCA\Memories\Service\Index::class);
             $users = 0;

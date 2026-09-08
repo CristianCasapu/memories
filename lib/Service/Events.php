@@ -19,6 +19,7 @@ final class Events
 {
     /** a pause longer than this starts a new event */
     public const MAX_GAP = 4 * 3600;
+
     /** a jump farther than this (km) from the running centroid starts a new event */
     public const MAX_DISTANCE_KM = 15.0;
     public const MIN_PHOTOS = 8;
@@ -105,7 +106,7 @@ final class Events
         try {
             $del = $this->db->getQueryBuilder();
             $del->delete('memories_events_files')->where($del->expr()->in('event_id', $del->createFunction(
-                '(SELECT id FROM *PREFIX*memories_events WHERE uid = '.(string) $del->createNamedParameter($uid).')'
+                '(SELECT id FROM *PREFIX*memories_events WHERE uid = '.(string) $del->createNamedParameter($uid).')',
             )))->executeStatement();
             $del = $this->db->getQueryBuilder();
             $del->delete('memories_events')->where($del->expr()->eq('uid', $del->createNamedParameter($uid)))->executeStatement();

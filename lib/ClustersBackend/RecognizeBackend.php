@@ -125,7 +125,7 @@ final class RecognizeBackend extends Backend
         ));
 
         // Additional people that must also be in the photo
-        foreach (array_slice($together, 1) as $i => $other) {
+        foreach (\array_slice($together, 1) as $i => $other) {
             $c = 'rfc_t'.$i;
             $d = 'rfd_t'.$i;
             $field = is_numeric($other) ? $c.'.id' : $c.'.title';

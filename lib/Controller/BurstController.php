@@ -104,6 +104,7 @@ final class BurstController extends GenericApiController
             if ('none' !== $music && $musicService->enabled()) {
                 try {
                     $seconds = (float) $n / $fps;
+
                     /** @var list<int> $ordered */
                     $chosen = $musicService->mood($music, $ordered);
                     $mood = $chosen['mood'];
@@ -121,12 +122,12 @@ final class BurstController extends GenericApiController
             // save next to the first photo
             $parent = $first->getParent();
             $base = '' !== trim($name) ? trim($name) : pathinfo($first->getName(), PATHINFO_FILENAME).'-burst';
-            $base = preg_replace('/[\\/\\\\:*?"<>|]+/', '-', $base) ?? $base;
+            $base = preg_replace('/[\/\\\:*?"<>|]+/', '-', $base) ?? $base;
             $target = $base.'.mp4';
             for ($i = 2; $parent->nodeExists($target); ++$i) {
                 $target = "{$base} ({$i}).mp4";
             }
-            $file = $parent->newFile($target, fopen($out, 'rb'));
+            $file = $parent->newFile($target, fopen($out, 'r'));
             $tmp->clean();
 
             return new JSONResponse([

@@ -7,11 +7,11 @@ namespace OCA\Memories\Controller;
 use OCA\Memories\AppInfo\Application;
 use OCA\Memories\Db\FsManager;
 use OCA\Memories\Db\TimelineQuery;
+use OCA\Memories\Http\DownloadMenuAction;
 use OCA\Memories\Util;
 use OCP\AppFramework\AuthPublicShareController;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
-use OCA\Memories\Http\DownloadMenuAction;
 use OCP\AppFramework\Http\Template\PublicTemplateResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -140,8 +140,8 @@ final class PublicController extends AuthPublicShareController
                 'filename' => null,
             ]);
             // Custom HTML action: a plain download link (a SimpleMenuAction is rendered as "copy link" or as an
-        // external-app link with a confirmation dialog by Nextcloud 30+)
-        $dlAction = new DownloadMenuAction($this->l10n->t('Download'), $dlUrl);
+            // external-app link with a confirmation dialog by Nextcloud 30+)
+            $dlAction = new DownloadMenuAction($this->l10n->t('Download'), $dlUrl);
             $response->setHeaderActions([$dlAction]);
         }
 
