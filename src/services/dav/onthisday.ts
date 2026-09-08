@@ -9,17 +9,25 @@ import type { IDay, IPhoto } from '@typings';
 /**
  * Get original onThisDay response.
  */
-export async function getOnThisDayRaw() {
+export async function getOnThisDayRaw(week = false) {
   const dayIds: number[] = [];
   const now = new Date();
   const nowUTC = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 
-  const dayRange = staticConfig.getSync('onthisday_day_range');
+  // Offsets (in days) around today to look at in each past year.
+  // "week": the whole calendar week (Monday to Sunday), as the weekly recap counts it.
+  let offsets: number[] = [];
+  if (week) {
+    const dow = (now.getDay() + 6) % 7; // 0 = Monday
+    for (let j = -dow; j <= 6 - dow; j++) offsets.push(j);
+  } else {
+    const dayRange = staticConfig.getSync('onthisday_day_range');
+    for (let j = -dayRange; j <= dayRange; j++) offsets.push(j);
+  }
 
   // Populate dayIds
   for (let i = 1; i <= 120; i++) {
-    // +- 3 days from this day
-    for (let j = -dayRange; j <= dayRange; j++) {
+    for (const j of offsets) {
       const d = new Date(nowUTC);
       d.setFullYear(d.getFullYear() - i);
       d.setDate(d.getDate() + j);
@@ -38,9 +46,9 @@ export async function getOnThisDayRaw() {
  * Get the onThisDay data
  * Query for last 120 years; should be enough
  */
-export async function getOnThisDayData(): Promise<IDay[]> {
+export async function getOnThisDayData(week = false): Promise<IDay[]> {
   // Query for photos
-  let data = await getOnThisDayRaw();
+  let data = await getOnThisDayRaw(week);
 
   // Group photos by day
   const ans: IDay[] = [];

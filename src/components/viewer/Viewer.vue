@@ -89,6 +89,7 @@ import EditFileIcon from 'vue-material-design-icons/FileEdit.vue';
 import FacesIcon from 'vue-material-design-icons/FaceRecognition.vue';
 import AlbumRemoveIcon from 'vue-material-design-icons/BookRemove.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
+import ImageCheckIcon from 'vue-material-design-icons/ImageCheck.vue';
 import RotateLeftIcon from 'vue-material-design-icons/RotateLeft.vue';
 
 type IViewerAction = {
@@ -306,6 +307,13 @@ export default defineComponent({
           callback: () => this.downloadByFileId(raw.fileid),
           if: this.canDownload,
         })),
+        {
+          id: 'set-cover',
+          name: this.t('memories', 'Use as cover'),
+          icon: ImageCheckIcon,
+          callback: this.setAsCover,
+          if: this.routeIsCluster && !this.routeIsRecognizeUnassigned && !this.routeIsPublic && !this.isLocal,
+        },
         {
           id: 'view-in-folder',
           name: this.t('memories', 'View in folder'),
@@ -1232,6 +1240,12 @@ export default defineComponent({
     /**
      * Open the files app with the current file.
      */
+    /** Make the current photo the cover of the person / album / place / tag being viewed */
+    async setAsCover() {
+      if (!this.currentPhoto) return;
+      await dav.setClusterCover(this.currentPhoto);
+    },
+
     async viewInFolder() {
       dav.viewInFolder(this.currentPhoto!);
     },

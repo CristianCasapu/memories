@@ -53,7 +53,7 @@ final class Notifier implements INotifier
 
         $notification->setParsedSubject($l->t('Your memories from this week'))
             ->setParsedMessage($l->t('%1$s photos were taken during this week in past years: %2$s', [(string) $count, implode(', ', $parts)]))
-            ->setLink($this->urlGenerator->linkToRouteAbsolute('memories.Page.thisday'))
+            ->setLink($this->urlGenerator->linkToRouteAbsolute('memories.Page.thisday').'?week=1')
             ->setIcon($this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APPNAME, 'app-dark.svg')))
         ;
 

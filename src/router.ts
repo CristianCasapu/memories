@@ -92,7 +92,9 @@ export const routes: { [key in RouteId]: RouteConfig } = {
     path: '/thisday',
     component: Timeline,
     name: 'thisday',
-    props: (route: Route) => ({ rootTitle: t('memories', 'On this day') }),
+    props: (route: Route) => ({
+      rootTitle: route.query.week ? t('memories', 'This week in past years') : t('memories', 'On this day'),
+    }),
   },
 
   Recognize: {

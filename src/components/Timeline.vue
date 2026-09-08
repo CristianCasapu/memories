@@ -753,7 +753,7 @@ export default defineComponent({
 
         let data: IDay[] = [];
         if (this.routeIsThisDay) {
-          data = await dav.getOnThisDayData();
+          data = await dav.getOnThisDayData(!!this.$route.query.week); // ?week=1: the weekly recap
         } else if (dav.isSingleItem()) {
           data = await dav.getSingleItemData();
           setTimeout(() => _m.viewer.open(data[0]!.detail![0]), 0);
