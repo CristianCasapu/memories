@@ -67,6 +67,7 @@ final class SystemConfig
 
         // Paths to ffmpeg and ffprobe binaries
         'memories.vod.ffmpeg' => '',
+        'memories.clips.ffmpeg' => '', // ffmpeg used for clips (photo videos); empty = the one above
         'memories.vod.ffprobe' => '',
 
         // Path to go-vod binary

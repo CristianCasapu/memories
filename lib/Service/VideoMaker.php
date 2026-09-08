@@ -28,6 +28,7 @@ final class VideoMaker
 {
     public const MAX_FRAMES = 200;
     public const FRAME_SIZE = 1920;
+    public const PREVIEW_SIZE = 1024;
 
     public function __construct(
         private VideoJobMapper $jobs,
@@ -83,7 +84,11 @@ final class VideoMaker
 
     private function make(VideoJob $job): void
     {
-        $ffmpeg = (string) SystemConfig::get('memories.vod.ffmpeg');
+        // clips may use their own ffmpeg (a newer build whose NVENC is stable); otherwise the transcoder's
+        $ffmpeg = (string) SystemConfig::get('memories.clips.ffmpeg');
+        if ('' === $ffmpeg || !is_executable($ffmpeg)) {
+            $ffmpeg = (string) SystemConfig::get('memories.vod.ffmpeg');
+        }
         if ('' === $ffmpeg || !is_executable($ffmpeg)) {
             throw Exceptions::NotEnabled('ffmpeg (Administration › Memories › Video: ffmpeg path)');
         }
@@ -127,7 +132,8 @@ final class VideoMaker
             $first ??= $node;
 
             try {
-                $img = $this->preview->getPreview($node, self::FRAME_SIZE, self::FRAME_SIZE, false, IPreview::MODE_FILL);
+                // a 2048-wide preview: enough for 1080p and light to decode (asking for 1920 would return the 4096 one)
+                $img = $this->preview->getPreview($node, self::PREVIEW_SIZE, self::PREVIEW_SIZE, false, IPreview::MODE_FILL);
                 file_put_contents(\sprintf('%s/frame_%04d.jpg', $dir, $n++), $img->getContent());
             } catch (\Throwable $e) {
                 $this->logger->warning('Video job: preview failed for '.$fileId, ['exception' => $e]);
@@ -145,7 +151,7 @@ final class VideoMaker
         $seconds = (float) $n / $fps;
         $filter = \sprintf('scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv420p', self::FRAME_SIZE, 1080, self::FRAME_SIZE, 1080);
         $filter .= $this->overlays($job, $dir, $seconds);
-        $encode = static function (bool $gpu) use ($ffmpeg, $fps, $dir, $filter, $out): string {
+        $encode = static function (bool $gpu) use ($ffmpeg, $fps, $dir, $filter, $out): array {
             $codec = $gpu
                 ? ['-c:v', 'h264_nvenc', '-preset', 'p4', '-rc', 'vbr', '-cq', '23', '-b:v', '0']
                 : ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20'];
@@ -154,25 +160,29 @@ final class VideoMaker
                 $codec,
                 ['-r', '30', '-movflags', '+faststart', $out],
             );
-            [, $stderr] = Util::execSafe2($cmd, 300000, null, false, true);
 
-            return trim((string) $stderr);
+            return self::exec($cmd, 300);
         };
+        $ok = false;
         $stderr = '';
         if ($this->gpuEncoder($ffmpeg)) {
             $this->progress($job, 63, 'Encoding the video (GPU)');
-            $stderr = $encode(true);
-        }
-        if (!is_file($out) || filesize($out) < 100) {
-            if ('' !== $stderr) {
-                $this->logger->info('Video job: NVENC failed, using the CPU: '.$stderr);
+            [$code, $stderr] = $encode(true);
+            // a crashed encoder (signal) leaves a truncated file behind: only a clean exit counts
+            $ok = 0 === $code && is_file($out) && filesize($out) > 100;
+            if ($ok) {
+                $this->logger->info('Video job '.$job->getId().': encoded with NVENC');
+            } else {
+                $this->logger->info('Video job '.$job->getId().': NVENC failed (exit '.$code.'), using the CPU: '.$stderr);
+                @unlink($out);
             }
-            $stderr = $encode(false);
-        } else {
-            $this->logger->info('Video job '.$job->getId().': encoded with NVENC');
         }
-        if (!is_file($out) || filesize($out) < 100) {
-            throw new \Exception('ffmpeg failed: '.$stderr);
+        if (!$ok) {
+            [$code, $stderr] = $encode(false);
+            $ok = 0 === $code && is_file($out) && filesize($out) > 100;
+        }
+        if (!$ok) {
+            throw new \Exception('ffmpeg failed (exit '.$code.'): '.$stderr);
         }
 
         // background music, chosen by the mood of the photos (or the one asked for)
@@ -284,6 +294,49 @@ final class VideoMaker
     }
 
     /** Can this process encode on the NVIDIA GPU? (device reachable and ffmpeg built with NVENC) */
+    /**
+     * Run a command to completion; the exit code (or 128+signal when it crashed) and its stderr.
+     *
+     * @param list<string> $cmd
+     *
+     * @return array{int, string}
+     */
+    private static function exec(array $cmd, int $timeoutSeconds): array
+    {
+        $pipes = [];
+        $proc = proc_open($cmd, [1 => ['file', '/dev/null', 'w'], 2 => ['pipe', 'w']], $pipes);
+        if (!\is_resource($proc)) {
+            return [-1, 'proc_open failed'];
+        }
+        stream_set_blocking($pipes[2], false);
+        $stderr = '';
+        $deadline = microtime(true) + $timeoutSeconds;
+        while (true) {
+            $stderr .= (string) stream_get_contents($pipes[2]);
+            $status = proc_get_status($proc);
+            if (!$status['running']) {
+                break;
+            }
+            if (microtime(true) > $deadline) {
+                proc_terminate($proc, 9);
+                fclose($pipes[2]);
+                proc_close($proc);
+
+                return [-2, 'timeout after '.$timeoutSeconds.'s '.$stderr];
+            }
+            usleep(50000);
+        }
+        $stderr .= (string) stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        proc_close($proc);
+        $code = (int) $status['exitcode'];
+        if ($status['signaled'] ?? false) {
+            $code = 128 + (int) ($status['termsig'] ?? 0);
+        }
+
+        return [$code, mb_substr(trim($stderr), 0, 2000)];
+    }
+
     private function gpuEncoder(string $ffmpeg): bool
     {
         static $hasEncoder = null;
