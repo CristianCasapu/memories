@@ -164,6 +164,7 @@ final class VideoMaker
             return self::exec($cmd, 300);
         };
         $ok = false;
+        $code = -1;
         $stderr = '';
         if ($this->gpuEncoder($ffmpeg)) {
             $this->progress($job, 63, 'Encoding the video (GPU)');
@@ -310,7 +311,7 @@ final class VideoMaker
         }
         stream_set_blocking($pipes[2], false);
         $stderr = '';
-        $deadline = microtime(true) + $timeoutSeconds;
+        $deadline = microtime(true) + (float) $timeoutSeconds;
         while (true) {
             $stderr .= (string) stream_get_contents($pipes[2]);
             $status = proc_get_status($proc);
@@ -329,9 +330,9 @@ final class VideoMaker
         $stderr .= (string) stream_get_contents($pipes[2]);
         fclose($pipes[2]);
         proc_close($proc);
-        $code = (int) $status['exitcode'];
-        if ($status['signaled'] ?? false) {
-            $code = 128 + (int) ($status['termsig'] ?? 0);
+        $code = $status['exitcode'];
+        if ($status['signaled']) {
+            $code = 128 + $status['termsig'];
         }
 
         return [$code, mb_substr(trim($stderr), 0, 2000)];
