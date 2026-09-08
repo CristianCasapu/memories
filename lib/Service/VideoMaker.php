@@ -168,6 +168,8 @@ final class VideoMaker
                 $this->logger->info('Video job: NVENC failed, using the CPU: '.$stderr);
             }
             $stderr = $encode(false);
+        } else {
+            $this->logger->info('Video job '.$job->getId().': encoded with NVENC');
         }
         if (!is_file($out) || filesize($out) < 100) {
             throw new \Exception('ffmpeg failed: '.$stderr);
