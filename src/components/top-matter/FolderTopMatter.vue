@@ -68,7 +68,9 @@
           @click="downloadFolder()"
           close-after-click
         >
-          {{ recursive ? t('memories', 'Download all photos (with subfolders)') : t('memories', 'Download all photos') }}
+          {{
+            recursive ? t('memories', 'Download all photos (with subfolders)') : t('memories', 'Download all photos')
+          }}
           <template #icon> <DownloadIcon :size="20" /> </template>
         </NcActionButton>
 
@@ -138,7 +140,9 @@ export default defineComponent({
 
   computed: {
     folderName(): string {
-      const parts = String(this.$route.params.path || '').split('/').filter(Boolean);
+      const parts = String(this.$route.params.path || '')
+        .split('/')
+        .filter(Boolean);
       return parts.length ? parts[parts.length - 1] : this.initstate.shareTitle || this.t('memories', 'Photos');
     },
 

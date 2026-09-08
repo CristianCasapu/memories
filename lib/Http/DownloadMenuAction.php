@@ -20,11 +20,13 @@ final class DownloadMenuAction implements IMenuAction
         private string $link,
     ) {}
 
+    #[\Override]
     public function getId(): string
     {
         return 'download';
     }
 
+    #[\Override]
     public function getLabel(): string
     {
         return $this->label;
@@ -35,16 +37,19 @@ final class DownloadMenuAction implements IMenuAction
         return 'icon-download';
     }
 
+    #[\Override]
     public function getLink(): string
     {
         return $this->link;
     }
 
+    #[\Override]
     public function getPriority(): int
     {
         return 10;
     }
 
+    #[\Override]
     public function render(): string
     {
         $href = htmlspecialchars($this->link, ENT_QUOTES);

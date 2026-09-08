@@ -74,7 +74,12 @@ export async function shareView(route: any, defaultName: string = '') {
     return;
   }
 
-  if (routeName === _m.routes.Recognize.name && route.params.name && route.params.name !== 'NULL' && !String(route.params.name).includes('|')) {
+  if (
+    routeName === _m.routes.Recognize.name &&
+    route.params.name &&
+    route.params.name !== 'NULL' &&
+    !String(route.params.name).includes('|')
+  ) {
     const name = String(route.params.name);
     if (!/^\d+$/.test(name)) {
       try {

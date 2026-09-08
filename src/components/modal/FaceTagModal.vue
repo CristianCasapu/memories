@@ -48,7 +48,9 @@
           <template #icon> <PlusIcon :size="18" /> </template>
           {{ t('memories', 'Add a face') }}
         </NcButton>
-        <NcButton v-if="drawing || draft" variant="tertiary" @click="cancelDraw">{{ t('memories', 'Cancel') }}</NcButton>
+        <NcButton v-if="drawing || draft" variant="tertiary" @click="cancelDraw">{{
+          t('memories', 'Cancel')
+        }}</NcButton>
         <NcButton v-if="ignoredCount && !drawing" @click="unignore" variant="tertiary">
           {{ t('memories', 'Restore ignored faces') }}
         </NcButton>
@@ -68,7 +70,12 @@
           </NcButton>
           <NcButton variant="tertiary" :disabled="busy" @click="cancelDraw">{{ t('memories', 'Cancel') }}</NcButton>
         </div>
-        <span class="hint">{{ t('memories', 'The face is detected inside the box so it can be recognized in other photos too. This takes a few seconds.') }}</span>
+        <span class="hint">{{
+          t(
+            'memories',
+            'The face is detected inside the box so it can be recognized in other photos too. This takes a few seconds.',
+          )
+        }}</span>
       </div>
 
       <div class="editor" v-if="selected && !draft">
@@ -301,7 +308,8 @@ export default defineComponent({
       const img = (this.$refs.stage as HTMLElement)?.querySelector('img');
       if (!img) return null;
       const rect = img.getBoundingClientRect();
-      const point = 'touches' in event ? event.touches[0] ?? (event as TouchEvent).changedTouches[0] : (event as MouseEvent);
+      const point =
+        'touches' in event ? (event.touches[0] ?? (event as TouchEvent).changedTouches[0]) : (event as MouseEvent);
       if (!point) return null;
       return {
         x: Math.min(1, Math.max(0, (point.clientX - rect.left) / rect.width)),

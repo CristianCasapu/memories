@@ -70,7 +70,9 @@ export const routes: { [key in RouteId]: RouteRecordRaw } = {
     component: Timeline,
     name: 'search',
     props: (route: RouteLocationNormalized) => ({
-      rootTitle: route.params.q ? t('memories', 'Search: {query}', { query: String(route.params.q) }) : t('memories', 'Search'),
+      rootTitle: route.params.q
+        ? t('memories', 'Search: {query}', { query: String(route.params.q) })
+        : t('memories', 'Search'),
     }),
   },
 

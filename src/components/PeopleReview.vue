@@ -54,16 +54,29 @@
         <div class="suggestion" v-if="person.suggestion">
           <span v-if="person.suggestion.shared_files > 0" class="veto">
             {{
-              t('memories', 'Looks like {name} (distance {d}) but appears together with them in {n} photo(s), so it is someone else', {
-                name: person.suggestion.title,
-                d: person.suggestion.distance,
-                n: person.suggestion.shared_files,
-              })
+              t(
+                'memories',
+                'Looks like {name} (distance {d}) but appears together with them in {n} photo(s), so it is someone else',
+                {
+                  name: person.suggestion.title,
+                  d: person.suggestion.distance,
+                  n: person.suggestion.shared_files,
+                },
+              )
             }}
           </span>
           <span v-else>
-            {{ t('memories', 'Might be {name} (distance {d})', { name: person.suggestion.title, d: person.suggestion.distance }) }}
-            <NcButton variant="primary" :disabled="busy" @click="merge(person, person.suggestion.cluster_id, person.suggestion.title)">
+            {{
+              t('memories', 'Might be {name} (distance {d})', {
+                name: person.suggestion.title,
+                d: person.suggestion.distance,
+              })
+            }}
+            <NcButton
+              variant="primary"
+              :disabled="busy"
+              @click="merge(person, person.suggestion.cluster_id, person.suggestion.title)"
+            >
               {{ t('memories', 'It is {name}', { name: person.suggestion.title }) }}
             </NcButton>
           </span>
@@ -76,7 +89,11 @@
             list="memories-review-names"
             @keydown.enter="rename(person)"
           />
-          <NcButton variant="secondary" :disabled="busy || !(names[person.cluster_id] || '').trim()" @click="rename(person)">
+          <NcButton
+            variant="secondary"
+            :disabled="busy || !(names[person.cluster_id] || '').trim()"
+            @click="rename(person)"
+          >
             {{ t('memories', 'Name') }}
           </NcButton>
           <NcButton variant="tertiary" :disabled="busy" @click="ignore(person)">
@@ -205,7 +222,8 @@ export default defineComponent({
             : this.t('memories', 'Person named {name}', { name: res.data.title }),
         );
         this.remove(person);
-        if (!res.data.merged && this.data) this.data.named.push({ cluster_id: res.data.cluster_id, title: res.data.title, count: person.count });
+        if (!res.data.merged && this.data)
+          this.data.named.push({ cluster_id: res.data.cluster_id, title: res.data.title, count: person.count });
       } catch (error: any) {
         console.error(error);
         showError(error?.response?.data?.message || this.t('memories', 'Could not name the person'));
@@ -234,7 +252,9 @@ export default defineComponent({
       if (
         !(await utils.confirmDestructive({
           title: this.t('memories', 'Not a person'),
-          message: this.t('memories', 'Hide these {n} faces for good? (statues, posters, screens …)', { n: person.count }),
+          message: this.t('memories', 'Hide these {n} faces for good? (statues, posters, screens …)', {
+            n: person.count,
+          }),
           confirm: this.t('memories', 'Hide'),
           confirmClasses: 'error',
           cancel: this.t('memories', 'Cancel'),

@@ -3,7 +3,12 @@
     <h2>{{ $options.title }}</h2>
 
     <p>
-      {{ t('memories', 'Videos made from photos ("Create a video") get background music. The mood is read from the pictures with the CLIP model of the Recognize fork (party, birthday, wedding, melancholic, playful, summer, calm, winter, travel, sport, romantic, family) and a matching track comes from the first provider below that has one. The credit is written into the video file.') }}
+      {{
+        t(
+          'memories',
+          'Videos made from photos ("Create a video") get background music. The mood is read from the pictures with the CLIP model of the Recognize fork (party, birthday, wedding, melancholic, playful, summer, calm, winter, travel, sport, romantic, family) and a matching track comes from the first provider below that has one. The credit is written into the video file.',
+        )
+      }}
     </p>
 
     <NcCheckboxRadioSwitch
@@ -15,14 +20,24 @@
     </NcCheckboxRadioSwitch>
 
     <NcNoteCard :type="musicStatus.moodDetection ? 'success' : 'warning'" v-if="musicStatus">
-      {{ musicStatus.moodDetection
-        ? t('memories', 'Mood detection is available (natural-language search of the Recognize fork).')
-        : t('memories', 'Mood detection needs the natural-language search of the Recognize fork (Administration › Recognize › Natural-language search); until then "Automatic" uses calm music.') }}
+      {{
+        musicStatus.moodDetection
+          ? t('memories', 'Mood detection is available (natural-language search of the Recognize fork).')
+          : t(
+              'memories',
+              'Mood detection needs the natural-language search of the Recognize fork (Administration › Recognize › Natural-language search); until then "Automatic" uses calm music.',
+            )
+      }}
     </NcNoteCard>
 
     <h3>{{ t('memories', 'Providers') }}</h3>
     <p>
-      {{ t('memories', 'Jamendo: free and royalty-free independent music under Creative Commons (a free client id from developer.jamendo.com). Freesound: sounds, loops and short pieces, CC0 and CC-BY (an API token from freesound.org/apiv2/apply). Mubert: music generated on demand for the exact length and mood, never claimed by copyright (a paid B2B token). Epidemic Sound and Artlist have no public API; their enterprise contracts would need their own integration.') }}
+      {{
+        t(
+          'memories',
+          'Jamendo: free and royalty-free independent music under Creative Commons (a free client id from developer.jamendo.com). Freesound: sounds, loops and short pieces, CC0 and CC-BY (an API token from freesound.org/apiv2/apply). Mubert: music generated on demand for the exact length and mood, never claimed by copyright (a paid B2B token). Epidemic Sound and Artlist have no public API; their enterprise contracts would need their own integration.',
+        )
+      }}
     </p>
 
     <NcTextField

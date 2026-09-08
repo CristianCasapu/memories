@@ -19,16 +19,19 @@ final class MubertProvider implements ProviderInterface
 
     public function __construct(private IClientService $clients) {}
 
+    #[\Override]
     public function id(): string
     {
         return 'mubert';
     }
 
+    #[\Override]
     public function configured(): bool
     {
         return '' !== trim((string) SystemConfig::get('memories.music.mubert_token'));
     }
 
+    #[\Override]
     public function find(array $tags, int $minSeconds, int $maxSeconds): ?Track
     {
         $client = $this->clients->newClient();
@@ -37,7 +40,7 @@ final class MubertProvider implements ProviderInterface
             'params' => [
                 'pat' => trim((string) SystemConfig::get('memories.music.mubert_token')),
                 'duration' => max(30, min(600, $minSeconds + 5)),
-                'tags' => array_values($tags),
+                'tags' => $tags,
                 'mode' => 'track',
                 'format' => 'mp3',
                 'bitrate' => 128,
@@ -46,11 +49,11 @@ final class MubertProvider implements ProviderInterface
         ];
         $response = $client->post(self::API, ['json' => $body, 'timeout' => 30]);
         $data = json_decode((string) $response->getBody(), true);
-        if (($data['status'] ?? 0) !== 1) {
-            throw new \RuntimeException('Mubert: '.($data['error']['text'] ?? 'unexpected answer'));
+        if (!\is_array($data) || ($data['status'] ?? 0) !== 1) {
+            throw new \RuntimeException('Mubert: '.(string) ($data['error']['text'] ?? 'unexpected answer'));
         }
         $task = $data['data']['tasks'][0] ?? null;
-        $url = (string) ($task['download_link'] ?? '');
+        $url = \is_array($task) ? (string) ($task['download_link'] ?? '') : '';
         if ('' === $url) {
             throw new \RuntimeException('Mubert: no download link');
         }
@@ -67,6 +70,6 @@ final class MubertProvider implements ProviderInterface
             sleep(3);
         }
 
-        return new Track('Mubert', $url, 'Generated track ('.implode(', ', $tags).')', 'Mubert AI', 'Mubert licence', (int) $body['params']['duration']);
+        return new Track('Mubert', $url, 'Generated track ('.implode(', ', $tags).')', 'Mubert AI', 'Mubert licence', $body['params']['duration']);
     }
 }

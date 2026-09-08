@@ -10,3 +10,26 @@ namespace OCA\Recognize\Public {
         public function generateApiKey():string;
     }
 }
+
+namespace OCA\Recognize\Service {
+    /** Natural-language photo search of the CristianCasapu fork (CLIP). */
+    class SemanticSearch {
+        public function isAvailable(): bool;
+        /** @return array<int, float> file id => score, best first */
+        public function search(string $text, int $limit = 200, ?float $minScore = null): array;
+        /**
+         * @param list<int> $fileIds
+         * @param list<string> $texts
+         * @return array<int, array<int, float>> text index => (file id => score)
+         */
+        public function scoreFiles(array $fileIds, array $texts): array;
+        /** @return list<float> */
+        public function embedText(string $text): array;
+    }
+
+    /** Bursts and near-duplicates of the CristianCasapu fork. */
+    class SimilarPhotos {
+        /** @return list<array{id: string, files: list<int>, size: int}> */
+        public function groups(): array;
+    }
+}

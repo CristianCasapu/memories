@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+/** The Photos app (optional dependency): albums that the fork fills and shares. */
+namespace OCA\Photos\Album {
+    class AlbumInfo {
+        public function getId(): int;
+        public function getTitle(): string;
+        public function getUserId(): string;
+    }
+
+    class AlbumMapper {
+        public function get(int $id): ?AlbumInfo;
+        public function getByName(string $name, string $userId): ?AlbumInfo;
+        public function create(string $userId, string $name, string $location = ''): AlbumInfo;
+        public function addFile(int $albumId, int $fileId, string $owner): void;
+        public function removeFile(int $albumId, int $fileId): void;
+        public function getForAlbumIdAndFileId(int $albumId, int $fileId): mixed;
+    }
+}

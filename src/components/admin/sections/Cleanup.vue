@@ -12,7 +12,9 @@
       }}
     </p>
 
-    <div v-if="!cleanup" class="muted">{{ loading ? t('memories', 'Loading …') : t('memories', 'Could not load the cleanup status') }}</div>
+    <div v-if="!cleanup" class="muted">
+      {{ loading ? t('memories', 'Loading …') : t('memories', 'Could not load the cleanup status') }}
+    </div>
 
     <template v-else>
       <NcCheckboxRadioSwitch v-model="cleanup.config.enabled" @update:model-value="save()" type="switch">
@@ -44,17 +46,23 @@
       </div>
 
       <div class="buttons">
-        <NcButton variant="primary" :disabled="busy" @click="run(false)">{{ t('memories', 'Run cleanup now') }}</NcButton>
-        <NcButton variant="secondary" :disabled="busy" @click="run(true)">{{ t('memories', 'Dry run (report only)') }}</NcButton>
+        <NcButton variant="primary" :disabled="busy" @click="run(false)">{{
+          t('memories', 'Run cleanup now')
+        }}</NcButton>
+        <NcButton variant="secondary" :disabled="busy" @click="run(true)">{{
+          t('memories', 'Dry run (report only)')
+        }}</NcButton>
         <NcButton variant="tertiary" :disabled="busy" @click="refresh()">{{ t('memories', 'Refresh') }}</NcButton>
         <span class="muted" v-if="busy">{{ t('memories', 'Working …') }}</span>
       </div>
 
       <div class="result" v-if="lastRun">
         <strong>{{ lastRun.dry_run ? t('memories', 'Dry run') : t('memories', 'Last run') }}</strong>
-        · {{ formatTime(lastRun.time) }} ·
-        {{ n('memories', '%n file', '%n files', lastRun.files) }} · {{ human(lastRun.bytes) }} · {{ lastRun.duration }} s
-        <span v-if="lastRun.errors?.length" class="error"> · {{ n('memories', '%n error', '%n errors', lastRun.errors.length) }}</span>
+        · {{ formatTime(lastRun.time) }} · {{ n('memories', '%n file', '%n files', lastRun.files) }} ·
+        {{ human(lastRun.bytes) }} · {{ lastRun.duration }} s
+        <span v-if="lastRun.errors?.length" class="error">
+          · {{ n('memories', '%n error', '%n errors', lastRun.errors.length) }}</span
+        >
         <ul v-if="lastRun.errors?.length" class="errors">
           <li v-for="(e, i) in lastRun.errors" :key="i">{{ e }}</li>
         </ul>
@@ -75,17 +83,29 @@
           </thead>
           <tbody>
             <tr v-for="tg in cleanup.targets" :key="tg.id" :class="{ disabled: !tg.enabled }">
-              <td>{{ tg.label }}<span v-if="!tg.enabled" class="muted"> ({{ t('memories', 'off') }})</span></td>
-              <td><code v-if="tg.path">{{ tg.path }}</code><span v-else class="muted">—</span></td>
+              <td>
+                {{ tg.label }}<span v-if="!tg.enabled" class="muted"> ({{ t('memories', 'off') }})</span>
+              </td>
+              <td>
+                <code v-if="tg.path">{{ tg.path }}</code
+                ><span v-else class="muted">—</span>
+              </td>
               <td class="muted">{{ tg.rule }}</td>
               <td>
-                <template v-if="tg.path && tg.exists">{{ n('memories', '%n file', '%n files', tg.count) }}, {{ human(tg.size) }}</template>
+                <template v-if="tg.path && tg.exists"
+                  >{{ n('memories', '%n file', '%n files', tg.count) }}, {{ human(tg.size) }}</template
+                >
                 <span v-else-if="tg.path" class="muted">{{ t('memories', 'missing') }}</span>
               </td>
               <td>
-                <template v-if="tg.removable_files !== undefined">{{ n('memories', '%n file', '%n files', tg.removable_files) }}, {{ human(tg.removable_bytes) }}</template>
+                <template v-if="tg.removable_files !== undefined"
+                  >{{ n('memories', '%n file', '%n files', tg.removable_files) }},
+                  {{ human(tg.removable_bytes) }}</template
+                >
               </td>
-              <td><template v-if="tg.free !== null && tg.free !== undefined">{{ human(tg.free) }}</template></td>
+              <td>
+                <template v-if="tg.free !== null && tg.free !== undefined">{{ human(tg.free) }}</template>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -178,7 +198,9 @@ export default defineComponent({
     async save() {
       if (!this.cleanup) return;
       try {
-        const res = await axios.put(generateUrl('/apps/memories/api/admin/cleanup/config'), { config: this.cleanup.config });
+        const res = await axios.put(generateUrl('/apps/memories/api/admin/cleanup/config'), {
+          config: this.cleanup.config,
+        });
         this.cleanup.config = res.data;
         showSuccess(t('memories', 'Cleanup settings saved'));
         // rules / previews depend on the settings
@@ -197,7 +219,10 @@ export default defineComponent({
         this.lastRun = res.data;
         showSuccess(
           dryRun
-            ? t('memories', 'Dry run: {n} files ({size}) would be removed', { n: res.data.files, size: this.human(res.data.bytes) })
+            ? t('memories', 'Dry run: {n} files ({size}) would be removed', {
+                n: res.data.files,
+                size: this.human(res.data.bytes),
+              })
             : t('memories', 'Removed {n} files ({size})', { n: res.data.files, size: this.human(res.data.bytes) }),
         );
         if (!dryRun) {

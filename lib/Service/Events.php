@@ -76,8 +76,8 @@ final class Events
 
             $newEvent = null === $current
                 || $time - $current['end'] > self::MAX_GAP
-                || (null !== $lat && null !== $current['lat'] && self::distanceKm($lat, $lon, $current['lat'], $current['lon']) > self::MAX_DISTANCE_KM);
-            if ($newEvent) {
+                || (null !== $lat && null !== $lon && null !== $current['lat'] && null !== $current['lon'] && self::distanceKm($lat, $lon, $current['lat'], $current['lon']) > self::MAX_DISTANCE_KM);
+            if ($newEvent || null === $current) {
                 if (null !== $current) {
                     $events[] = $current;
                 }
@@ -88,8 +88,9 @@ final class Events
             $current['folders'][$folder] = ($current['folders'][$folder] ?? 0) + 1;
             if (null !== $lat && null !== $lon) {
                 // running centroid
-                $current['lat'] = (($current['lat'] ?? $lat) * $current['gps'] + $lat) / ($current['gps'] + 1);
-                $current['lon'] = (($current['lon'] ?? $lon) * $current['gps'] + $lon) / ($current['gps'] + 1);
+                $gps = (float) $current['gps'];
+                $current['lat'] = (($current['lat'] ?? $lat) * $gps + $lat) / ($gps + 1.0);
+                $current['lon'] = (($current['lon'] ?? $lon) * $gps + $lon) / ($gps + 1.0);
                 ++$current['gps'];
             }
         }
@@ -104,7 +105,7 @@ final class Events
         try {
             $del = $this->db->getQueryBuilder();
             $del->delete('memories_events_files')->where($del->expr()->in('event_id', $del->createFunction(
-                '(SELECT id FROM *PREFIX*memories_events WHERE uid = '.$del->createNamedParameter($uid).')'
+                '(SELECT id FROM *PREFIX*memories_events WHERE uid = '.(string) $del->createNamedParameter($uid).')'
             )))->executeStatement();
             $del = $this->db->getQueryBuilder();
             $del->delete('memories_events')->where($del->expr()->eq('uid', $del->createNamedParameter($uid)))->executeStatement();
@@ -199,8 +200,8 @@ final class Events
         $r = 6371.0;
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
-        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+        $a = sin($dLat / 2.0) ** 2.0 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2.0) ** 2.0;
 
-        return 2 * $r * asin(min(1.0, sqrt($a)));
+        return 2.0 * $r * asin(min(1.0, sqrt($a)));
     }
 }

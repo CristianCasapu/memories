@@ -18,16 +18,19 @@ final class JamendoProvider implements ProviderInterface
 
     public function __construct(private IClientService $clients) {}
 
+    #[\Override]
     public function id(): string
     {
         return 'jamendo';
     }
 
+    #[\Override]
     public function configured(): bool
     {
         return '' !== trim((string) SystemConfig::get('memories.music.jamendo_client_id'));
     }
 
+    #[\Override]
     public function find(array $tags, int $minSeconds, int $maxSeconds): ?Track
     {
         $client = $this->clients->newClient();
@@ -46,15 +49,15 @@ final class JamendoProvider implements ProviderInterface
         ];
         $response = $client->get(self::API, ['query' => $query, 'timeout' => 20]);
         $data = json_decode((string) $response->getBody(), true);
-        $results = $data['results'] ?? [];
+        $results = \is_array($data) ? ($data['results'] ?? []) : [];
         if (!\is_array($results) || 0 === \count($results)) {
             // no track long enough under a free licence: try without the length
             unset($query['durationbetween']);
             $response = $client->get(self::API, ['query' => $query, 'timeout' => 20]);
             $data = json_decode((string) $response->getBody(), true);
-            $results = $data['results'] ?? [];
+            $results = \is_array($data) ? ($data['results'] ?? []) : [];
         }
-        $results = array_values(array_filter(\is_array($results) ? $results : [], static fn ($r) => !empty($r['audio'])));
+        $results = array_values(array_filter(\is_array($results) ? $results : [], static fn ($r) => \is_array($r) && !empty($r['audio'])));
         if (0 === \count($results)) {
             return null;
         }

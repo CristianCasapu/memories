@@ -19,10 +19,10 @@ final class Track
     /** "Title — Artist (license, via Provider)" for the video's metadata and the toast */
     public function credit(): string
     {
-        $parts = [trim($this->title.('' !== $this->artist ? ' — '.$this->artist : ''))];
+        $title = trim($this->title.('' !== $this->artist ? ' — '.$this->artist : ''));
         $extra = array_filter([$this->license, 'via '.$this->provider]);
 
-        return $parts[0].(\count($extra) ? ' ('.implode(', ', $extra).')' : '');
+        return $title.' ('.implode(', ', $extra).')';
     }
 
     public function toArray(): array

@@ -28,9 +28,20 @@
         {{ t('memories', 'Background music is not set up (Administration › Memories › Music).') }}
       </p>
       <p class="hint" v-else-if="!status.moodDetection">
-        {{ t('memories', 'The mood cannot be read from the photos (natural-language search is off); "Automatic" uses calm music.') }}
+        {{
+          t(
+            'memories',
+            'The mood cannot be read from the photos (natural-language search is off); "Automatic" uses calm music.',
+          )
+        }}
       </p>
-      <p class="hint">{{ t('memories', 'About {s} seconds; saved as an MP4 next to the first photo.', { s: Math.round(fileIds.length * secondsPerPhoto) }) }}</p>
+      <p class="hint">
+        {{
+          t('memories', 'About {s} seconds; saved as an MP4 next to the first photo.', {
+            s: Math.round(fileIds.length * secondsPerPhoto),
+          })
+        }}
+      </p>
     </div>
 
     <template #buttons>

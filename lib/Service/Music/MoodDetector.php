@@ -66,7 +66,7 @@ final class MoodDetector
         foreach ($matrix as $t => $perFile) {
             foreach ($perFile as $fileId => $score) {
                 $seen[$fileId] = true;
-                $mood = $owner[$t];
+                $mood = $owner[$t] ?? MoodDetector::FALLBACK;
                 $key = $fileId.'|'.$mood;
                 $perPhoto[$key] = max($perPhoto[$key] ?? -1.0, (float) $score);
             }
@@ -76,16 +76,16 @@ final class MoodDetector
             return ['mood' => self::FALLBACK, 'scores' => [], 'detected' => false];
         }
         foreach ($perPhoto as $key => $score) {
-            [, $mood] = explode('|', $key, 2);
-            $sum[$mood] += $score;
+            $mood = substr($key, (int) strpos($key, '|') + 1);
+            $sum[$mood] = ($sum[$mood] ?? 0.0) + $score;
         }
         $scores = [];
         foreach ($sum as $mood => $total) {
-            $scores[$mood] = round($total / $count, 4);
+            $scores[$mood] = round($total / (float) $count, 4);
         }
         arsort($scores);
         $mood = (string) array_key_first($scores);
-        $this->logger->debug('Music mood: '.$mood.' for '.$count.' photos '.json_encode(array_slice($scores, 0, 4, true)));
+        $this->logger->debug('Music mood: '.$mood.' for '.$count.' photos '.(json_encode(array_slice($scores, 0, 4, true)) ?: ''));
 
         return ['mood' => $mood, 'scores' => $scores, 'detected' => true];
     }

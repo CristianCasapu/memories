@@ -26,7 +26,11 @@
         </NcActionButton>
         <!-- root view (not cluster or unassigned) -->
         <template v-if="!name && routeIsRecognize && !routeIsRecognizeUnassigned">
-          <NcActionButton :aria-label="t('memories', 'Review unnamed people')" @click="$router.push({ name: 'people-review' })" close-after-click>
+          <NcActionButton
+            :aria-label="t('memories', 'Review unnamed people')"
+            @click="$router.push({ name: 'people-review' })"
+            close-after-click
+          >
             {{ t('memories', 'Review unnamed people') }}
             <template #icon> <ReviewIcon :size="20" /> </template>
           </NcActionButton>
@@ -38,11 +42,19 @@
 
         <!-- real cluster -->
         <template v-if="isTogether">
-          <NcActionButton :aria-label="t('memories', 'Add another person')" @click="refs().togetherModal.open()" close-after-click>
+          <NcActionButton
+            :aria-label="t('memories', 'Add another person')"
+            @click="refs().togetherModal.open()"
+            close-after-click
+          >
             {{ t('memories', 'Add another person') }}
             <template #icon> <TogetherIcon :size="20" /> </template>
           </NcActionButton>
-          <NcActionButton :aria-label="t('memories', 'Show only {name}', { name: firstName })" @click="showOnlyFirst" close-after-click>
+          <NcActionButton
+            :aria-label="t('memories', 'Show only {name}', { name: firstName })"
+            @click="showOnlyFirst"
+            close-after-click
+          >
             {{ t('memories', 'Show only {name}', { name: firstName }) }}
             <template #icon> <BackIcon :size="20" /> </template>
           </NcActionButton>
@@ -190,7 +202,16 @@ export default defineComponent({
   mixins: [UserConfig],
 
   data: () => ({
-    progress: null as null | { running: boolean; scanned: number; total: number; percent: number | null; etaSeconds: number | null; waitingForClustering: number; faces: number; clusters: number },
+    progress: null as null | {
+      running: boolean;
+      scanned: number;
+      total: number;
+      percent: number | null;
+      etaSeconds: number | null;
+      waitingForClustering: number;
+      faces: number;
+      clusters: number;
+    },
     progressTimer: null as null | number,
     finding: false,
     personAlbum: null as { album_id: number; name: string } | null,
@@ -250,8 +271,16 @@ export default defineComponent({
       const p = this.progress;
       if (!p) return '';
       if (p.running) {
-        const eta = p.etaSeconds !== null ? ', ' + this.t('memories', '~{min} min left', { min: Math.ceil(p.etaSeconds / 60) }) : '';
-        return this.t('memories', 'scanning {scanned} / {total} photos ({percent} %){eta}', { scanned: p.scanned, total: p.total, percent: p.percent ?? 0, eta });
+        const eta =
+          p.etaSeconds !== null
+            ? ', ' + this.t('memories', '~{min} min left', { min: Math.ceil(p.etaSeconds / 60) })
+            : '';
+        return this.t('memories', 'scanning {scanned} / {total} photos ({percent} %){eta}', {
+          scanned: p.scanned,
+          total: p.total,
+          percent: p.percent ?? 0,
+          eta,
+        });
       }
       if (p.waitingForClustering > 0) {
         return this.t('memories', '{n} faces waiting for clustering', { n: p.waitingForClustering });
@@ -263,7 +292,9 @@ export default defineComponent({
       if (this.routeIsRecognizeUnassigned) {
         return this.t('memories', 'Unassigned faces');
       } else if (!this.name) {
-        return this.progressText ? this.t('memories', 'People') + ' · ' + this.progressText : this.t('memories', 'People');
+        return this.progressText
+          ? this.t('memories', 'People') + ' · ' + this.progressText
+          : this.t('memories', 'People');
       } else if (this.isTogether) {
         return String(this.name)
           .split('|')
@@ -354,7 +385,13 @@ export default defineComponent({
         const clusterId = await this.resolveClusterId();
         const res = await axios.post(generateUrl(`/apps/memories/api/person-albums/${clusterId}`), {});
         this.personAlbum = res.data;
-        showSuccess(this.t('memories', 'Album "{name}" created with {n} photos; new photos of this person are added automatically', { name: res.data.name, n: res.data.added }));
+        showSuccess(
+          this.t(
+            'memories',
+            'Album "{name}" created with {n} photos; new photos of this person are added automatically',
+            { name: res.data.name, n: res.data.added },
+          ),
+        );
         this.openPersonAlbum();
       } catch (error) {
         console.error(error);
@@ -388,7 +425,9 @@ export default defineComponent({
         if (n) utils.bus.emit('memories:timeline:hard-refresh', null);
       } catch (error) {
         console.error(error);
-        showError(this.t('memories', 'Searching for this person failed (is the CristianCasapu Recognize fork installed?)'));
+        showError(
+          this.t('memories', 'Searching for this person failed (is the CristianCasapu Recognize fork installed?)'),
+        );
       } finally {
         this.finding = false;
       }

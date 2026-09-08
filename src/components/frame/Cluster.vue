@@ -19,10 +19,21 @@
 
     <!-- Phone: a row of buttons under the picture -->
     <div class="tile-actions" v-if="showActionBar" @click.stop.prevent @keydown.stop>
-      <button type="button" :title="t('memories', 'Share with a public link')" :disabled="busy" @click="isFace ? sharePersonLink() : shareAlbumLink()">
+      <button
+        type="button"
+        :title="t('memories', 'Share with a public link')"
+        :disabled="busy"
+        @click="isFace ? sharePersonLink() : shareAlbumLink()"
+      >
         <LinkIcon :size="22" />
       </button>
-      <button v-if="isFace" type="button" :title="t('memories', 'Create an album of this person')" :disabled="busy" @click="createPersonAlbum">
+      <button
+        v-if="isFace"
+        type="button"
+        :title="t('memories', 'Create an album of this person')"
+        :disabled="busy"
+        @click="createPersonAlbum"
+      >
         <AlbumIcon :size="22" />
       </button>
       <button v-if="isAlbum" type="button" :title="t('memories', 'Share album')" @click="shareAlbum">
@@ -34,7 +45,13 @@
       <button v-if="isAlbum" type="button" :title="t('memories', 'Download album')" @click="downloadAlbum">
         <DownloadIcon :size="22" />
       </button>
-      <button v-if="isAlbum && owned" type="button" class="danger" :title="t('memories', 'Delete album')" @click="deleteAlbum">
+      <button
+        v-if="isAlbum && owned"
+        type="button"
+        class="danger"
+        :title="t('memories', 'Delete album')"
+        @click="deleteAlbum"
+      >
         <DeleteIcon :size="22" />
       </button>
     </div>
@@ -49,11 +66,21 @@
 
         <!-- person -->
         <template v-if="isFace">
-          <NcActionButton :aria-label="t('memories', 'Share with a public link')" :disabled="busy" @click="sharePersonLink" close-after-click>
+          <NcActionButton
+            :aria-label="t('memories', 'Share with a public link')"
+            :disabled="busy"
+            @click="sharePersonLink"
+            close-after-click
+          >
             {{ t('memories', 'Share with a public link') }}
             <template #icon> <LinkIcon :size="20" /> </template>
           </NcActionButton>
-          <NcActionButton :aria-label="t('memories', 'Create an album of this person')" :disabled="busy" @click="createPersonAlbum" close-after-click>
+          <NcActionButton
+            :aria-label="t('memories', 'Create an album of this person')"
+            :disabled="busy"
+            @click="createPersonAlbum"
+            close-after-click
+          >
             {{ t('memories', 'Create an album of this person') }}
             <template #icon> <AlbumIcon :size="20" /> </template>
           </NcActionButton>
@@ -61,26 +88,36 @@
 
         <!-- album -->
         <template v-if="isAlbum">
-        <NcActionButton :aria-label="t('memories', 'Share with a public link')" :disabled="busy" @click="shareAlbumLink" close-after-click>
-          {{ t('memories', 'Share with a public link') }}
-          <template #icon> <LinkIcon :size="20" /> </template>
-        </NcActionButton>
-        <NcActionButton :aria-label="t('memories', 'Share album')" @click="shareAlbum" close-after-click>
-          {{ t('memories', 'Share album') }}
-          <template #icon> <ShareIcon :size="20" /> </template>
-        </NcActionButton>
-        <NcActionButton v-if="owned" :aria-label="t('memories', 'Edit album')" @click="editAlbum" close-after-click>
-          {{ t('memories', 'Edit album') }}
-          <template #icon> <EditIcon :size="20" /> </template>
-        </NcActionButton>
-        <NcActionButton :aria-label="t('memories', 'Download album')" @click="downloadAlbum" close-after-click>
-          {{ t('memories', 'Download album') }}
-          <template #icon> <DownloadIcon :size="20" /> </template>
-        </NcActionButton>
-        <NcActionButton v-if="owned" :aria-label="t('memories', 'Delete album')" @click="deleteAlbum" close-after-click>
-          {{ t('memories', 'Delete album') }}
-          <template #icon> <DeleteIcon :size="20" /> </template>
-        </NcActionButton>
+          <NcActionButton
+            :aria-label="t('memories', 'Share with a public link')"
+            :disabled="busy"
+            @click="shareAlbumLink"
+            close-after-click
+          >
+            {{ t('memories', 'Share with a public link') }}
+            <template #icon> <LinkIcon :size="20" /> </template>
+          </NcActionButton>
+          <NcActionButton :aria-label="t('memories', 'Share album')" @click="shareAlbum" close-after-click>
+            {{ t('memories', 'Share album') }}
+            <template #icon> <ShareIcon :size="20" /> </template>
+          </NcActionButton>
+          <NcActionButton v-if="owned" :aria-label="t('memories', 'Edit album')" @click="editAlbum" close-after-click>
+            {{ t('memories', 'Edit album') }}
+            <template #icon> <EditIcon :size="20" /> </template>
+          </NcActionButton>
+          <NcActionButton :aria-label="t('memories', 'Download album')" @click="downloadAlbum" close-after-click>
+            {{ t('memories', 'Download album') }}
+            <template #icon> <DownloadIcon :size="20" /> </template>
+          </NcActionButton>
+          <NcActionButton
+            v-if="owned"
+            :aria-label="t('memories', 'Delete album')"
+            @click="deleteAlbum"
+            close-after-click
+          >
+            {{ t('memories', 'Delete album') }}
+            <template #icon> <DeleteIcon :size="20" /> </template>
+          </NcActionButton>
         </template>
       </NcActions>
     </div>
@@ -200,10 +237,10 @@ export default defineComponent({
     /** a named person from Recognize (not the "unassigned" pseudo cluster) */
     isFace(): boolean {
       return (
-        this.data.cluster_type === 'recognize'
-        && !this.plus
-        && String((this.data as any).name ?? '') !== 'NULL'
-        && (this.data as any).user_id === utils.uid
+        this.data.cluster_type === 'recognize' &&
+        !this.plus &&
+        String((this.data as any).name ?? '') !== 'NULL' &&
+        (this.data as any).user_id === utils.uid
       );
     },
 
@@ -391,15 +428,25 @@ $actionbar: 44px;
     padding: 0;
     margin: 0;
 
-    &.danger { color: var(--color-error); }
-    &:disabled { opacity: 0.5; }
+    &.danger {
+      color: var(--color-error);
+    }
+    &:disabled {
+      opacity: 0.5;
+    }
   }
 }
 
 .has-actions {
-  :deep .previews { height: calc(100% - #{$actionbar}); }
-  .name { bottom: $actionbar; }
-  .count-bubble { top: 6px; }
+  :deep .previews {
+    height: calc(100% - #{$actionbar});
+  }
+  .name {
+    bottom: $actionbar;
+  }
+  .count-bubble {
+    top: 6px;
+  }
 }
 
 .cluster,

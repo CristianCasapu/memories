@@ -89,7 +89,7 @@ final class SimilarBackend extends Backend
             if (\count($files) < 2) {
                 continue;
             }
-            $cover = (int) $files[0];
+            $cover = $files[0];
             $bytes = 0;
             foreach ($files as $id) {
                 $bytes += $visible[(int) $id]['size'];

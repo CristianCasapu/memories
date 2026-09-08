@@ -33,11 +33,7 @@
           {{ t('memories', 'Weekly notification with your memories from this week in past years') }}
         </NcCheckboxRadioSwitch>
 
-        <NcCheckboxRadioSwitch
-          v-model="config.stack_raw_files"
-          @update:model-value="updateStackRawFiles"
-          type="switch"
-        >
+        <NcCheckboxRadioSwitch v-model="config.stack_raw_files" @update:model-value="updateStackRawFiles" type="switch">
           {{ t('memories', 'Stack RAW files with same name') }}
         </NcCheckboxRadioSwitch>
 

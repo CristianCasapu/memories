@@ -56,7 +56,10 @@ export default defineComponent({
       this.fromList = typeof name === 'string';
       if (edit) {
         try {
-          this.album = await dav.getAlbum(user ?? String(this.$route.params.user), name ?? String(this.$route.params.name));
+          this.album = await dav.getAlbum(
+            user ?? String(this.$route.params.user),
+            name ?? String(this.$route.params.name),
+          );
         } catch (e) {
           console.error(e);
           showError(this.t('memories', 'Could not load the selected album'));

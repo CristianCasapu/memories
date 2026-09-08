@@ -18,16 +18,19 @@ final class FreesoundProvider implements ProviderInterface
 
     public function __construct(private IClientService $clients) {}
 
+    #[\Override]
     public function id(): string
     {
         return 'freesound';
     }
 
+    #[\Override]
     public function configured(): bool
     {
         return '' !== trim((string) SystemConfig::get('memories.music.freesound_token'));
     }
 
+    #[\Override]
     public function find(array $tags, int $minSeconds, int $maxSeconds): ?Track
     {
         $client = $this->clients->newClient();
@@ -41,7 +44,15 @@ final class FreesoundProvider implements ProviderInterface
         ];
         $response = $client->get(self::API, ['query' => $query, 'timeout' => 20]);
         $data = json_decode((string) $response->getBody(), true);
-        $results = array_values(array_filter($data['results'] ?? [], static fn ($r) => !empty($r['previews']['preview-hq-mp3'])));
+        /** @var list<array<string, mixed>> $results */
+        $results = [];
+        if (\is_array($data) && \is_array($data['results'] ?? null)) {
+            foreach ($data['results'] as $r) {
+                if (\is_array($r) && !empty($r['previews']['preview-hq-mp3'])) {
+                    $results[] = $r;
+                }
+            }
+        }
         if (0 === \count($results)) {
             return null;
         }

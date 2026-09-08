@@ -254,7 +254,7 @@ final class Cleanup
             } elseif ($age < $maxAge) {
                 continue;
             }
-            $size = $isLink ? 0 : (int) $stat['size'];
+            $size = $isLink ? 0 : $stat['size'];
             if ($dryRun || @unlink($path)) {
                 ++$result['files'];
                 $result['bytes'] += $size;
@@ -273,7 +273,7 @@ final class Cleanup
     private static function matchesAny(string $name, array $patterns): bool
     {
         foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $name)) {
+            if ('' !== $pattern && preg_match($pattern, $name)) {
                 return true;
             }
         }

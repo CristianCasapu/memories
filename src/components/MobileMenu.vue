@@ -77,9 +77,7 @@ export default defineComponent({
   mounted() {
     try {
       const apps = (loadState('core', 'apps', []) as CoreApp[]) || [];
-      this.apps = apps
-        .filter((a) => a.id !== 'memories')
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      this.apps = apps.filter((a) => a.id !== 'memories').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     } catch {
       this.apps = [];
     }

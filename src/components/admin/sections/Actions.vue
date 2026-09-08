@@ -2,7 +2,14 @@
   <div class="admin-section">
     <h2>{{ $options.title }}</h2>
 
-    <p>{{ t('memories', 'Maintenance actions of the CristianCasapu fork. Each one runs now and reports the result here; the same actions are available as occ commands.') }}</p>
+    <p>
+      {{
+        t(
+          'memories',
+          'Maintenance actions of the CristianCasapu fork. Each one runs now and reports the result here; the same actions are available as occ commands.',
+        )
+      }}
+    </p>
 
     <div class="actions">
       <div class="action" v-for="a in actions" :key="a.id">
@@ -48,19 +55,28 @@ export default defineComponent({
       {
         id: 'person-albums',
         label: t('memories', 'Sync person albums'),
-        description: t('memories', 'Add newly recognized photos to the automatic albums of people (occ memories:person-albums-sync)'),
+        description: t(
+          'memories',
+          'Add newly recognized photos to the automatic albums of people (occ memories:person-albums-sync)',
+        ),
         url: '/apps/memories/api/admin/person-albums-sync',
       },
       {
         id: 'recap',
         label: t('memories', 'Send me the weekly recap'),
-        description: t('memories', 'Test the "Your memories from this week" notification on your own account (occ memories:weekly-recap)'),
+        description: t(
+          'memories',
+          'Test the "Your memories from this week" notification on your own account (occ memories:weekly-recap)',
+        ),
         url: '/apps/memories/api/admin/weekly-recap-test',
       },
       {
         id: 'index',
         label: t('memories', 'Index new photos'),
-        description: t('memories', 'Run the indexer once now (occ memories:index); normally done by the background job'),
+        description: t(
+          'memories',
+          'Run the indexer once now (occ memories:index); normally done by the background job',
+        ),
         url: '/apps/memories/api/admin/index',
       },
     ] as IAction[],

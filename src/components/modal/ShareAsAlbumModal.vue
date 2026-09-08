@@ -7,7 +7,9 @@
     <div class="outer">
       <div class="hint" v-if="loading">{{ t('memories', 'Collecting photos …') }}</div>
       <div class="hint" v-else>
-        {{ n('memories', '%n photo will be added to the album', '%n photos will be added to the album', photos.length) }}
+        {{
+          n('memories', '%n photo will be added to the album', '%n photos will be added to the album', photos.length)
+        }}
       </div>
 
       <NcTextField
@@ -25,7 +27,12 @@
       <NcButton @click="close" class="button" variant="secondary">
         {{ t('memories', 'Cancel') }}
       </NcButton>
-      <NcButton @click="submit" class="button" variant="primary" :disabled="busy || loading || !name.trim() || !photos.length">
+      <NcButton
+        @click="submit"
+        class="button"
+        variant="primary"
+        :disabled="busy || loading || !name.trim() || !photos.length"
+      >
         {{ t('memories', 'Create album and share') }}
       </NcButton>
     </template>

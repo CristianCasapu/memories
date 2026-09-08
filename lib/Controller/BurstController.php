@@ -61,7 +61,10 @@ final class BurstController extends GenericApiController
             $userFolder = Util::getUserFolder();
             $preview = \OC::$server->get(IPreview::class);
             $tmp = \OC::$server->get(ITempManager::class);
-            $dir = $tmp->getTemporaryFolder();
+            $dir = (string) $tmp->getTemporaryFolder();
+            if ('' === $dir) {
+                throw new \Exception('no temporary folder');
+            }
 
             $first = null;
             $n = 0;
@@ -100,7 +103,7 @@ final class BurstController extends GenericApiController
             $musicService = \OC::$server->get(\OCA\Memories\Service\Music\MusicService::class);
             if ('none' !== $music && $musicService->enabled()) {
                 try {
-                    $seconds = $n / $fps;
+                    $seconds = (float) $n / $fps;
                     $chosen = $musicService->mood($music, $ordered);
                     $mood = $chosen['mood'];
                     $track = $musicService->pick($mood, (int) ceil($seconds));

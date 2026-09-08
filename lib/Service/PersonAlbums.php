@@ -206,7 +206,7 @@ final class PersonAlbums
             $allowed = array_flip(array_map('intval', $query->executeQuery()->fetchAll(\PDO::FETCH_COLUMN)));
             // safety: never empty an album because the person has no photos in scope right now
             if (0 === \count($allowed)) {
-                return $added ?? 0;
+                return 0;
             }
             foreach ($inAlbum as $fileId) {
                 if (!isset($allowed[$fileId])) {

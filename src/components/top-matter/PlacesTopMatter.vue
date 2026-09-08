@@ -11,7 +11,12 @@
 
     <div class="right-actions">
       <NcActions :inline="1">
-        <NcActionButton v-if="name" :aria-label="t('memories', 'Share as album')" @click="shareView($route, name)" close-after-click>
+        <NcActionButton
+          v-if="name"
+          :aria-label="t('memories', 'Share as album')"
+          @click="shareView($route, name)"
+          close-after-click
+        >
           {{ t('memories', 'Share as album') }}
           <template #icon> <ShareIcon :size="20" /> </template>
         </NcActionButton>
