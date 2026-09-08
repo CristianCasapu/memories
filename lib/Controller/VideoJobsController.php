@@ -52,15 +52,12 @@ final class VideoJobsController extends GenericApiController
         return Util::guardEx(static function () use ($fileids, $albumUser, $albumName, $event, $mode, $n) {
             $picker = \OC::$server->get(\OCA\Memories\Service\ClipPicker::class);
 
-            /** @var list<int> $candidates */
-            $candidates = [];
-            foreach ($fileids as $id) {
-                $candidates[] = (int) $id;
-            }
             if ('' !== $albumName) {
                 $candidates = $picker->albumPhotos('' !== $albumUser ? $albumUser : Util::getUID(), $albumName);
             } elseif ($event > 0) {
                 $candidates = $picker->eventPhotos($event);
+            } else {
+                $candidates = self::ints($fileids);
             }
             if (\count($candidates) < 2) {
                 throw Exceptions::BadRequest('not enough photos');
@@ -122,6 +119,17 @@ final class VideoJobsController extends GenericApiController
     public function deleteAny(int $id): Http\Response
     {
         return $this->act($id, 'delete', true);
+    }
+
+    /** @return list<int> */
+    private static function ints(array $values): array
+    {
+        $out = [];
+        foreach ($values as $v) {
+            $out[] = (int) $v;
+        }
+
+        return $out;
     }
 
     private function act(int $id, string $what, bool $admin): Http\Response

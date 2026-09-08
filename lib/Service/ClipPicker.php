@@ -64,7 +64,11 @@ final class ClipPicker
         return $this->inCaptureOrder(self::head($chosen, $n));
     }
 
-    /** All photos of an album the user can see. @return list<int> */
+    /**
+     * All photos of an album the user can see.
+     *
+     * @return list<int>
+     */
     public function albumPhotos(string $albumUser, string $albumName): array
     {
         $uid = Util::getUID();
@@ -88,7 +92,11 @@ final class ClipPicker
         return array_map('intval', $query->executeQuery()->fetchAll(\PDO::FETCH_COLUMN));
     }
 
-    /** The photos of one of the user's automatic events. @return list<int> */
+    /**
+     * The photos of one of the user's automatic events.
+     *
+     * @return list<int>
+     */
     public function eventPhotos(int $eventId): array
     {
         $query = $this->db->getQueryBuilder();
