@@ -32,12 +32,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, markRaw, type PropType } from 'vue';
 
 import { showError } from '@nextcloud/dialogs';
 
-import NcActions from '@nextcloud/vue/dist/Components/NcActions.js';
-import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js';
+import NcActions from '@nextcloud/vue/components/NcActions';
+import NcActionButton from '@nextcloud/vue/components/NcActionButton';
 
 import UserConfig from '@mixins/UserConfig';
 
@@ -199,20 +199,20 @@ export default defineComponent({
     this.defaultActions = [
       {
         name: t('memories', 'Delete'),
-        icon: DeleteIcon,
+        icon: markRaw(DeleteIcon),
         callback: this.deleteSelection.bind(this),
         allowPublic: true,
         if: () => !this.routeIsAlbums && (!this.routeIsPublic || this.initstate.allow_delete),
       },
       {
         name: t('memories', 'Remove from album'),
-        icon: AlbumRemoveIcon,
+        icon: markRaw(AlbumRemoveIcon),
         callback: this.deleteSelection.bind(this),
         if: () => this.routeIsAlbums,
       },
       {
         name: t('memories', 'Share'),
-        icon: ShareIcon,
+        icon: markRaw(ShareIcon),
         callback: this.shareSelection.bind(this),
         if: () => !this.routeIsAlbums,
       },
@@ -224,7 +224,7 @@ export default defineComponent({
       },
       {
         name: t('memories', 'Download'),
-        icon: DownloadIcon,
+        icon: markRaw(DownloadIcon),
         callback: this.downloadSelection.bind(this),
         allowPublic: true,
         if: () => !this.initstate.noDownload,
@@ -240,65 +240,65 @@ export default defineComponent({
       },
       {
         name: t('memories', 'Favorite'),
-        icon: StarIcon,
+        icon: markRaw(StarIcon),
         callback: this.favoriteSelection.bind(this),
       },
       {
         name: t('memories', 'Archive'),
-        icon: ArchiveIcon,
+        icon: markRaw(ArchiveIcon),
         callback: this.archiveSelection.bind(this),
         if: () => !this.routeIsArchiveFolder() && !this.routeIsAlbums,
       },
       {
         name: t('memories', 'Unarchive'),
-        icon: UnarchiveIcon,
+        icon: markRaw(UnarchiveIcon),
         callback: this.archiveSelection.bind(this),
         if: () => this.routeIsArchiveFolder(),
       },
       {
         name: t('memories', 'Edit metadata'),
-        icon: EditFileIcon,
+        icon: markRaw(EditFileIcon),
         callback: this.editMetadataSelection.bind(this),
       },
       {
         name: t('memories', 'Rotate / Flip'),
-        icon: RotateLeftIcon,
+        icon: markRaw(RotateLeftIcon),
         callback: () => this.editMetadataSelection(this.selection, [5]),
       },
       {
         name: t('memories', 'View in folder'),
-        icon: OpenInNewIcon,
+        icon: markRaw(OpenInNewIcon),
         callback: this.viewInFolder.bind(this),
         if: () => this.selection.size === 1 && !this.routeIsAlbums,
       },
       {
         name: t('memories', 'Set as cover image'),
-        icon: ImageCheckIcon,
+        icon: markRaw(ImageCheckIcon),
         callback: this.setClusterCover.bind(this),
         if: () => this.selection.size === 1 && this.routeIsCluster && !this.routeIsRecognizeUnassigned,
       },
       {
         name: t('memories', 'Move to folder'),
-        icon: FolderMoveIcon,
+        icon: markRaw(FolderMoveIcon),
         callback: this.moveToFolder.bind(this),
         if: () => !this.routeIsAlbums && !this.routeIsArchiveFolder(),
       },
       {
         name: t('memories', 'Add to album'),
-        icon: AlbumsIcon,
+        icon: markRaw(AlbumsIcon),
         callback: this.addToAlbum.bind(this),
         if: (self: any) => self.config.albums_enabled && !self.routeIsAlbums,
       },
       {
         id: 'face-move',
         name: t('memories', 'Move to person'),
-        icon: MoveIcon,
+        icon: markRaw(MoveIcon),
         callback: this.moveSelectionToPerson.bind(this),
         if: () => this.routeIsRecognize,
       },
       {
         name: t('memories', 'Remove from person'),
-        icon: CloseIcon,
+        icon: markRaw(CloseIcon),
         callback: this.removeSelectionFromPerson.bind(this),
         if: () => this.routeIsRecognize && !this.routeIsRecognizeUnassigned,
       },
@@ -315,7 +315,7 @@ export default defineComponent({
     utils.bus.on('memories:fragment:pop:selection', this.clear);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     // Unsubscribe from global events
     utils.bus.off('memories:albums:update', this.clear);
     utils.bus.off('memories:fragment:pop:selection', this.clear);
@@ -568,7 +568,7 @@ export default defineComponent({
       const elem: any = document
         .elementsFromPoint(touch.clientX, clampedY)
         .find((e) => e.classList.contains('p-outer-super'));
-      let overPhoto: IPhoto | null = elem?.__vue__?.data;
+      let overPhoto: IPhoto | null = elem?.__photo;
       if (overPhoto && overPhoto.flag & this.c.FLAG_PLACEHOLDER) overPhoto = null;
 
       // Do multi-selection "till" overPhoto "from" anchor
@@ -930,7 +930,7 @@ export default defineComponent({
      */
     async viewInFolder(selection: Selection) {
       if (selection.size !== 1) return;
-      dav.viewInFolder(selection.values().next().value);
+      dav.viewInFolder(selection.values().next().value!);
     },
 
     /**
@@ -938,7 +938,7 @@ export default defineComponent({
      */
     async setClusterCover(selection: Selection) {
       if (selection.size !== 1 || !this.routeIsCluster) return;
-      if (await dav.setClusterCover(selection.values().next().value)) {
+      if (await dav.setClusterCover(selection.values().next().value!)) {
         this.clear();
       }
     },
@@ -988,7 +988,7 @@ export default defineComponent({
       if (!this.routeIsRecognize || !user || !name) return;
 
       // Check photo ownership
-      if (this.$route.params.user !== utils.uid) {
+      if (this.$route.params.user?.toString() !== utils.uid) {
         showError(this.t('memories', 'Only user "{user}" can update this person', { user }));
         return;
       }
@@ -1003,7 +1003,7 @@ export default defineComponent({
       const photos = Array.from(map.values());
 
       // Run WebDAV query
-      for await (let delIds of dav.recognizeDeleteFaceImages(user, name, photos)) {
+      for await (let delIds of dav.recognizeDeleteFaceImages(user.toString(), name.toString(), photos)) {
         const fileIds = delIds.map((id) => map.get(id)?.fileid).filter(utils.truthy);
         this.deleteSelectedPhotosById(fileIds, selection);
       }

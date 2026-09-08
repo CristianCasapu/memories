@@ -68,17 +68,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, defineAsyncComponent } from 'vue';
 
 import { showError } from '@nextcloud/dialogs';
 import axios from '@nextcloud/axios';
 
-const NcListItem = () => import('@nextcloud/vue/dist/Components/NcListItem.js');
+const NcListItem = defineAsyncComponent(() => import('@nextcloud/vue/components/NcListItem'));
 
 import UserConfig from '@mixins/UserConfig';
 
 import Modal from './Modal.vue';
 import ModalMixin from './ModalMixin';
+import XLoadingIcon from '@components/XLoadingIcon.vue';
 
 import { API } from '@services/API';
 import * as dav from '@services/dav';
@@ -98,6 +99,7 @@ export default defineComponent({
   components: {
     NcListItem,
     Modal,
+    XLoadingIcon,
 
     PhotoIcon,
     LargePhotoIcon,
@@ -336,7 +338,7 @@ ul.options {
   padding-top: 10px;
   padding-bottom: 5px;
 
-  :deep .avatar {
+  :deep(.avatar) {
     padding: 0 0.5em;
   }
 

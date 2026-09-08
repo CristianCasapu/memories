@@ -299,8 +299,7 @@ final class AdminController extends GenericApiController
                 $out->setHeader('Content-Length: 0');
 
                 $places = \OC::$server->get(\OCA\Memories\Service\Places::class);
-                $datafile = $places->downloadPlanet();
-                $places->importPlanet($datafile);
+                $places->downloadImportPlanet();
                 $places->recalculateAll();
 
                 $out->setOutput("Places set up successfully.\n");

@@ -32,8 +32,8 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 
-import NcActions from '@nextcloud/vue/dist/Components/NcActions.js';
-import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js';
+import NcActions from '@nextcloud/vue/components/NcActions';
+import NcActionButton from '@nextcloud/vue/components/NcActionButton';
 
 import * as utils from '@services/utils';
 import * as dav from '@services/dav';
@@ -42,6 +42,7 @@ import type { IPhoto } from '@typings';
 
 import LeftMoveIcon from 'vue-material-design-icons/ChevronLeft.vue';
 import RightMoveIcon from 'vue-material-design-icons/ChevronRight.vue';
+import XImg from '@components/frame/XImg.vue';
 
 interface IYear {
   year: number;
@@ -58,6 +59,7 @@ export default defineComponent({
     NcActionButton,
     LeftMoveIcon,
     RightMoveIcon,
+    XImg,
   },
 
   emits: {
@@ -73,19 +75,13 @@ export default defineComponent({
   }),
 
   computed: {
-    refs() {
-      return this.$refs as {
-        inner?: HTMLDivElement;
-      };
-    },
-
     photosPerYear(): number {
       return staticConfig.getSync('onthisday_photos_per_year');
     },
   },
 
   mounted() {
-    const inner = this.refs.inner!;
+    const inner = this.refs().inner!;
 
     inner.addEventListener('scroll', this.onScroll.bind(this), {
       passive: true,
@@ -97,11 +93,17 @@ export default defineComponent({
     this.refreshNow();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.resizeObserver?.disconnect();
   },
 
   methods: {
+    refs() {
+      return this.$refs as {
+        inner?: HTMLDivElement;
+      };
+    },
+
     onload() {
       this.$emit('load');
     },
@@ -189,12 +191,12 @@ export default defineComponent({
     },
 
     moveLeft() {
-      const inner = this.refs.inner!;
+      const inner = this.refs().inner!;
       inner.scrollBy(-(this.scrollStack.pop() || inner.clientWidth), 0);
     },
 
     moveRight() {
-      const inner = this.refs.inner!;
+      const inner = this.refs().inner!;
       const innerRect = inner.getBoundingClientRect();
       const nextChild = Array.from(inner.children)
         .map((c) => c.getBoundingClientRect())
@@ -207,7 +209,7 @@ export default defineComponent({
     },
 
     onScroll() {
-      const inner = this.refs.inner;
+      const inner = this.refs().inner;
       if (!inner) return;
       this.hasLeft = inner.scrollLeft > 0;
       this.hasRight = inner.clientWidth + inner.scrollLeft < inner.scrollWidth - 20;
@@ -246,7 +248,7 @@ $mobHeight: 165px;
     will-change: scroll-position;
   }
 
-  :deep .dir-btn button {
+  :deep(.dir-btn button) {
     transform: scale(0.6);
     box-shadow: var(--color-main-text) 0 0 3px 0 !important;
     background-color: var(--color-main-background) !important;

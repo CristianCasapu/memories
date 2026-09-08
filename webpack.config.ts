@@ -6,6 +6,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
+const MiB = 1024 * 1024;
 const appName = process.env.npm_package_name!;
 const appVersion = process.env.npm_package_version!;
 const buildMode = process.env.NODE_ENV;
@@ -71,6 +72,12 @@ module.exports = {
     ],
   },
 
+  performance: {
+    maxAssetSize: (isDev ? 15 : 3) * MiB,
+    maxEntrypointSize: (isDev ? 15 : 3) * MiB,
+    hints: 'error',
+  },
+
   module: {
     rules: [
       {
@@ -96,6 +103,7 @@ module.exports = {
             loader: 'ts-loader',
             options: {
               appendTsSuffixTo: [/\.vue$/],
+              transpileOnly: true,
             },
           },
         ],
@@ -123,12 +131,20 @@ module.exports = {
     new WorkboxPlugin.InjectManifest({
       swSrc: path.resolve(path.join('src', 'service-worker.ts')),
       swDest: 'memories-service-worker.js',
-      maximumFileSizeToCacheInBytes: (isDev ? 10 : 4) * 1024 * 1024,
+      maximumFileSizeToCacheInBytes: (isDev ? 50 : 20) * MiB,
     }),
 
     // Make appName & appVersion available as a constant
     new webpack.DefinePlugin({ appName: JSON.stringify(appName) }),
     new webpack.DefinePlugin({ appVersion: JSON.stringify(appVersion) }),
+
+    // Vue 3 compile-time feature flags (required to silence the
+    // esm-bundler warning and enable proper tree-shaking)
+    new webpack.DefinePlugin({
+      __VUE_OPTIONS_API__: true,
+      __VUE_PROD_DEVTOOLS__: false,
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+    }),
 
     // Bundle analyzer (npm i --no-save webpack-bundle-analyzer)
     // new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)()
@@ -143,12 +159,20 @@ module.exports = {
       // See https://github.com/nextcloud/nextcloud-vue/issues/3281
       vue$: path.resolve(__dirname, 'node_modules', 'vue'),
 
+      // Use plyr source instead of the prebuilt dist so that
+      // patches/plyr-wrap.patch actually takes effect at runtime.
+      // The $ keeps subpath imports like 'plyr/dist/plyr.css' untouched.
+      plyr$: path.resolve(__dirname, 'node_modules', 'plyr', 'src', 'js', 'plyr.js'),
+
       // You also need to update tsconfig.json
       '@services': path.resolve(__dirname, 'src', 'services'),
       '@assets': path.resolve(__dirname, 'src', 'assets'),
       '@components': path.resolve(__dirname, 'src', 'components'),
       '@mixins': path.resolve(__dirname, 'src', 'mixins'),
       '@native': path.resolve(__dirname, 'src', 'native'),
+    },
+    fallback: {
+      stream: require.resolve('stream-browserify'),
     },
   },
 };

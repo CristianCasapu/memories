@@ -74,12 +74,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import type { Component } from 'vue';
+import { defineComponent, defineAsyncComponent, markRaw } from 'vue';
+import type { Component, PropType } from 'vue';
 
-import NcActions from '@nextcloud/vue/dist/Components/NcActions.js';
-import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js';
-const NcAvatar = () => import('@nextcloud/vue/dist/Components/NcAvatar.js');
+import NcActions from '@nextcloud/vue/components/NcActions';
+import NcActionButton from '@nextcloud/vue/components/NcActionButton';
+const NcAvatar = defineAsyncComponent(() => import('@nextcloud/vue/components/NcAvatar'));
 
 import axios from '@nextcloud/axios';
 import { getCanonicalLocale } from '@nextcloud/l10n';
@@ -88,6 +88,7 @@ import { DateTime } from 'luxon';
 import UserConfig from '@mixins/UserConfig';
 import Cluster from '@components/frame/Cluster.vue';
 import AlbumsList from '@components/modal/AlbumsList.vue';
+import XLoadingIcon from '@components/XLoadingIcon.vue';
 
 import EditIcon from 'vue-material-design-icons/Pencil.vue';
 import CalendarIcon from 'vue-material-design-icons/Calendar.vue';
@@ -101,6 +102,7 @@ import * as dav from '@services/dav';
 import { API } from '@services/API';
 
 import type { IAlbum, IFace, IImageInfo, IPhoto, IExif } from '@typings';
+import type { IFolder, INode, IView } from '@nextcloud/files';
 
 interface TopField {
   id?: string;
@@ -120,9 +122,37 @@ export default defineComponent({
     AlbumsList,
     Cluster,
     EditIcon,
+    XLoadingIcon,
   },
 
   mixins: [UserConfig],
+
+  props: {
+    /** File node when mounted as Files sidebar tab (custom element) */
+    node: {
+      type: Object as PropType<INode>,
+      required: false,
+      default: undefined,
+    },
+    // eslint-disable-next-line vue/no-unused-properties -- Required on the web component interface
+    active: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    // eslint-disable-next-line vue/no-unused-properties -- Required on the web component interface
+    folder: {
+      type: Object as PropType<IFolder>,
+      required: false,
+      default: undefined,
+    },
+    // eslint-disable-next-line vue/no-unused-properties -- Required on the web component interface
+    view: {
+      type: Object as PropType<IView>,
+      required: false,
+      default: undefined,
+    },
+  },
 
   data: () => ({
     fileid: null as number | null,
@@ -140,7 +170,7 @@ export default defineComponent({
     utils.bus.on('memories:albums:update', this.refresh);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     utils.bus.off('files:file:updated', this.handleFileUpdated);
     utils.bus.off('memories:albums:update', this.refresh);
   },
@@ -153,7 +183,7 @@ export default defineComponent({
         list.push({
           title: this.dateOriginalStr!,
           subtitle: this.dateOriginalTime!,
-          icon: CalendarIcon,
+          icon: markRaw(CalendarIcon),
           edit: this.editDate,
         });
       }
@@ -162,7 +192,7 @@ export default defineComponent({
         list.push({
           title: this.camera,
           subtitle: this.cameraSub,
-          icon: CameraIrisIcon,
+          icon: markRaw(CameraIrisIcon),
         });
       }
 
@@ -171,7 +201,7 @@ export default defineComponent({
           id: 'image-info', // adds class
           title: this.imageInfoTitle,
           subtitle: this.imageInfoSub,
-          icon: ImageIcon,
+          icon: markRaw(ImageIcon),
           href: this.filepath
             ? dav.viewInFolderUrl({
                 fileid: this.fileid!,
@@ -185,7 +215,7 @@ export default defineComponent({
         list.push({
           title: this.tagNamesStr,
           subtitle: [],
-          icon: TagIcon,
+          icon: markRaw(TagIcon),
           edit: this.editTags,
         });
       }
@@ -194,7 +224,7 @@ export default defineComponent({
         list.push({
           title: this.address || this.t('memories', 'No coordinates'),
           subtitle: this.address ? [] : [this.t('memories', 'Click edit to set location')],
-          icon: LocationIcon,
+          icon: markRaw(LocationIcon),
           href: this.address ? this.mapFullUrl : undefined,
           edit: this.editGeo,
         });
@@ -404,6 +434,18 @@ export default defineComponent({
     },
   },
 
+  watch: {
+    node: {
+      immediate: true,
+      handler() {
+        const fileid = Number(this.node?.fileid ?? this.node?.id ?? 0);
+        if (fileid) {
+          this.update(fileid);
+        }
+      },
+    },
+  },
+
   methods: {
     async update(photo: number | IPhoto): Promise<IImageInfo | null> {
       this.invalidateUnless(0);
@@ -552,7 +594,7 @@ export default defineComponent({
 
 .albums {
   font-size: 0.96em;
-  :deep .line-one__title {
+  :deep(.line-one__title) {
     font-weight: 400 !important; // no bold title
   }
 }
@@ -569,7 +611,7 @@ export default defineComponent({
     display: inline-block;
     margin-right: 10px;
 
-    :deep .material-design-icon {
+    :deep(.material-design-icon) {
       color: var(--color-text-lighter);
     }
   }

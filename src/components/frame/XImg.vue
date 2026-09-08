@@ -50,7 +50,7 @@ export default defineComponent({
     this.loadImage();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this._state = -1;
 
     // Free up the blob if it was locked
@@ -116,7 +116,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-div.svg > :deep svg {
+div.svg > :deep(svg) {
   width: 100%;
   height: 100%;
 }

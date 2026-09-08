@@ -5,6 +5,7 @@
     :class="{
       hasPreview: previews.length > 0,
       onePreview: previews.length === 1,
+      [`folder--${sanitizedName}`]: true,
     }"
     :to="target"
   >
@@ -33,11 +34,13 @@ import * as utils from '@services/utils/helpers';
 import type { IFolder, IPhoto } from '@typings';
 
 import FolderIcon from 'vue-material-design-icons/Folder.vue';
+import XImg from '@components/frame/XImg.vue';
 
 export default defineComponent({
   name: 'Folder',
   components: {
     FolderIcon,
+    XImg,
   },
 
   mixins: [UserConfig],
@@ -59,9 +62,9 @@ export default defineComponent({
 
       path = [...path, this.data.name]; // intentional copy
       return {
-        ...this.$route,
-        params: { path },
-        hash: undefined,
+        name: this.$route.name,
+        params: { ...this.$route.params, path },
+        query: this.$route.query,
       };
     },
 
@@ -76,6 +79,10 @@ export default defineComponent({
       } else {
         return previews.slice(0, 4);
       }
+    },
+
+    sanitizedName(): string {
+      return this.data.name.replace(/[^a-zA-Z0-9-_]/g, '');
     },
   },
 
@@ -101,7 +108,7 @@ export default defineComponent({
   z-index: 100;
   transition: opacity 0.2s ease-in-out;
 
-  :deep .material-design-icon__svg {
+  :deep(.material-design-icon__svg) {
     width: 50%;
     height: 50%;
   }

@@ -11,6 +11,7 @@
       :crossOrigin="true"
       :zoom="zoom"
       :minZoom="2"
+      @ready="onMapReady"
       @moveend="refreshDebounced"
       @zoomend="refreshDebounced"
       :options="mapOptions"
@@ -23,7 +24,6 @@
               {{ cluster.count }}
             </div>
             <XImg
-              v-once
               :src="clusterPreviewUrl(cluster)"
               :class="['thumb-important', `memories-thumb-${cluster.preview.fileid}`]"
             />
@@ -36,7 +36,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { LMap, LTileLayer, LMarker, LPopup, LIcon } from 'vue2-leaflet';
+import { LMap, LTileLayer, LMarker, LPopup, LIcon } from '@vue-leaflet/vue-leaflet';
 import { latLngBounds, Icon } from 'leaflet';
 
 import axios from '@nextcloud/axios';
@@ -44,7 +44,8 @@ import axios from '@nextcloud/axios';
 import { API } from '@services/API';
 import * as utils from '@services/utils';
 
-import type { IPhoto } from '@typings';
+import type { IMapCluster } from '@typings';
+import XImg from '@components/frame/XImg.vue';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-edgebuffer';
@@ -54,14 +55,6 @@ const OSM_ATTRIBUTION = '&copy; <a target="_blank" href="http://osm.org/copyrigh
 
 // CSS transition time for zooming in/out cluster animation
 const CLUSTER_TRANSITION_TIME = 300;
-
-type IMarkerCluster = {
-  id: number;
-  center: [number, number];
-  count: number;
-  preview: IPhoto;
-  dummy?: boolean;
-};
 
 delete (<any>Icon.Default.prototype)._getIconUrl;
 
@@ -79,6 +72,7 @@ export default defineComponent({
     LMarker,
     LPopup,
     LIcon,
+    XImg,
   },
 
   data: () => ({
@@ -91,33 +85,25 @@ export default defineComponent({
     tileLayerOptions: {
       referrerPolicy: 'origin',
     },
-    clusters: [] as IMarkerCluster[],
+    clusters: [] as IMapCluster[],
     animMarkers: false,
   }),
 
   mounted() {
-    // Make sure the zoom control doesn't overlap with the navbar
-    this.refs.map.mapObject.zoomControl.setPosition('topright');
-
-    // Initialize
-    this.initialize();
+    if (this.refs().map?.leafletObject) {
+      this.onMapReady();
+    }
   },
 
   created() {
     utils.bus.on('memories:window:resize', this.handleContainerResize);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     utils.bus.off('memories:window:resize', this.handleContainerResize);
   },
 
   computed: {
-    refs() {
-      return this.$refs as {
-        map: LMap;
-      };
-    },
-
     tileurl() {
       return OSM_TILE_URL;
     },
@@ -135,6 +121,19 @@ export default defineComponent({
   },
 
   methods: {
+    refs() {
+      return this.$refs as {
+        map: InstanceType<typeof LMap>;
+      };
+    },
+
+    onMapReady() {
+      // Make sure the zoom control doesn't overlap with the navbar
+      this.refs().map.leafletObject!.zoomControl.setPosition('topright');
+
+      // Initialize
+      this.initialize();
+    },
     /**
      * Get initial coordinates for display and set them.
      * Then fetch clusters.
@@ -158,14 +157,14 @@ export default defineComponent({
         }>(API.MAP_INIT());
 
         // Init data contains position information
-        const map = this.refs.map;
+        const map = this.refs().map;
         const pos = init?.data?.pos;
         if (!pos?.lat || !pos?.lon) {
           throw new Error('No position data');
         }
 
         // This will trigger route change -> fetchClusters
-        map.mapObject.setView([pos.lat, pos.lon], 11);
+        map.leafletObject!.setView([pos.lat, pos.lon], 11);
       } catch (e) {
         // We will initialize clusters anyway
       } finally {
@@ -178,11 +177,11 @@ export default defineComponent({
     },
 
     async refresh() {
-      const map = this.refs.map;
-      if (!map || !map.mapObject) return;
+      const map = this.refs().map;
+      if (!map || !map.leafletObject) return;
 
       // Get boundaries of the map
-      const boundary = map.mapObject.getBounds();
+      const boundary = map.leafletObject.getBounds();
       let minLat = boundary.getSouth();
       let maxLat = boundary.getNorth();
       let minLon = boundary.getWest();
@@ -192,7 +191,7 @@ export default defineComponent({
       const bounds = this.boundsToStr({ minLat, maxLat, minLon, maxLon });
 
       // Zoom level
-      this.zoom = Math.round(map.mapObject.getZoom());
+      this.zoom = Math.round(map.leafletObject.getZoom());
 
       // Construct query
       const query = {
@@ -215,7 +214,7 @@ export default defineComponent({
     async fetchClusters() {
       const oldZoom = this.oldZoom;
       const qbounds = this.$route.query.b;
-      const zoom = this.$route.query.z as string;
+      const zoom = this.$route.query.z?.toString();
       const paramsChanged = () => this.$route.query.b !== qbounds || this.$route.query.z !== zoom;
 
       let { minLat, maxLat, minLon, maxLon } = this.boundsFromQuery();
@@ -254,7 +253,7 @@ export default defineComponent({
     },
 
     boundsFromQuery() {
-      const bounds = (this.$route.query.b as string).split(',');
+      const bounds = (this.$route.query.b?.toString() ?? '').split(',');
       return {
         minLat: parseFloat(bounds[0]),
         maxLat: parseFloat(bounds[1]),
@@ -279,26 +278,26 @@ export default defineComponent({
     },
 
     setBoundsFromQuery() {
-      const map = this.refs.map;
+      const map = this.refs().map;
       const { minLat, maxLat, minLon, maxLon } = this.boundsFromQuery();
-      map.mapObject.fitBounds([
+      map.leafletObject!.fitBounds([
         [minLat, minLon],
         [maxLat, maxLon],
       ]);
     },
 
-    clusterPreviewUrl(cluster: IMarkerCluster) {
+    clusterPreviewUrl(cluster: IMapCluster) {
       return utils.getPreviewUrl({
         photo: cluster.preview,
         msize: 256,
       });
     },
 
-    clusterIconClass(cluster: IMarkerCluster) {
+    clusterIconClass(cluster: IMapCluster) {
       return cluster.dummy ? 'dummy' : '';
     },
 
-    zoomTo(cluster: IMarkerCluster) {
+    zoomTo(cluster: IMapCluster) {
       // At high zoom levels, open the photo
       if (this.zoom >= 12 && cluster.preview) {
         cluster.preview.key = cluster.preview.fileid.toString();
@@ -307,10 +306,10 @@ export default defineComponent({
       }
 
       // Zoom in
-      const map = this.refs.map;
+      const map = this.refs().map;
       const factor = globalThis.innerWidth >= 768 ? 2 : 1;
-      const zoom = map.mapObject.getZoom() + factor;
-      map.mapObject.setView(cluster.center, zoom, { animate: true });
+      const zoom = map.leafletObject!.getZoom() + factor;
+      map.leafletObject!.setView(cluster.center, zoom, { animate: true });
     },
 
     getGridKey(center: [number, number], zoom: number) {
@@ -324,8 +323,8 @@ export default defineComponent({
       return `${latGid}-${lonGid}`;
     },
 
-    getGridMap(clusters: IMarkerCluster[], zoom: number) {
-      const gridMap = new Map<string, IMarkerCluster>();
+    getGridMap(clusters: IMapCluster[], zoom: number) {
+      const gridMap = new Map<string, IMapCluster>();
       for (const cluster of clusters) {
         const key = this.getGridKey(cluster.center, zoom);
         gridMap.set(key, cluster);
@@ -333,12 +332,12 @@ export default defineComponent({
       return gridMap;
     },
 
-    async setClustersZoomIn(clusters: IMarkerCluster[], oldZoom: number) {
+    async setClustersZoomIn(clusters: IMapCluster[], oldZoom: number) {
       // Create GID-map for old clusters
       const oldClusters = this.getGridMap(this.clusters, oldZoom);
 
       // Dummy clusters to animate markers
-      const dummyClusters: IMarkerCluster[] = [];
+      const dummyClusters: IMapCluster[] = [];
 
       // Iterate new clusters
       for (const cluster of clusters) {
@@ -364,18 +363,18 @@ export default defineComponent({
       this.clusters = clusters;
     },
 
-    async setClustersZoomOut(clusters: IMarkerCluster[]) {
+    async setClustersZoomOut(clusters: IMapCluster[]) {
       // Get GID-map for new clusters
       const newClustersGid = this.getGridMap(clusters, this.zoom);
 
       // Get ID-map for new clusters
-      const newClustersId = new Map<number, IMarkerCluster>();
+      const newClustersId = new Map<number, IMapCluster>();
       for (const cluster of clusters) {
         newClustersId.set(cluster.id, cluster);
       }
 
       // Dummy clusters to animate markers
-      const dummyClusters: IMarkerCluster[] = [...clusters];
+      const dummyClusters: IMapCluster[] = [...clusters];
 
       // Iterate old clusters
       for (const oldCluster of this.clusters) {
@@ -407,7 +406,7 @@ export default defineComponent({
     },
 
     handleContainerResize() {
-      this.refs.map?.mapObject?.invalidateSize(true);
+      this.refs().map?.leafletObject?.invalidateSize(true);
     },
   },
 });
@@ -426,18 +425,18 @@ export default defineComponent({
   z-index: 0;
   background-color: var(--color-background-dark);
 
-  :deep .leaflet-control-attribution {
+  :deep(.leaflet-control-attribution) {
     background-color: var(--color-background-dark);
     color: var(--color-text-light);
   }
 
-  :deep .leaflet-bar a {
+  :deep(.leaflet-bar a) {
     background-color: var(--color-main-background);
     color: var(--color-main-text);
+  }
 
-    &.leaflet-disabled {
-      opacity: 0.6;
-    }
+  :deep(.leaflet-bar a.leaflet-disabled) {
+    opacity: 0.6;
   }
 }
 

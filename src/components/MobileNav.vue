@@ -46,9 +46,9 @@ export default defineComponent({
   computed: {
     links() {
       return [
-        { to: '/', icon: ImageMultipleIcon, text: t('memories', 'Photos') },
-        { to: '/explore', icon: SearchIcon, text: t('memories', 'Explore') },
-        { to: '/albums', icon: AlbumIcon, text: t('memories', 'Albums') },
+        { to: '/', icon: markRaw(ImageMultipleIcon), text: t('memories', 'Photos') },
+        { to: '/explore', icon: markRaw(SearchIcon), text: t('memories', 'Explore') },
+        { to: '/albums', icon: markRaw(AlbumIcon), text: t('memories', 'Albums') },
       ];
     },
   },
@@ -104,11 +104,11 @@ export default defineComponent({
   font-size: 0.9em;
   overflow: hidden;
 
-  :deep a {
+  :deep(a) {
     flex: 1 1 0px;
     opacity: 0.75;
 
-    span.material-design-icon {
+    :deep(span.material-design-icon) {
       border-radius: 20px;
       padding: 4px;
       max-width: 70px;
@@ -118,7 +118,7 @@ export default defineComponent({
     &.router-link-exact-active {
       opacity: 1;
 
-      span.material-design-icon {
+      :deep(span.material-design-icon) {
         background: var(--color-primary-element-light);
       }
     }

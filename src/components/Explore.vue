@@ -30,12 +30,12 @@
           :key="category.name"
           :to="category.link"
           @click="category.click?.()"
-          type="tertiary-no-background"
+          variant="tertiary-no-background"
         >
           <template #icon>
             <component :is="category.icon" />
           </template>
-          <template>{{ category.name }}</template>
+          {{ category.name }}
         </NcButton>
       </div>
     </div>
@@ -43,13 +43,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, markRaw } from 'vue';
 import type { Component } from 'vue';
 
 import Searchbar from '@components/header/Searchbar.vue';
 import ClusterHList from '@components/ClusterHList.vue';
+import XLoadingIcon from '@components/XLoadingIcon.vue';
 
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
+import NcButton from '@nextcloud/vue/components/NcButton';
 
 import FolderIcon from 'vue-material-design-icons/Folder.vue';
 import StarIcon from 'vue-material-design-icons/Star.vue';
@@ -75,6 +76,7 @@ export default defineComponent({
     ClusterHList,
     NcButton,
     StarIcon,
+    XLoadingIcon,
   },
 
   data: () => ({
@@ -90,37 +92,37 @@ export default defineComponent({
     categories: [
       {
         name: t('memories', 'Folders'),
-        icon: FolderIcon,
+        icon: markRaw(FolderIcon),
         link: '/folders',
       },
       {
         name: t('memories', 'Favorites'),
-        icon: StarIcon,
+        icon: markRaw(StarIcon),
         link: '/favorites',
       },
       {
         name: t('memories', 'Videos'),
-        icon: VideoIcon,
+        icon: markRaw(VideoIcon),
         link: '/videos',
       },
       {
         name: t('memories', 'Archive'),
-        icon: ArchiveIcon,
+        icon: markRaw(ArchiveIcon),
         link: '/archive',
       },
       {
         name: t('memories', 'On this day'),
-        icon: CalendarIcon,
+        icon: markRaw(CalendarIcon),
         link: '/thisday',
       },
       {
         name: t('memories', 'Map'),
-        icon: MapIcon,
+        icon: markRaw(MapIcon),
         link: '/map',
       },
       {
         name: t('memories', 'Settings'),
-        icon: CogIcon,
+        icon: markRaw(CogIcon),
         link: undefined,
         click: _m.modals.showSettings,
         if: () => utils.isMobile(),

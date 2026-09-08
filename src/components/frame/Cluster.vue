@@ -10,7 +10,7 @@
     @click="click"
   >
     <div class="count-bubble" v-if="counters && data.count">
-      <NcCounterBubble> {{ data.count }} </NcCounterBubble>
+      <NcCounterBubble :count="data.count" />
     </div>
     <div class="name">
       <div class="title">{{ title }}</div>
@@ -103,7 +103,7 @@
 </template>
 
 <script lang="ts">
-import Vue, { defineComponent, type PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 
 import NcCounterBubble from '@nextcloud/vue/dist/Components/NcCounterBubble.js';
 import NcActions from '@nextcloud/vue/dist/Components/NcActions.js';
@@ -125,7 +125,6 @@ import errorsvg from '@assets/error.svg';
 import plussvg from '@assets/plus.svg';
 
 import * as nativex from '@native';
-import * as utils from '@services/utils';
 import * as dav from '@services/dav';
 
 import type { ICluster } from '@typings';
@@ -231,7 +230,7 @@ export default defineComponent({
 
   methods: {
     failed() {
-      Vue.set(this.data, 'previewError', true);
+      (this.data as any).previewError = true;
     },
 
     click() {
@@ -408,7 +407,7 @@ img {
 
 .cluster {
   // Get rid of color of the bubble
-  .count-bubble :deep .counter-bubble__counter {
+  .count-bubble :deep(.counter-bubble__counter) {
     color: unset !important;
   }
 
@@ -551,7 +550,7 @@ $namemargin: 10px;
       background-color: var(--color-primary-element-light);
       color: var(--color-primary);
 
-      :deep svg {
+      :deep(svg) {
         cursor: pointer;
       }
     }

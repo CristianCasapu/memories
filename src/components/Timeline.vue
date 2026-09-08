@@ -20,8 +20,8 @@
     <TimelineTopOverlay
       ref="topOverlay"
       :heads="heads"
-      :container="refs.container?.$el"
-      :recycler="refs.recycler?.$el"
+      :container="refs().container?.$el"
+      :recycler="refs().recycler?.$el"
     />
 
     <!-- Main recycler view for rows -->
@@ -47,17 +47,17 @@
           <div class="mobile-header-top-gap"></div>
 
           <!-- Route-specific top matter -->
-          <DynamicTopMatter ref="dtm" @load="refs.scrollerManager.adjust()" />
+          <DynamicTopMatter ref="dtm" @load="refs().scrollerManager.adjust()" />
         </div>
       </template>
 
       <template v-slot="{ item, index }">
-        <RowHead v-if="item.type === 0" :item="item" @click="refs.selectionManager.selectHead(item)" />
+        <RowHead v-if="item.type === 0" :item="item" @click="refs().selectionManager.selectHead(item)" />
 
         <template v-else>
           <Photo
             class="photo top-left"
-            v-for="photo of item.photos"
+            v-for="photo of item.photos ?? []"
             :key="photo.key"
             :style="{
               height: `${photo.dispH}px`,
@@ -66,11 +66,11 @@
             }"
             :data="photo"
             :day="item.day"
-            @select="refs.selectionManager.clickSelectionIcon(photo, $event, index)"
-            @pointerdown="refs.selectionManager.clickPhoto(photo, $event, index)"
-            @touchstart="refs.selectionManager.touchstartPhoto(photo, $event, index)"
-            @touchend="refs.selectionManager.touchendPhoto(photo, $event, index)"
-            @touchmove="refs.selectionManager.touchmovePhoto(photo, $event, index)"
+            @select="refs().selectionManager.clickSelectionIcon(photo, $event, index)"
+            @pointerdown="refs().selectionManager.clickPhoto(photo, $event, index)"
+            @touchstart="refs().selectionManager.touchstartPhoto(photo, $event, index)"
+            @touchend="refs().selectionManager.touchendPhoto(photo, $event, index)"
+            @touchmove="refs().selectionManager.touchmovePhoto(photo, $event, index)"
           />
         </template>
       </template>
@@ -82,12 +82,12 @@
       v-show="!showEmpty"
       :rows="list"
       :fullHeight="scrollerHeight"
-      :recycler="refs.recycler"
-      :recyclerBefore="refs.recyclerBefore"
+      :recycler="refs().recycler"
+      :recyclerBefore="refs().recyclerBefore"
       @interactend="loadScrollView"
       @scroll="
         currentScroll = $event.current;
-        refs.topOverlay?.refresh();
+        refs().topOverlay?.refresh();
       "
     />
 
@@ -96,8 +96,8 @@
       :heads="heads"
       :rows="list"
       :isreverse="isMonthView"
-      :recycler="refs.recycler?.$el"
-      :scrollerManager="refs.scrollerManager"
+      :recycler="refs().recycler?.$el"
+      :scrollerManager="refs().scrollerManager"
       @updateLoading="updateLoading"
     />
   </SwipeRefresh>
@@ -105,7 +105,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import type { Route } from 'vue-router';
+import type { RouteLocationNormalized } from 'vue-router';
+import { RecycleScroller } from 'vue-virtual-scroller';
 
 import axios from '@nextcloud/axios';
 import { showError } from '@nextcloud/dialogs';
@@ -124,6 +125,7 @@ import EmptyContent from '@components/top-matter/EmptyContent.vue';
 import TopMatter from '@components/top-matter/TopMatter.vue';
 import DynamicTopMatter from '@components/top-matter/DynamicTopMatter.vue';
 import TimelineTopOverlay from '@components/top-matter/TimelineTopOverlay.vue';
+import XLoadingIcon from '@components/XLoadingIcon.vue';
 
 import * as dav from '@services/dav';
 import * as utils from '@services/utils';
@@ -131,7 +133,7 @@ import * as nativex from '@native';
 
 import { API, DaysFilterType } from '@services/API';
 
-import type { IDay, IHeadRow, IPhoto, IRow } from '@typings';
+import type { IDay, IHeadRow, IPhoto, IPhotoRow, IRow } from '@typings';
 
 const SCROLL_LOAD_DELAY = 100; // Delay in loading data when scrolling
 const DESKTOP_ROW_HEIGHT = 200; // Height of row on desktop
@@ -152,6 +154,8 @@ export default defineComponent({
     ScrollerManager,
     Viewer,
     SwipeRefresh,
+    RecycleScroller,
+    XLoadingIcon,
   },
 
   mixins: [UserConfig],
@@ -213,10 +217,16 @@ export default defineComponent({
     this.routeChange(this.$route);
 
     // Start resize observer on container
-    if (this.refs.container?.$el) {
+    const container = this.refs().container;
+    if (container?.$el) {
       this.resizeObserver = new ResizeObserver(() => this.handleResizeWithDelay());
-      this.resizeObserver.observe(this.refs.container.$el);
+      this.resizeObserver.observe(container.$el);
     }
+
+    // Template refs ($refs) are not reactive in Vue 3, so prop bindings
+    // like :recycler="refs().recycler" evaluated during the initial render
+    // stay undefined. Re-render once now that all refs are populated.
+    this.$forceUpdate();
   },
 
   unmounted() {
@@ -224,7 +234,7 @@ export default defineComponent({
   },
 
   watch: {
-    async $route(to: Route, from?: Route) {
+    async $route(to: RouteLocationNormalized, from?: RouteLocationNormalized) {
       await this.routeChange(to, from);
     },
   },
@@ -239,7 +249,7 @@ export default defineComponent({
     utils.bus.on('memories:timeline:hard-refresh', this.refresh);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     utils.bus.off('memories:user-config-changed', this.softRefresh);
     utils.bus.off('files:file:created', this.softRefresh);
     utils.bus.off('memories:window:resize', this.handleResizeWithDelay);
@@ -252,19 +262,6 @@ export default defineComponent({
   },
 
   computed: {
-    refs() {
-      return this.$refs as {
-        container?: InstanceType<typeof SwipeRefresh>;
-        topmatter?: InstanceType<typeof TopMatter>;
-        dtm?: InstanceType<typeof DynamicTopMatter>;
-        topOverlay?: InstanceType<typeof TimelineTopOverlay>;
-        recycler?: VueRecyclerType;
-        recyclerBefore?: HTMLDivElement;
-        selectionManager: InstanceType<typeof SelectionManager>;
-        scrollerManager: InstanceType<typeof ScrollerManager>;
-      };
-    },
-
     routeHasNative(): boolean {
       return this.routeIsBase && nativex.has();
     },
@@ -295,13 +292,26 @@ export default defineComponent({
   },
 
   methods: {
-    async routeChange(to: Route, from?: Route) {
+    refs() {
+      return this.$refs as {
+        container?: InstanceType<typeof SwipeRefresh>;
+        topmatter?: InstanceType<typeof TopMatter>;
+        dtm?: InstanceType<typeof DynamicTopMatter>;
+        topOverlay?: InstanceType<typeof TimelineTopOverlay>;
+        recycler?: VueRecyclerType;
+        recyclerBefore?: HTMLDivElement;
+        selectionManager: InstanceType<typeof SelectionManager>;
+        scrollerManager: InstanceType<typeof ScrollerManager>;
+      };
+    },
+
+    async routeChange(to: RouteLocationNormalized, from?: RouteLocationNormalized) {
       // Always do a hard refresh if the path changes
       if (from?.path !== to.path) {
         await this.refresh();
 
         // Focus on the recycler (e.g. after navigation click)
-        this.refs.recycler?.$el.focus();
+        this.refs().recycler?.$el.focus();
       }
 
       // Do a soft refresh if the query changes
@@ -332,7 +342,7 @@ export default defineComponent({
         if (!from) {
           const index = this.list.findIndex((r) => r.day.dayid === dayid && r.photos?.includes(photo));
           if (index !== -1) {
-            this.refs.recycler?.scrollToItem(index);
+            this.refs().recycler?.scrollToItem(index);
           }
         }
 
@@ -365,7 +375,7 @@ export default defineComponent({
       this.recomputeSizes();
 
       // Timeline recycler init
-      this.refs.recycler?.$el.addEventListener('scroll', this.scrollPositionChange, { passive: true });
+      this.refs().recycler?.$el.addEventListener('scroll', this.scrollPositionChange, { passive: true });
 
       // Get data
       await this.fetchDays();
@@ -373,8 +383,8 @@ export default defineComponent({
 
     /** Reset all state */
     async resetState() {
-      this.refs.selectionManager.clear();
-      this.refs.scrollerManager.reset();
+      this.refs().selectionManager.clear();
+      this.refs().scrollerManager.reset();
       this.loading = 0;
       this.list = [];
       this.dtmContent = false;
@@ -414,7 +424,7 @@ export default defineComponent({
      * Do not pass this function as a callback directly.
      */
     async _softRefreshInternal(sync: boolean) {
-      this.refs.selectionManager.clear();
+      this.refs().selectionManager.clear();
       this.fetchDayQueue = []; // reset queue
 
       // Fetch days
@@ -433,7 +443,7 @@ export default defineComponent({
     /** Recompute static sizes of containers */
     recomputeSizes() {
       // Get the container element
-      const container = this.refs.container?.$el;
+      const container = this.refs().container?.$el;
       if (!container) return;
 
       // Size of outer container
@@ -445,11 +455,11 @@ export default defineComponent({
       this.scrollerHeight = height;
 
       // Static top matter to exclude from recycler height
-      const topmatter = this.refs.topmatter;
+      const topmatter = this.refs().topmatter;
       const tmHeight = topmatter?.$el?.clientHeight || 0;
 
       // Recycler height
-      const recycler = this.refs.recycler!;
+      const recycler = this.refs().recycler!;
       const targetHeight = height - tmHeight - 4;
       const targetWidth = this.isMobile() ? width : width - 40;
       const heightChanged = recycler.$el.clientHeight !== targetHeight;
@@ -491,7 +501,7 @@ export default defineComponent({
         // At this point we're sure the size has changed, so we need
         // to invalidate everything related to sizes
         this.sizedDays.clear();
-        this.refs.scrollerManager.adjust();
+        this.refs().scrollerManager.adjust();
 
         // Explicitly request a scroll event
         this.loadScrollView();
@@ -504,7 +514,7 @@ export default defineComponent({
      * the pixel position of the recycler has changed.
      */
     scrollPositionChange(event?: Event) {
-      this.refs.scrollerManager.recyclerScrolled(event ?? null);
+      this.refs().scrollerManager.recyclerScrolled(event ?? null);
     },
 
     /** Trigger when recycler view changes (for callback) */
@@ -550,7 +560,7 @@ export default defineComponent({
       }
 
       // We only need to debounce loads if the user is dragging the scrollbar
-      const scrolling = this.refs.scrollerManager.interacting;
+      const scrolling = this.refs().scrollerManager.interacting;
 
       // Make sure we don't do this too often
       this.currentStart = startIndex;
@@ -655,7 +665,7 @@ export default defineComponent({
       }
 
       // Albums
-      const { user, name } = this.$route.params;
+      const { user, name } = this.$route.params as { user: string; name: string };
       if (this.routeIsAlbums) {
         if (!user || !name) {
           throw new Error('Invalid album route');
@@ -701,7 +711,7 @@ export default defineComponent({
 
       // Map Bounds
       if (this.routeIsMap) {
-        const bounds = <string>this.$route.query.b;
+        const bounds = this.$route.query.b?.toString();
         if (!bounds) {
           throw new Error('Missing map bounds');
         }
@@ -725,7 +735,7 @@ export default defineComponent({
       try {
         this.updateLoading(1);
         const state = this.state;
-        const res = await this.refs.dtm?.refresh();
+        const res = await this.refs().dtm?.refresh();
         if (this.state !== state) return;
         this.dtmContent = res ?? false;
       } finally {
@@ -792,7 +802,7 @@ export default defineComponent({
         // Make sure we're still on the same page
         if (this.state !== startState) return;
         await this.processDays(data, false);
-      } catch (e) {
+      } catch (e: any) {
         if (!utils.isNetworkError(e)) {
           showError(e?.response?.data?.message ?? e.message);
           console.error(e);
@@ -911,7 +921,7 @@ export default defineComponent({
       });
 
       // Fix view height variable
-      await this.refs.scrollerManager.reflow();
+      await this.refs().scrollerManager.reflow();
       this.scrollPositionChange();
 
       // Trigger a view refresh. This will load any new placeholders too.
@@ -1242,7 +1252,7 @@ export default defineComponent({
       let addedRows: IRow[] = [];
 
       // Recycler scroll top
-      let scrollTop = this.refs.recycler!.$el.scrollTop;
+      let scrollTop = this.refs().recycler!.$el.scrollTop;
       let needAdjust = false;
 
       // Get index and Y position of header in O(n)
@@ -1361,7 +1371,7 @@ export default defineComponent({
       }
 
       // Restore selection day
-      this.refs.selectionManager.restoreDay(day);
+      this.refs().selectionManager.restoreDay(day);
 
       // Rows that were removed
       const removedRows: IRow[] = [];
@@ -1404,24 +1414,24 @@ export default defineComponent({
         if (headRemoved) {
           // If the head was removed, we need a reflow,
           // or adjust isn't going to work right
-          this.refs.scrollerManager.reflow();
+          this.refs().scrollerManager.reflow();
         } else {
           // Otherwise just adjust the ticks
-          this.refs.scrollerManager.adjust();
+          this.refs().scrollerManager.adjust();
         }
 
         // Scroll to new position
-        this.refs.recycler!.$el.scrollTop = scrollTop;
+        this.refs().recycler!.$el.scrollTop = scrollTop;
       }
     },
 
     /** Add and get a new blank photos row */
-    addRow(day: IDay): IRow {
+    addRow(day: IDay): IPhotoRow {
       // Make sure rows exists
       day.rows ??= [];
 
       // Create new row
-      const row: IRow = {
+      const row: IPhotoRow = {
         id: `${day.dayid}-${day.rows.length}`,
         num: day.rows.length,
         photos: [],
@@ -1464,7 +1474,7 @@ export default defineComponent({
       await new Promise((resolve) => setTimeout(resolve, 200));
 
       // clear selection at this point
-      this.refs.selectionManager.deselect(delPhotos);
+      this.refs().selectionManager.deselect(delPhotos);
 
       // Reflow all touched days
       for (const day of updatedDays) {
@@ -1499,15 +1509,15 @@ export default defineComponent({
   width: 100%;
   transition: opacity 0.2s ease-in-out;
 
-  :deep .vue-recycle-scroller__slot {
+  :deep(.vue-recycle-scroller__slot) {
     contain: content;
   }
 
-  :deep .vue-recycle-scroller__item-wrapper {
+  :deep(.vue-recycle-scroller__item-wrapper) {
     contain: strict;
   }
 
-  :deep .vue-recycle-scroller__item-view {
+  :deep(.vue-recycle-scroller__item-view) {
     contain: layout style;
   }
 

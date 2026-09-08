@@ -17,13 +17,13 @@
           readonly
         />
 
-        <NcCheckboxRadioSwitch :checked.sync="config.square_thumbs" @update:checked="updateSquareThumbs" type="switch">
+        <NcCheckboxRadioSwitch v-model="config.square_thumbs" @update:model-value="updateSquareThumbs" type="switch">
           {{ t('memories', 'Square grid mode') }}
         </NcCheckboxRadioSwitch>
 
         <NcCheckboxRadioSwitch
-          :checked.sync="config.enable_top_memories"
-          @update:checked="updateEnableTopMemories"
+          v-model="config.enable_top_memories"
+          @update:model-value="updateEnableTopMemories"
           type="switch"
         >
           {{ t('memories', 'Show past photos on top of timeline') }}
@@ -42,16 +42,16 @@
         </NcCheckboxRadioSwitch>
 
         <NcCheckboxRadioSwitch
-          :checked.sync="config.dedup_identical"
-          @update:checked="updateDedupIdentical"
+          v-model="config.dedup_identical"
+          @update:model-value="updateDedupIdentical"
           type="switch"
         >
           {{ t('memories', 'De-duplicate identical files') }}
         </NcCheckboxRadioSwitch>
 
         <NcCheckboxRadioSwitch
-          :checked.sync="config.show_owner_name_timeline"
-          @update:checked="updateShowOwnerNameTimeline"
+          v-model="config.show_owner_name_timeline"
+          @update:model-value="updateShowOwnerNameTimeline"
           type="switch"
         >
           {{ t('memories', 'Show photo owner name on timeline') }}
@@ -60,36 +60,32 @@
 
       <NcAppSettingsSection id="viewer-settings" :name="names.viewer">
         <NcCheckboxRadioSwitch
-          :checked.sync="config.livephoto_autoplay"
-          @update:checked="updateLivephotoAutoplay"
+          v-model="config.livephoto_autoplay"
+          @update:model-value="updateLivephotoAutoplay"
           type="switch"
         >
           {{ t('memories', 'Autoplay Live Photos') }}
         </NcCheckboxRadioSwitch>
 
-        <NcCheckboxRadioSwitch
-          :checked.sync="config.livephoto_loop"
-          @update:checked="updateLivephotoLoop"
-          type="switch"
-        >
+        <NcCheckboxRadioSwitch v-model="config.livephoto_loop" @update:model-value="updateLivephotoLoop" type="switch">
           {{ t('memories', 'Loop Live Photos') }}
         </NcCheckboxRadioSwitch>
 
-        <NcCheckboxRadioSwitch :checked.sync="config.video_loop" @update:checked="updateVideoLoop" type="switch">
+        <NcCheckboxRadioSwitch v-model="config.video_loop" @update:model-value="updateVideoLoop" type="switch">
           {{ t('memories', 'Loop Videos') }}
         </NcCheckboxRadioSwitch>
 
         <NcCheckboxRadioSwitch
-          :checked.sync="config.sidebar_filepath"
-          @update:checked="updateSidebarFilepath"
+          v-model="config.sidebar_filepath"
+          @update:model-value="updateSidebarFilepath"
           type="switch"
         >
           {{ t('memories', 'Show full file path in sidebar') }}
         </NcCheckboxRadioSwitch>
 
         <NcCheckboxRadioSwitch
-          :checked.sync="config.metadata_in_slideshow"
-          @update:checked="updateMetadataInSlideshow"
+          v-model="config.metadata_in_slideshow"
+          @update:model-value="updateMetadataInSlideshow"
           type="switch"
         >
           {{ t('memories', 'Show metadata in slideshow') }}
@@ -98,27 +94,27 @@
         <div class="radio-group">
           <div class="title">{{ t('memories', 'High resolution image loading behavior') }}</div>
           <NcCheckboxRadioSwitch
-            :checked="highResCond"
+            :model-value="highResCond"
             value="zoom"
             name="vhrc_radio"
             type="radio"
-            @update:checked="updateHighResCond($event)"
+            @update:model-value="updateHighResCond($event)"
             >{{ t('memories', 'Load high resolution image on zoom') }}
           </NcCheckboxRadioSwitch>
           <NcCheckboxRadioSwitch
-            :checked="highResCond"
+            :model-value="highResCond"
             value="always"
             name="vhrc_radio"
             type="radio"
-            @update:checked="updateHighResCond($event)"
+            @update:model-value="updateHighResCond($event)"
             >{{ t('memories', 'Always load high resolution image (not recommended)') }}
           </NcCheckboxRadioSwitch>
           <NcCheckboxRadioSwitch
-            :checked="highResCond"
+            :model-value="highResCond"
             value="never"
             name="vhrc_radio"
             type="radio"
-            @update:checked="updateHighResCond($event)"
+            @update:model-value="updateHighResCond($event)"
             >{{ t('memories', 'Never load high resolution image') }}
           </NcCheckboxRadioSwitch>
         </div>
@@ -136,14 +132,14 @@
         <NcCheckboxRadioSwitch
           v-for="folder in localFolders"
           :key="folder.id"
-          :checked.sync="folder.enabled"
-          @update:checked="updateDeviceFolders"
+          v-model="folder.enabled"
+          @update:model-value="updateDeviceFolders"
           type="switch"
         >
           {{ folder.name }}
         </NcCheckboxRadioSwitch>
 
-        <NcButton @click="runNxSetup()" type="secondary">
+        <NcButton @click="runNxSetup()" variant="secondary">
           {{ t('memories', 'Run initial device setup') }}
         </NcButton>
       </NcAppSettingsSection>
@@ -158,16 +154,16 @@
         />
 
         <NcCheckboxRadioSwitch
-          :checked.sync="config.show_hidden_folders"
-          @update:checked="updateShowHidden"
+          v-model="config.show_hidden_folders"
+          @update:model-value="updateShowHidden"
           type="switch"
         >
           {{ t('memories', 'Show hidden folders') }}
         </NcCheckboxRadioSwitch>
 
         <NcCheckboxRadioSwitch
-          :checked.sync="config.sort_folder_month"
-          @update:checked="updateSortFolderMonth"
+          v-model="config.sort_folder_month"
+          @update:model-value="updateSortFolderMonth"
           type="switch"
         >
           {{ t('memories', 'Sort folders oldest-first') }}
@@ -176,18 +172,14 @@
 
       <NcAppSettingsSection id="albums-settings" :name="names.albums">
         <NcCheckboxRadioSwitch
-          :checked.sync="config.sort_album_month"
-          @update:checked="updateSortAlbumMonth"
+          v-model="config.sort_album_month"
+          @update:model-value="updateSortAlbumMonth"
           type="switch"
         >
           {{ t('memories', 'Sort albums oldest-first') }}
         </NcCheckboxRadioSwitch>
 
-        <NcCheckboxRadioSwitch
-          :checked.sync="config.show_hidden_albums"
-          @update:checked="updateShowHidden"
-          type="switch"
-        >
+        <NcCheckboxRadioSwitch v-model="config.show_hidden_albums" @update:model-value="updateShowHidden" type="switch">
           {{ t('memories', 'Show hidden albums') }}
         </NcCheckboxRadioSwitch>
       </NcAppSettingsSection>
@@ -202,10 +194,8 @@
           max="7"
           step="1"
           @input="updateOnThisDayRange"
+          :helper-text="t('memories', 'Number of days before and after each anniversary to include')"
         />
-        <div class="settings-hint">
-          {{ t('memories', 'Number of days before and after each anniversary to include') }}
-        </div>
 
         <NcTextField
           :label="t('memories', 'Photos per year (1-50)')"
@@ -216,10 +206,8 @@
           max="50"
           step="1"
           @input="updateOnThisDayPhotos"
+          :helper-text="t('memories', 'Maximum number of photos to include per year')"
         />
-        <div class="settings-hint">
-          {{ t('memories', 'Maximum number of photos to include per year') }}
-        </div>
       </NcAppSettingsSection>
     </NcAppSettingsDialog>
 
@@ -231,28 +219,21 @@
 input[type='text'] {
   width: 100%;
 }
-
-div.settings-hint {
-  font-size: 0.8rem;
-  margin-left: 0.6rem;
-  margin-bottom: 0.6rem;
-  color: var(--color-text-lighter);
-}
 </style>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, defineAsyncComponent } from 'vue';
 
 import UserConfig from '@mixins/UserConfig';
 import { translate as t } from '@services/l10n';
 import * as utils from '@services/utils';
 import * as nativex from '@native';
 
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
-const NcTextField = () => import('@nextcloud/vue/dist/Components/NcTextField.js');
-const NcAppSettingsDialog = () => import('@nextcloud/vue/dist/Components/NcAppSettingsDialog.js');
-const NcAppSettingsSection = () => import('@nextcloud/vue/dist/Components/NcAppSettingsSection.js');
-const NcCheckboxRadioSwitch = () => import('@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js');
+import NcButton from '@nextcloud/vue/components/NcButton';
+const NcTextField = defineAsyncComponent(() => import('@nextcloud/vue/components/NcTextField'));
+const NcAppSettingsDialog = defineAsyncComponent(() => import('@nextcloud/vue/components/NcAppSettingsDialog'));
+const NcAppSettingsSection = defineAsyncComponent(() => import('@nextcloud/vue/components/NcAppSettingsSection'));
+const NcCheckboxRadioSwitch = defineAsyncComponent(() => import('@nextcloud/vue/components/NcCheckboxRadioSwitch'));
 
 import MultiPathSelectionModal from '@components/modal/MultiPathSelectionModal.vue';
 
@@ -297,12 +278,6 @@ export default defineComponent({
   },
 
   computed: {
-    refs() {
-      return this.$refs as {
-        multiPathModal: InstanceType<typeof MultiPathSelectionModal>;
-      };
-    },
-
     pathSelTitle(): string {
       return this.t('memories', 'Choose Timeline Paths');
     },
@@ -335,18 +310,24 @@ export default defineComponent({
     utils.bus.on('memories:fragment:pop:settings', this.onClose);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     utils.bus.off('memories:fragment:pop:settings', this.onClose);
   },
 
   methods: {
+    refs() {
+      return this.$refs as {
+        multiPathModal: InstanceType<typeof MultiPathSelectionModal>;
+      };
+    },
+
     onClose() {
       this.$emit('update:open', false);
     },
 
     // Paths settings
     async chooseTimelinePath() {
-      this.refs.multiPathModal.open(this.config.timeline_path.split(';'));
+      this.refs().multiPathModal.open(this.config.timeline_path.split(';'));
     },
 
     async saveTimelinePath(paths: string[]) {
@@ -477,37 +458,37 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-#memories-settings:deep {
-  .app-settings__content {
+#memories-settings {
+  :deep(.app-settings__content) {
     // Fix weirdness when focusing on toggle input on mobile
     position: relative;
   }
 
-  input[readonly] {
+  :deep(input[readonly]) {
     cursor: pointer;
     user-select: none;
   }
 
-  .app-settings-section {
+  :deep(.app-settings-section) {
     margin-bottom: 20px !important;
   }
 
-  #sign-out {
+  :deep(#sign-out) {
     margin-top: 10px;
   }
 
-  .checkbox-radio-switch__label {
+  :deep(.checkbox-radio-switch__label) {
     padding: 1px 14px; // was 4px 14px, make it more compact
   }
 
-  .radio-group {
+  :deep(.radio-group) {
     margin-top: 6px;
 
-    .title {
+    :deep(.title) {
       font-weight: 500;
     }
 
-    .checkbox-radio-switch-radio {
+    :deep(.checkbox-radio-switch-radio) {
       margin: 2px 16px; // indent for radio button
     }
   }

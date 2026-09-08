@@ -3,6 +3,7 @@ OC.L10N.register(
     {
     "Shared Link" : "共有リンク",
     "Download" : "ダウンロード",
+    "Memories" : "メモリー",
     "Fast, modern and advanced photo management suite" : "高速で、モダンで、高度な写真管理スイート",
     "People (Recognize)" : "人物（認識）",
     "People" : "人間",
@@ -17,6 +18,7 @@ OC.L10N.register(
     "Places" : "場所",
     "Map" : "地図",
     "Tags" : "タグ",
+    "Navigation" : "ナビゲーション",
     "Settings" : "設定",
     "Videos" : "動画",
     "Face Recognition" : "顔認識",
@@ -34,6 +36,7 @@ OC.L10N.register(
     "Cancel" : "キャンセル",
     "_{n} selected_::_{n} selected_" : ["{n}選択されています"],
     "General" : "一般",
+    "On This Day" : "この日には",
     "Account" : "アカウント",
     "Info" : "情報",
     "Close" : "閉じる",

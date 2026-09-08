@@ -15,14 +15,14 @@
 
       <div class="buttons">
         <NcButton
-          type="secondary"
+          variant="secondary"
           class="button"
           href="https://play.google.com/store/apps/details?id=com.nextcloud.client"
         >
           {{ t('memories', 'Set up automatic upload') }}
         </NcButton>
 
-        <NcButton type="primary" class="button" @click="step++">
+        <NcButton variant="primary" class="button" @click="step++">
           {{ t('memories', 'Continue') }}
         </NcButton>
       </div>
@@ -46,12 +46,12 @@
       }}
 
       <div class="buttons">
-        <NcButton type="secondary" class="button" @click="grantMediaPermission" v-if="!hasMediaPermission">
+        <NcButton variant="secondary" class="button" @click="grantMediaPermission" v-if="!hasMediaPermission">
           {{ t('memories', 'Grant permissions') }}
         </NcButton>
 
         <NcButton
-          :type="hasMediaPermission ? 'secondary' : 'primary'"
+          :variant="hasMediaPermission ? 'secondary' : 'primary'"
           class="button"
           @click="step += hasMediaPermission ? 1 : 2"
         >
@@ -82,8 +82,8 @@
           <NcCheckboxRadioSwitch
             v-for="folder in localFolders"
             :key="folder.id"
-            :checked.sync="folder.enabled"
-            @update:checked="updateDeviceFolders"
+            v-model="folder.enabled"
+            @update:model-value="updateDeviceFolders"
             type="switch"
           >
             {{ folder.name }}
@@ -92,7 +92,7 @@
       </div>
 
       <div class="buttons">
-        <NcButton type="secondary" class="button" @click="step++">
+        <NcButton variant="secondary" class="button" @click="step++">
           {{ t('memories', 'Finish') }}
         </NcButton>
       </div>
@@ -101,13 +101,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, defineAsyncComponent } from 'vue';
 
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
-const NcCheckboxRadioSwitch = () => import('@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js');
+import NcButton from '@nextcloud/vue/components/NcButton';
+const NcCheckboxRadioSwitch = defineAsyncComponent(() => import('@nextcloud/vue/components/NcCheckboxRadioSwitch'));
 
 import * as util from '@services/utils';
 import * as nativex from '@native';
+import XImg from '@components/frame/XImg.vue';
 
 import banner from '@assets/banner.svg';
 
@@ -117,6 +118,7 @@ export default defineComponent({
   components: {
     NcButton,
     NcCheckboxRadioSwitch,
+    XImg,
   },
 
   data: () => ({
@@ -171,7 +173,7 @@ export default defineComponent({
     }, 500);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     nativex.setTheme(); // reset theme
     window.clearInterval(this.syncStatusWatch);
   },
@@ -206,7 +208,7 @@ export default defineComponent({
 
   .banner {
     padding: 30px 20px;
-    :deep > svg {
+    > :deep(svg) {
       width: 60%;
       max-width: 400px;
     }
@@ -228,7 +230,7 @@ export default defineComponent({
 
     .checkbox-radio-switch {
       margin-left: 10px;
-      :deep .checkbox-radio-switch__label {
+      :deep(.checkbox-radio-switch__label) {
         min-height: unset;
       }
     }

@@ -1,12 +1,12 @@
 import './bootstrap';
+import { registerGlobals } from './bootstrap';
 
-import Vue from 'vue';
+import { createApp } from 'vue';
 import App from './App.vue';
-import router, { routes } from './router';
+import router, { routes, registerRouteCheckers } from './router';
 import * as nativex from '@native';
 
 // Global components
-import XImg from '@components/frame/XImg.vue';
 import VueVirtualScroller from 'vue-virtual-scroller';
 
 // CSS for components
@@ -18,7 +18,7 @@ globalThis._m = {
   mode: 'user',
 
   get route() {
-    return router.currentRoute;
+    return router.currentRoute.value;
   },
   router: router,
   routes: routes,
@@ -42,14 +42,15 @@ _m.video.clientIdPersistent = localStorage.getItem('videoClientIdPersistent') ??
 localStorage.setItem('videoClientIdPersistent', _m.video.clientIdPersistent);
 
 // Register global components and plugins
-Vue.use(VueVirtualScroller);
-Vue.component('XImg', XImg);
+const app = createApp(App);
+registerGlobals(app);
+registerRouteCheckers(app);
+app.use(router);
+app.use(VueVirtualScroller);
 
 // Initialize NativeX globals
 nativex.initialize();
 
-export default new Vue({
-  el: '#content',
-  router,
-  render: (h) => h(App),
-});
+app.mount('#content');
+
+export default app;

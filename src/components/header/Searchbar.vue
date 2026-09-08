@@ -6,12 +6,14 @@
           <NcTextField
             ref="textField"
             class="text-field"
-            :value.sync="prompt"
+            v-model="prompt"
             :label-outside="true"
             :label="t('memories', 'Search your photos …')"
             :placeholder="t('memories', 'Search your photos …')"
           >
-            <MagnifyIcon :size="16" />
+            <template #icon>
+              <MagnifyIcon :size="16" />
+            </template>
           </NcTextField>
         </div>
       </template>
@@ -58,10 +60,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, defineAsyncComponent } from 'vue';
 
-const NcTextField = () => import('@nextcloud/vue/dist/Components/NcTextField.js');
-const NcPopover = () => import('@nextcloud/vue/dist/Components/NcPopover.js');
+const NcTextField = defineAsyncComponent(() => import('@nextcloud/vue/components/NcTextField'));
+const NcPopover = defineAsyncComponent(() => import('@nextcloud/vue/components/NcPopover'));
 
 import UserConfig from '@mixins/UserConfig';
 
@@ -74,6 +76,8 @@ import ImageSearchIcon from 'vue-material-design-icons/ImageSearch.vue';
 import AlbumIcon from 'vue-material-design-icons/ImageAlbum.vue';
 import LocationIcon from 'vue-material-design-icons/MapMarker.vue';
 import TagIcon from 'vue-material-design-icons/Tag.vue';
+import XImg from '@components/frame/XImg.vue';
+import XLoadingIcon from '@components/XLoadingIcon.vue';
 
 import type { ICluster } from '@typings';
 
@@ -88,6 +92,8 @@ export default defineComponent({
     AlbumIcon,
     LocationIcon,
     TagIcon,
+    XImg,
+    XLoadingIcon,
   },
 
   mixins: [UserConfig],
@@ -221,7 +227,7 @@ export default defineComponent({
     // Remove padding from text bar
     --border-width-input-focused: 0px;
 
-    :deep input[type='text'] {
+    :deep(input[type='text']) {
       border: none !important;
       background-color: color-mix(in srgb, var(--searchbar-color) 12%, transparent);
       backdrop-filter: blur(2px);
@@ -234,8 +240,8 @@ export default defineComponent({
       --input-border-width-offset: 0px;
     }
 
-    :deep *,
-    :deep input[type='text']::placeholder {
+    :deep(*),
+    :deep(input[type='text']::placeholder) {
       color: var(--searchbar-color);
     }
   }
