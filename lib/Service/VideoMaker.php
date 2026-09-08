@@ -285,7 +285,8 @@ final class VideoMaker
     private function gpuEncoder(string $ffmpeg): bool
     {
         static $hasEncoder = null;
-        if (!SystemConfig::get('memories.vod.nvenc') || !@is_readable('/dev/nvidia0') || !@is_readable('/dev/nvidiactl')) {
+        // the GPU is used whenever this process can see it (cron can; php-fpm runs with PrivateDevices and falls back to the CPU)
+        if (!@is_readable('/dev/nvidia0') || !@is_readable('/dev/nvidiactl')) {
             return false;
         }
         if (null === $hasEncoder) {
