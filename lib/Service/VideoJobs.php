@@ -317,7 +317,11 @@ final class VideoJobs
         }
         $occ = \OC::$SERVERROOT.'/occ';
         $nice = max(0, min(19, (int) SystemConfig::get('memories.clips.nice')));
-        $cmd = \sprintf('nohup nice -n %d %s %s memories:video-run %d > /dev/null 2>&1 &', $nice, escapeshellarg($php), escapeshellarg($occ), $id);
+        // renice sets the absolute priority (nice -n would only add to the web server's own, e.g. -10 + 10 = 0)
+        $cmd = \sprintf(
+            'nohup sh -c %s > /dev/null 2>&1 &',
+            escapeshellarg(\sprintf('renice -n %d -p $$ > /dev/null 2>&1; exec %s %s memories:video-run %d', $nice, escapeshellarg($php), escapeshellarg($occ), $id)),
+        );
 
         try {
             exec($cmd);
