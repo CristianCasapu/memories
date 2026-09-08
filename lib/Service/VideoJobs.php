@@ -57,6 +57,10 @@ final class VideoJobs
         $mentions = [];
         $rawMentions = $options['mentions'] ?? null;
         foreach (\is_array($rawMentions) ? $rawMentions : [] as $m) {
+            if (\is_string($m)) {
+                // a plain name: a user id when one exists, otherwise just a name on the card
+                $m = ['uid' => null !== $this->userManager->get($m) ? $m : '', 'name' => $m];
+            }
             if (\is_array($m) && '' !== trim((string) ($m['name'] ?? ''))) {
                 $mentions[] = ['uid' => mb_substr((string) ($m['uid'] ?? ''), 0, 64), 'name' => mb_substr(trim((string) $m['name']), 0, 100)];
             }
