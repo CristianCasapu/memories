@@ -224,7 +224,13 @@ final class Takeout
             if (null === $tags) {
                 return false;
             }
-            $tags->addToFavorites($file->getId());
+            $fileId = $file->getId();
+            foreach ($tags->getTagsForObjects([$fileId])[$fileId] ?? [] as $tag) {
+                if (\OCP\ITags::TAG_FAVORITE === $tag) {
+                    return true; // already a favourite (a second insert would violate the primary key)
+                }
+            }
+            $tags->addToFavorites($fileId);
 
             return true;
         } catch (\Throwable $e) {

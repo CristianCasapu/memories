@@ -75,7 +75,7 @@ import NcActionButton from '@nextcloud/vue/components/NcActionButton';
 
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
-import { showError, showSuccess } from '@nextcloud/dialogs';
+import { showError, showSuccess, showInfo } from '@nextcloud/dialogs';
 
 import * as strings from '@services/strings';
 import * as dav from '@services/dav';
@@ -138,6 +138,7 @@ export default defineComponent({
     async saveEventAsAlbum() {
       if (this.cleaning) return;
       this.cleaning = true;
+      showInfo(this.t('memories', 'Saving the album …'));
       try {
         const res = await axios.post(generateUrl(`/apps/memories/api/events/${this.$route.params.name}/album`), {});
         showSuccess(
