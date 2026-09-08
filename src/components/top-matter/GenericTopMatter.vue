@@ -15,6 +15,15 @@
           {{ shareLabel }}
           <template #icon> <ShareIcon :size="20" /> </template>
         </NcActionButton>
+        <NcActionButton
+          v-if="$route.name === 'videos' && !routeIsPublic"
+          :aria-label="t('memories', 'Videos in the making')"
+          @click="videoJobs()"
+          close-after-click
+        >
+          {{ t('memories', 'Videos in the making') }}
+          <template #icon> <ProgressIcon :size="20" /> </template>
+        </NcActionButton>
       </NcActions>
     </div>
   </div>
@@ -31,6 +40,7 @@ import { shareView } from '@services/view-share';
 
 import BackIcon from 'vue-material-design-icons/ArrowLeft.vue';
 import ShareIcon from 'vue-material-design-icons/ShareVariant.vue';
+import ProgressIcon from 'vue-material-design-icons/ProgressClock.vue';
 
 /** Back + Share on every page that has no dedicated top matter. */
 export default defineComponent({
@@ -40,6 +50,7 @@ export default defineComponent({
     NcActionButton,
     BackIcon,
     ShareIcon,
+    ProgressIcon,
   },
 
   computed: {
@@ -54,6 +65,10 @@ export default defineComponent({
   },
 
   methods: {
+    videoJobs() {
+      _m.modals.videoJobs();
+    },
+
     share() {
       shareView(this.$route, this.routeIsPublic ? '' : this.viewname);
     },

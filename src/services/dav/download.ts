@@ -58,13 +58,11 @@ export async function createBurstVideo(fileIds: number[], fps = 3, music = 'auto
   try {
     const res = await axios.post(API.BURST_VIDEO(), { fileids: fileIds, fps, music });
     showSuccess(
-      t('memories', 'Video "{name}" ({n} photos) saved in {folder}', {
-        name: res.data.name,
-        n: res.data.frames,
-        folder: res.data.folder || '/',
-      }) + (res.data.music?.credit ? ' — ' + t('memories', 'music: {credit}', { credit: res.data.music.credit }) : ''),
+      t('memories', 'The video is being made from {n} photos; you will be notified when it is ready.', {
+        n: fileIds.length,
+      }),
     );
-    return res.data.fileid as number;
+    return (res.data.job?.id as number) ?? null;
   } catch (error) {
     console.error(error);
     showError(t('memories', 'Could not create the video (is ffmpeg configured?)'));

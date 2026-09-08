@@ -71,6 +71,71 @@
       @change="update('memories.music.volume', Number($event.target.value))"
     />
 
+    <h3>{{ t('memories', 'Videos in the making (all users)') }}</h3>
+    <p>
+      {{
+        t(
+          'memories',
+          'Every video asked for, with its progress and outcome. A video is made by a worker started right away, or by the background job within five minutes; one that stays "running" for half an hour is marked failed.',
+        )
+      }}
+    </p>
+    <div class="jobs-bar">
+      <NcButton @click="loadJobs">{{ t('memories', 'Refresh') }}</NcButton>
+      <span class="muted" v-if="jobs">{{ t('memories', '{n} entries', { n: jobs.length }) }}</span>
+    </div>
+    <table class="jobs" v-if="jobs && jobs.length">
+      <thead>
+        <tr>
+          <th>{{ t('memories', 'User') }}</th>
+          <th>{{ t('memories', 'Video') }}</th>
+          <th>{{ t('memories', 'Status') }}</th>
+          <th>{{ t('memories', 'Details') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="job in jobs" :key="job.id" :class="job.status">
+          <td>{{ job.uid }}</td>
+          <td>
+            {{ job.result_name || job.title || t('memories', '{n} photos', { n: job.photos }) }}<br /><small
+              class="muted"
+              >{{ job.result_folder }}</small
+            >
+          </td>
+          <td>
+            {{ job.status }}<span v-if="job.status === 'running'"> {{ job.progress }}%</span><br /><small
+              class="muted"
+              >{{ new Date((job.finished || job.created) * 1000).toLocaleString() }}</small
+            >
+          </td>
+          <td>
+            <span v-if="job.status === 'failed'" class="error">{{ job.error }}</span>
+            <span v-else-if="job.status === 'running' || job.status === 'queued'">{{ job.step }}</span>
+            <span v-else-if="job.track && job.track.credit">{{ job.track.credit }}</span>
+            <span v-else-if="job.mood">{{ job.mood }}</span>
+          </td>
+          <td class="job-actions">
+            <NcButton
+              v-if="job.status === 'queued' || job.status === 'running'"
+              @click="jobAct(job, 'cancel')"
+              variant="tertiary"
+              >{{ t('memories', 'Cancel') }}</NcButton
+            >
+            <NcButton
+              v-if="job.status === 'failed' || job.status === 'cancelled'"
+              @click="jobAct(job, 'retry')"
+              variant="tertiary"
+              >{{ t('memories', 'Retry') }}</NcButton
+            >
+            <NcButton v-if="job.status !== 'running'" @click="jobAct(job, 'delete')" variant="tertiary">{{
+              t('memories', 'Remove')
+            }}</NcButton>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
     <h3>{{ t('memories', 'Try it') }}</h3>
     <div class="try">
       <select v-model="tryMood">
@@ -96,6 +161,22 @@ import { API } from '@services/API';
 import AdminMixin from '../AdminMixin';
 
 type IMusicStatus = { enabled: boolean; providers: string[]; moodDetection: boolean; moods: Record<string, string> };
+type IVideoJob = {
+  id: number;
+  uid: string;
+  status: string;
+  title: string;
+  photos: number;
+  mood: string;
+  progress: number;
+  step: string;
+  result_name: string;
+  result_folder: string;
+  track: { credit?: string } | null;
+  error: string | null;
+  created: number;
+  finished: number;
+};
 
 export default defineComponent({
   name: 'Music',
@@ -108,6 +189,8 @@ export default defineComponent({
     tryMood: 'party',
     tryResult: '',
     busy: false,
+    jobs: null as IVideoJob[] | null,
+    jobsTimer: null as number | null,
   }),
 
   async mounted() {
@@ -116,9 +199,36 @@ export default defineComponent({
     } catch (e) {
       console.warn(e);
     }
+    await this.loadJobs();
+  },
+
+  beforeUnmount() {
+    if (this.jobsTimer) window.clearTimeout(this.jobsTimer);
   },
 
   methods: {
+    async loadJobs() {
+      try {
+        this.jobs = (await axios.get<IVideoJob[]>(generateUrl('/apps/memories/api/admin/videos/jobs'))).data;
+      } catch (e) {
+        console.warn(e);
+      }
+      if (this.jobsTimer) window.clearTimeout(this.jobsTimer);
+      if (this.jobs?.some((j) => j.status === 'queued' || j.status === 'running')) {
+        this.jobsTimer = window.setTimeout(() => this.loadJobs(), 3000);
+      }
+    },
+
+    async jobAct(job: IVideoJob, what: 'cancel' | 'retry' | 'delete') {
+      try {
+        if (what === 'delete') await axios.delete(generateUrl(`/apps/memories/api/admin/videos/jobs/${job.id}`));
+        else await axios.post(generateUrl(`/apps/memories/api/admin/videos/jobs/${job.id}/${what}`), {});
+      } catch (error: any) {
+        console.error(error);
+      }
+      await this.loadJobs();
+    },
+
     async tryIt() {
       this.busy = true;
       this.tryResult = '…';
@@ -136,6 +246,40 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+.jobs-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 6px 0;
+}
+table.jobs {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0 14px;
+  font-size: 0.92em;
+  th,
+  td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: top;
+  }
+  tr.failed td:nth-child(3) {
+    color: var(--color-error);
+  }
+  tr.done td:nth-child(3) {
+    color: var(--color-success);
+  }
+  .error {
+    color: var(--color-error);
+  }
+  .job-actions {
+    white-space: nowrap;
+  }
+}
+.muted {
+  color: var(--color-text-maxcontrast);
+}
 .try {
   display: flex;
   gap: 10px;

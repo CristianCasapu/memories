@@ -63,6 +63,15 @@ return [
         ['name' => 'Burst#video', 'url' => '/api/burst/video', 'verb' => 'POST'],
         ['name' => 'Admin#musicTest', 'url' => '/api/admin/music-test', 'verb' => 'POST'],
         ['name' => 'Admin#musicStatus', 'url' => '/api/music/status', 'verb' => 'GET'],
+        // videos in the making: the person's own, and (admin) everyone's
+        ['name' => 'VideoJobs#list', 'url' => '/api/videos/jobs', 'verb' => 'GET'],
+        ['name' => 'VideoJobs#cancel', 'url' => '/api/videos/jobs/{id}/cancel', 'verb' => 'POST'],
+        ['name' => 'VideoJobs#retry', 'url' => '/api/videos/jobs/{id}/retry', 'verb' => 'POST'],
+        ['name' => 'VideoJobs#delete', 'url' => '/api/videos/jobs/{id}', 'verb' => 'DELETE'],
+        ['name' => 'VideoJobs#listAll', 'url' => '/api/admin/videos/jobs', 'verb' => 'GET'],
+        ['name' => 'VideoJobs#cancelAny', 'url' => '/api/admin/videos/jobs/{id}/cancel', 'verb' => 'POST'],
+        ['name' => 'VideoJobs#retryAny', 'url' => '/api/admin/videos/jobs/{id}/retry', 'verb' => 'POST'],
+        ['name' => 'VideoJobs#deleteAny', 'url' => '/api/admin/videos/jobs/{id}', 'verb' => 'DELETE'],
 
         ['name' => 'Tags#set', 'url' => '/api/tags/set/{id}', 'verb' => 'PATCH'],
 

@@ -17,6 +17,8 @@ use OCP\Notification\UnknownNotificationException;
 final class Notifier implements INotifier
 {
     public const SUBJECT_WEEKLY_RECAP = 'weekly-recap';
+    public const SUBJECT_VIDEO_READY = 'video-ready';
+    public const SUBJECT_VIDEO_FAILED = 'video-failed';
 
     public function __construct(
         private IFactory $l10nFactory,
@@ -38,6 +40,25 @@ final class Notifier implements INotifier
     #[\Override]
     public function prepare(INotification $notification, string $languageCode): INotification
     {
+        if (Application::APPNAME === $notification->getApp() && \in_array($notification->getSubject(), [self::SUBJECT_VIDEO_READY, self::SUBJECT_VIDEO_FAILED], true)) {
+            $l = $this->l10nFactory->get(Application::APPNAME, $languageCode);
+            $p = $notification->getSubjectParameters();
+            $name = (string) ($p['name'] ?? '');
+            if (self::SUBJECT_VIDEO_READY === $notification->getSubject()) {
+                $notification->setParsedSubject($l->t('Your video "%s" is ready', [$name]))
+                    ->setParsedMessage($l->t('Saved in %s. Open Memories › Videos to watch it.', [(string) ($p['folder'] ?? '/')]))
+                    ->setLink($this->urlGenerator->linkToRouteAbsolute('memories.Page.videos'))
+                ;
+            } else {
+                $notification->setParsedSubject($l->t('Your video could not be made'))
+                    ->setParsedMessage((string) ($p['error'] ?? ''))
+                    ->setLink($this->urlGenerator->linkToRouteAbsolute('memories.Page.videos'))
+                ;
+            }
+            $notification->setIcon($this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APPNAME, 'app-dark.svg')));
+
+            return $notification;
+        }
         if (Application::APPNAME !== $notification->getApp() || self::SUBJECT_WEEKLY_RECAP !== $notification->getSubject()) {
             throw new UnknownNotificationException();
         }
