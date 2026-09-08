@@ -69,7 +69,7 @@ final class AdminController extends GenericApiController
             SystemConfig::set($key, $value);
 
             // If changing vod settings, kill any running go-vod instances
-            if (str_starts_with($key, 'memories.vod.')) {
+            if (str_starts_with($key, 'memories.vod.') || 'memories.tmp.base' === $key) {
                 try {
                     BinExt::startGoVod();
                 } catch (\Exception $e) {
@@ -209,6 +209,31 @@ final class AdminController extends GenericApiController
             } else {
                 $status['vaapi_dev'] = 'ok';
             }
+
+            // Temporary files: where everything lands, as seen from the web server
+            $tmpBase = BinExt::getTmpBase();
+            $status['tmp_base'] = $tmpBase;
+            $status['tmp_nc'] = rtrim((string) \OC::$server->get(\OCP\ITempManager::class)->getTempBaseDir(), '/');
+            $status['tmp_php'] = sys_get_temp_dir();
+            $status['tmp_upload'] = (string) \ini_get('upload_tmp_dir');
+            $status['tmp_env'] = (string) getenv('TMPDIR');
+            $status['tmp_exiftool'] = BinExt::getTmpPath();
+            $status['tmp_vod'] = BinExt::getVodTmpPath();
+            $status['tmp_writable'] = is_dir($tmpBase) && is_writable($tmpBase);
+            $free = @disk_free_space($tmpBase);
+            $status['tmp_free_gb'] = false === $free ? -1 : round($free / 1e9, 1);
+
+            // Clips: encoder, GPU, font
+            $clipsFfmpeg = \OCA\Memories\Service\VideoMaker::ffmpegPath();
+            $status['clips_ffmpeg_path'] = $clipsFfmpeg;
+            $status['clips_ffmpeg'] = $this->getExecutableStatus(
+                $clipsFfmpeg,
+                static fn ($p) => BinExt::testFFmpeg($p, 'ffmpeg'),
+            );
+            $status['clips_nvenc'] = '' !== $clipsFfmpeg && is_executable($clipsFfmpeg)
+                ? \OCA\Memories\Service\VideoMaker::gpuStatus($clipsFfmpeg)
+                : 'no_ffmpeg';
+            $status['clips_font'] = \OCA\Memories\Service\VideoMaker::font() ?? '';
 
             // Action token
             $status['action_token'] = $this->actionToken(true);

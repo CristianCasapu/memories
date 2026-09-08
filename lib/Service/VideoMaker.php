@@ -30,6 +30,8 @@ final class VideoMaker
     public const FRAME_SIZE = 1920;
     public const PREVIEW_SIZE = 1024;
 
+    private ?string $workDir = null;
+
     public function __construct(
         private VideoJobMapper $jobs,
         private MusicService $music,
@@ -61,6 +63,10 @@ final class VideoMaker
         }
         $job->setFinished(time());
         $this->tempManager->clean();
+        if (null !== $this->workDir) {
+            self::removeDir($this->workDir);
+            $this->workDir = null;
+        }
 
         return $this->jobs->update($job);
     }
@@ -82,13 +88,48 @@ final class VideoMaker
         return null;
     }
 
-    private function make(VideoJob $job): void
+    /**
+     * Can this process encode on the GPU? off (setting), no_device (the GPU is not visible from here:
+     * cron can see it, php-fpm with PrivateDevices cannot), no_encoder (ffmpeg without h264_nvenc), ok.
+     */
+    public static function gpuStatus(string $ffmpeg): string
     {
-        // clips may use their own ffmpeg (a newer build whose NVENC is stable); otherwise the transcoder's
+        static $hasEncoder = [];
+        if (!SystemConfig::get('memories.clips.nvenc')) {
+            return 'off';
+        }
+        if (!@is_readable('/dev/nvidia0') || !@is_readable('/dev/nvidiactl')) {
+            return 'no_device';
+        }
+        if (!isset($hasEncoder[$ffmpeg])) {
+            [$stdout] = Util::execSafe2([$ffmpeg, '-hide_banner', '-encoders'], 20000, null, true, false);
+            $hasEncoder[$ffmpeg] = str_contains((string) $stdout, 'h264_nvenc');
+        }
+
+        return $hasEncoder[$ffmpeg] ? 'ok' : 'no_encoder';
+    }
+
+    /** The ffmpeg used for clips: memories.clips.ffmpeg, else the transcoder's */
+    public static function ffmpegPath(): string
+    {
         $ffmpeg = (string) SystemConfig::get('memories.clips.ffmpeg');
         if ('' === $ffmpeg || !is_executable($ffmpeg)) {
             $ffmpeg = (string) SystemConfig::get('memories.vod.ffmpeg');
         }
+
+        return $ffmpeg;
+    }
+
+    /** @return array{int, int} width and height of the clip (1080p or 720p) */
+    public static function frameSize(): array
+    {
+        return 720 === (int) SystemConfig::get('memories.clips.height') ? [1280, 720] : [self::FRAME_SIZE, 1080];
+    }
+
+    private function make(VideoJob $job): void
+    {
+        // clips may use their own ffmpeg (a newer build whose NVENC is stable); otherwise the transcoder's
+        $ffmpeg = self::ffmpegPath();
         if ('' === $ffmpeg || !is_executable($ffmpeg)) {
             throw Exceptions::NotEnabled('ffmpeg (Administration › Memories › Video: ffmpeg path)');
         }
@@ -113,11 +154,14 @@ final class VideoMaker
         $ordered = array_merge($ordered, array_diff($fileids, $ordered));
 
         $userFolder = $this->rootFolder->getUserFolder($job->getUid());
-        $dir = (string) $this->tempManager->getTemporaryFolder();
-        if ('' === $dir) {
-            throw new \Exception('no temporary folder');
+        $dir = BinExt::getTmpBase().'/clips/job-'.$job->getId().'-'.bin2hex(random_bytes(4));
+        if (!@mkdir($dir, 0770, true) || !is_dir($dir)) {
+            throw new \Exception('cannot create the working folder '.$dir);
         }
+        $this->workDir = $dir;
 
+        [$width, $height] = self::frameSize();
+        $previewSize = $height > 720 ? self::PREVIEW_SIZE : 512;
         $first = null;
         $n = 0;
         $total = \count($ordered);
@@ -133,7 +177,7 @@ final class VideoMaker
 
             try {
                 // a 2048-wide preview: enough for 1080p and light to decode (asking for 1920 would return the 4096 one)
-                $img = $this->preview->getPreview($node, self::PREVIEW_SIZE, self::PREVIEW_SIZE, false, IPreview::MODE_FILL);
+                $img = $this->preview->getPreview($node, $previewSize, $previewSize, false, IPreview::MODE_FILL);
                 file_put_contents(\sprintf('%s/frame_%04d.jpg', $dir, $n++), $img->getContent());
             } catch (\Throwable $e) {
                 $this->logger->warning('Video job: preview failed for '.$fileId, ['exception' => $e]);
@@ -149,15 +193,23 @@ final class VideoMaker
         $this->progress($job, 62, 'Encoding the video');
         $out = $dir.'/burst.mp4';
         $seconds = (float) $n / $fps;
-        $filter = \sprintf('scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv420p', self::FRAME_SIZE, 1080, self::FRAME_SIZE, 1080);
-        $filter .= $this->overlays($job, $dir, $seconds);
-        $encode = static function (bool $gpu) use ($ffmpeg, $fps, $dir, $filter, $out): array {
+        $filter = \sprintf('scale=%d:%d:force_original_aspect_ratio=decrease,pad=%d:%d:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv420p', $width, $height, $width, $height);
+        $filter .= $this->overlays($job, $dir, $seconds, $height);
+        $threads = max(0, min(64, (int) SystemConfig::get('memories.clips.threads')));
+        $cpuPreset = (string) SystemConfig::get('memories.clips.cpu_preset');
+        if (!\in_array($cpuPreset, ['ultrafast', 'superfast', 'veryfast', 'faster', 'fast', 'medium', 'slow'], true)) {
+            $cpuPreset = 'veryfast';
+        }
+        $encode = static function (bool $gpu) use ($ffmpeg, $fps, $dir, $filter, $out, $threads, $cpuPreset): array {
             $codec = $gpu
                 ? ['-c:v', 'h264_nvenc', '-preset', 'p4', '-rc', 'vbr', '-cq', '23', '-b:v', '0']
-                : ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20'];
+                : ['-c:v', 'libx264', '-preset', $cpuPreset, '-crf', '20'];
             $cmd = array_merge(
-                [$ffmpeg, '-y', '-loglevel', 'error', '-framerate', (string) $fps, '-i', $dir.'/frame_%04d.jpg', '-vf', $filter],
+                [$ffmpeg, '-y', '-loglevel', 'error'],
+                $threads > 0 ? ['-threads', (string) $threads, '-filter_threads', (string) $threads] : [],
+                ['-framerate', (string) $fps, '-i', $dir.'/frame_%04d.jpg', '-vf', $filter],
                 $codec,
+                $threads > 0 ? ['-threads', (string) $threads] : [],
                 ['-r', '30', '-movflags', '+faststart', $out],
             );
 
@@ -241,8 +293,9 @@ final class VideoMaker
      * the people mentioned) and the text lines spread over the duration. Each text goes through
      * a file, so nothing has to be escaped for the filter.
      */
-    private function overlays(VideoJob $job, string $dir, float $seconds): string
+    private function overlays(VideoJob $job, string $dir, float $seconds, int $height = 1080): string
     {
+        $k = (float) $height / 1080.0; // font sizes were tuned for 1080p
         $font = self::font();
         if (null === $font) {
             return '';
@@ -271,13 +324,13 @@ final class VideoMaker
         if ('' !== $title || '' !== $sub || \count($mentions) > 0) {
             $filters[] = "drawbox=x=0:y=ih*0.62:w=iw:h=ih*0.38:color=black@0.45:t=fill:enable='lt(t,{$card})'";
             if ('' !== $title) {
-                $filters[] = $draw($write('title', $title), 64, 'h*0.66', 'lt(t,'.$card.')');
+                $filters[] = $draw($write('title', $title), (int) round(64.0 * $k), 'h*0.66', 'lt(t,'.$card.')');
             }
             if ('' !== $sub) {
-                $filters[] = $draw($write('sub', $sub), 40, 'h*0.66+90', 'lt(t,'.$card.')');
+                $filters[] = $draw($write('sub', $sub), (int) round(40.0 * $k), 'h*0.66+'.(int) round(90.0 * $k), 'lt(t,'.$card.')');
             }
             if (\count($mentions) > 0) {
-                $filters[] = $draw($write('with', implode('  ', $mentions)), 36, 'h*0.66+150', 'lt(t,'.$card.')');
+                $filters[] = $draw($write('with', implode('  ', $mentions)), (int) round(36.0 * $k), 'h*0.66+'.(int) round(150.0 * $k), 'lt(t,'.$card.')');
             }
         }
         $lines = $job->textList();
@@ -287,7 +340,7 @@ final class VideoMaker
             foreach ($lines as $i => $line) {
                 $from = $start + (float) $i * $slice;
                 $to = $i === \count($lines) - 1 ? $seconds + 1.0 : $from + $slice;
-                $filters[] = $draw($write('line'.$i, $line), 48, 'h-140', \sprintf('between(t,%.2f,%.2f)', $from, $to));
+                $filters[] = $draw($write('line'.$i, $line), (int) round(48.0 * $k), 'h-'.(int) round(140.0 * $k), \sprintf('between(t,%.2f,%.2f)', $from, $to));
             }
         }
 
@@ -340,17 +393,19 @@ final class VideoMaker
 
     private function gpuEncoder(string $ffmpeg): bool
     {
-        static $hasEncoder = null;
-        // the GPU is used whenever this process can see it (cron can; php-fpm runs with PrivateDevices and falls back to the CPU)
-        if (!@is_readable('/dev/nvidia0') || !@is_readable('/dev/nvidiactl')) {
-            return false;
-        }
-        if (null === $hasEncoder) {
-            [$stdout] = Util::execSafe2([$ffmpeg, '-hide_banner', '-encoders'], 20000, null, true, false);
-            $hasEncoder = str_contains((string) $stdout, 'h264_nvenc');
-        }
+        return 'ok' === self::gpuStatus($ffmpeg);
+    }
 
-        return $hasEncoder;
+    private static function removeDir(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        foreach (array_diff(scandir($dir) ?: [], ['.', '..']) as $entry) {
+            $path = $dir.'/'.$entry;
+            is_dir($path) && !is_link($path) ? self::removeDir($path) : @unlink($path);
+        }
+        @rmdir($dir);
     }
 
     private function progress(VideoJob $job, int $percent, string $step): void

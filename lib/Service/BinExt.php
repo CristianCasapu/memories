@@ -16,10 +16,38 @@ final class BinExt
     /** Exiftool environment is initialized in this process */
     private static bool $hasExiftoolEnv = false;
 
-    /** Get the path to the temp directory */
+    /** Get the path to the temp directory (exiftool) */
     public static function getTmpPath(): string
     {
-        return SystemConfig::get('memories.exiftool.tmp') ?: sys_get_temp_dir();
+        return SystemConfig::get('memories.exiftool.tmp') ?: self::getTmpBase();
+    }
+
+    /**
+     * Base directory for every temporary file of the app (clips, exiftool, go-vod):
+     * memories.tmp.base, else Nextcloud's temporary directory (which may be the system one).
+     */
+    public static function getTmpBase(): string
+    {
+        $base = rtrim((string) SystemConfig::get('memories.tmp.base'), '/');
+        if ('' === $base) {
+            $base = rtrim((string) \OC::$server->get(\OCP\ITempManager::class)->getTempBaseDir(), '/');
+        }
+        if ('' === $base) {
+            $base = rtrim(sys_get_temp_dir(), '/');
+        }
+        if (!is_dir($base)) {
+            @mkdir($base, 0770, true);
+        }
+
+        return $base;
+    }
+
+    /** Where go-vod keeps its transcode cache */
+    public static function getVodTmpPath(): string
+    {
+        $tmpPath = (string) SystemConfig::get('memories.vod.tempdir') ?: self::getTmpBase().'/go-vod/';
+
+        return rtrim($tmpPath, '/').'/';
     }
 
     /** Copy a binary to temp dir for execution */
@@ -210,13 +238,8 @@ final class BinExt
             return $env;
         }
 
-        // Get temp directory
-        $tmpPath = SystemConfig::get('memories.vod.tempdir', sys_get_temp_dir().'/go-vod/');
-
-        // Make sure path ends with slash
-        if ('/' !== substr($tmpPath, -1)) {
-            $tmpPath .= '/';
-        }
+        // Get temp directory (ends with a slash)
+        $tmpPath = self::getVodTmpPath();
 
         // Add instance ID to path
         $tmpPath .= SystemConfig::get('instanceid');

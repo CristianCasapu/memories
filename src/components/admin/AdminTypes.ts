@@ -20,6 +20,15 @@ export type ISystemConfig = {
   'memories.vod.connect': string;
   'memories.vod.external': boolean;
   'memories.vod.qf': number;
+  'memories.vod.tempdir': string;
+  'memories.exiftool.tmp': string;
+  'memories.tmp.base': string;
+  'memories.clips.ffmpeg': string;
+  'memories.clips.nvenc': boolean;
+  'memories.clips.cpu_preset': string;
+  'memories.clips.threads': number;
+  'memories.clips.nice': number;
+  'memories.clips.height': number;
   'memories.music.enabled': boolean;
   'memories.music.providers': string;
   'memories.music.jamendo_client_id': string;
@@ -70,6 +79,20 @@ export type ISystemStatus = {
   ffprobe: IBinaryStatus;
   govod: IBinaryStatus;
   vaapi_dev: 'ok' | 'not_found' | 'not_readable';
+
+  tmp_base: string;
+  tmp_nc: string;
+  tmp_php: string;
+  tmp_upload: string;
+  tmp_env: string;
+  tmp_exiftool: string;
+  tmp_vod: string;
+  tmp_writable: boolean;
+  tmp_free_gb: number;
+  clips_ffmpeg_path: string;
+  clips_ffmpeg: IBinaryStatus;
+  clips_nvenc: 'ok' | 'off' | 'no_device' | 'no_encoder' | 'no_ffmpeg';
+  clips_font: string;
 
   action_token: string;
 };

@@ -34,6 +34,8 @@ import Help from './sections/Help.vue';
 import Actions from './sections/Actions.vue';
 import Cleanup from './sections/Cleanup.vue';
 import Music from './sections/Music.vue';
+import ClipsAdmin from './sections/ClipsAdmin.vue';
+import TempFiles from './sections/TempFiles.vue';
 import Exif from './sections/Exif.vue';
 import Indexing from './sections/Indexing.vue';
 import FileSupport from './sections/FileSupport.vue';
@@ -67,6 +69,7 @@ export default defineComponent({
       markRaw(Actions),
       markRaw(Cleanup),
       markRaw(Music),
+      markRaw(ClipsAdmin),
       markRaw(Exif),
       markRaw(Indexing),
       markRaw(FileSupport),
@@ -77,6 +80,7 @@ export default defineComponent({
       markRaw(Video),
       markRaw(VideoTranscoder),
       markRaw(VideoAccel),
+      markRaw(TempFiles),
     ],
   }),
 

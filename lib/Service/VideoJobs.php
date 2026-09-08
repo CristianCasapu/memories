@@ -9,6 +9,7 @@ use OCA\Memories\Cron\VideoJobRunner;
 use OCA\Memories\Db\VideoJob;
 use OCA\Memories\Db\VideoJobMapper;
 use OCA\Memories\Notification\Notifier;
+use OCA\Memories\Settings\SystemConfig;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\BackgroundJob\IJobList;
 use OCP\Notification\IManager;
@@ -315,7 +316,8 @@ final class VideoJobs
             return;
         }
         $occ = \OC::$SERVERROOT.'/occ';
-        $cmd = \sprintf('nohup %s %s memories:video-run %d > /dev/null 2>&1 &', escapeshellarg($php), escapeshellarg($occ), $id);
+        $nice = max(0, min(19, (int) SystemConfig::get('memories.clips.nice')));
+        $cmd = \sprintf('nohup nice -n %d %s %s memories:video-run %d > /dev/null 2>&1 &', $nice, escapeshellarg($php), escapeshellarg($occ), $id);
 
         try {
             exec($cmd);

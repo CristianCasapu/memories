@@ -68,6 +68,12 @@ final class SystemConfig
         // Paths to ffmpeg and ffprobe binaries
         'memories.vod.ffmpeg' => '',
         'memories.clips.ffmpeg' => '', // ffmpeg used for clips (photo videos); empty = the one above
+        'memories.clips.nvenc' => true, // encode clips with NVIDIA NVENC when the worker can see the GPU
+        'memories.clips.cpu_preset' => 'veryfast', // libx264 preset when encoding on the CPU
+        'memories.clips.threads' => 0, // ffmpeg threads for clips (0 = automatic)
+        'memories.clips.nice' => 10, // niceness of the clip worker (0 = normal, 19 = lowest priority)
+        'memories.clips.height' => 1080, // 1080 or 720
+        'memories.tmp.base' => '', // base directory for temporary files (clips, exiftool, go-vod); empty = Nextcloud's
         'memories.vod.ffprobe' => '',
 
         // Path to go-vod binary
