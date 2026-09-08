@@ -108,6 +108,7 @@ import { defineComponent, type PropType } from 'vue';
 import NcCounterBubble from '@nextcloud/vue/components/NcCounterBubble';
 import NcActions from '@nextcloud/vue/components/NcActions';
 import NcActionButton from '@nextcloud/vue/components/NcActionButton';
+import XImg from '@components/frame/XImg.vue';
 
 import axios from '@nextcloud/axios';
 import { API } from '@services/API';
@@ -133,6 +134,7 @@ import type { ICluster } from '@typings';
 export default defineComponent({
   name: 'Cluster',
   components: {
+    XImg,
     NcCounterBubble,
     NcActions,
     NcActionButton,
