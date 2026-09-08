@@ -104,6 +104,7 @@ final class BurstController extends GenericApiController
             if ('none' !== $music && $musicService->enabled()) {
                 try {
                     $seconds = (float) $n / $fps;
+                    /** @var list<int> $ordered */
                     $chosen = $musicService->mood($music, $ordered);
                     $mood = $chosen['mood'];
                     $track = $musicService->pick($mood, (int) ceil($seconds));
