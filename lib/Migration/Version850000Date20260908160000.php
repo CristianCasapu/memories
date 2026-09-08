@@ -20,8 +20,8 @@ final class Version850000Date20260908160000 extends SimpleMigrationStep
         $table = $schema->getTable('memories_video_jobs');
         $changed = false;
         foreach ([
-            ['caption', Types::STRING, ['notnull' => true, 'length' => 1024, 'default' => '']],
-            ['location', Types::STRING, ['notnull' => true, 'length' => 255, 'default' => '']],
+            ['caption', Types::STRING, ['notnull' => false, 'length' => 1024]],
+            ['location', Types::STRING, ['notnull' => false, 'length' => 255]],
             ['mentions', Types::TEXT, ['notnull' => false]],
             ['texts', Types::TEXT, ['notnull' => false]],
             ['kind', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'manual']],

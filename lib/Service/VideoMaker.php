@@ -253,7 +253,7 @@ final class VideoMaker
         };
         $mentions = array_map(static fn ($m) => '@'.$m['name'], $job->mentionList());
         $title = trim($job->getTitle());
-        $sub = implode('  ·  ', array_filter([trim($job->getLocation()), trim($job->getCaption())]));
+        $sub = implode('  ·  ', array_filter([trim((string) $job->getLocation()), trim((string) $job->getCaption())]));
         $card = \sprintf('%.2f', min(3.5, max(1.5, $seconds * 0.3)));
         if ('' !== $title || '' !== $sub || \count($mentions) > 0) {
             $filters[] = "drawbox=x=0:y=ih*0.62:w=iw:h=ih*0.38:color=black@0.45:t=fill:enable='lt(t,{$card})'";

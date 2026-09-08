@@ -45,10 +45,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void        setStarted(int $started)
  * @method int         getFinished()
  * @method void        setFinished(int $finished)
- * @method string      getCaption()
- * @method void        setCaption(string $caption)
- * @method string      getLocation()
- * @method void        setLocation(string $location)
+ * @method null|string getCaption()
+ * @method void        setCaption(?string $caption)
+ * @method null|string getLocation()
+ * @method void        setLocation(?string $location)
  * @method null|string getMentions()
  * @method void        setMentions(?string $mentions)
  * @method null|string getTexts()
@@ -84,8 +84,8 @@ final class VideoJob extends Entity
     protected int $created = 0;
     protected int $started = 0;
     protected int $finished = 0;
-    protected string $caption = '';
-    protected string $location = '';
+    protected ?string $caption = null;
+    protected ?string $location = null;
     protected ?string $mentions = null;
     protected ?string $texts = null;
     protected string $kind = 'manual';
@@ -161,8 +161,8 @@ final class VideoJob extends Entity
             'created' => $this->getCreated(),
             'started' => $this->getStarted(),
             'finished' => $this->getFinished(),
-            'caption' => $this->getCaption(),
-            'location' => $this->getLocation(),
+            'caption' => $this->getCaption() ?? '',
+            'location' => $this->getLocation() ?? '',
             'mentions' => $this->mentionList(),
             'texts' => $this->textList(),
             'kind' => $this->getKind(),
