@@ -859,11 +859,9 @@ export default defineComponent({
      */
     /** Stitch the selected photos into a short video (saved next to the first photo) */
     async createVideoSelection(selection: Selection) {
-      const fileid = await dav.createBurstVideo(selection.photosNoDupFileId().map((p) => p.fileid));
-      if (fileid) {
-        this.clear();
-        utils.bus.emit('memories:timeline:soft-refresh', null);
-      }
+      const fileIds = selection.photosNoDupFileId().map((p) => p.fileid);
+      this.clear();
+      _m.modals.createVideo(fileIds);
     },
 
     async downloadSelection(selection: Selection) {

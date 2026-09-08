@@ -29,6 +29,7 @@ use OCA\Memories\Service\BinExt;
 use OCA\Memories\Settings\SystemConfig;
 use OCA\Memories\Util;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\UseSession;
 use OCP\AppFramework\Http\JSONResponse;
@@ -77,6 +78,40 @@ final class AdminController extends GenericApiController
             }
 
             return new JSONResponse([], Http::STATUS_OK);
+        });
+    }
+
+    /**
+     * Try to find a track for a mood with the configured providers (admin "Try it").
+     *
+     * @AdminRequired
+     */
+    public function musicTest(string $mood = 'calm'): Http\Response
+    {
+        return Util::guardEx(function () use ($mood) {
+            $music = \OC::$server->get(\OCA\Memories\Service\Music\MusicService::class);
+            $status = $music->status();
+            if (0 === \count($status['providers'])) {
+                return new JSONResponse(['ok' => false, 'message' => 'No music provider is configured (add a Jamendo client id, a Freesound token or a Mubert token).'] + $status, Http::STATUS_OK);
+            }
+            $track = $music->pick(\OCA\Memories\Service\Music\Mood::exists($mood) ? $mood : 'calm', 30);
+
+            return new JSONResponse([
+                'ok' => null !== $track,
+                'message' => null !== $track ? $track->credit() : 'No track found for this mood.',
+                'track' => $track?->toArray(),
+            ] + $status, Http::STATUS_OK);
+        });
+    }
+
+    /**
+     * Music providers and mood detection, for the admin page and the video dialog.
+     */
+    #[NoAdminRequired]
+    public function musicStatus(): Http\Response
+    {
+        return Util::guardEx(function () {
+            return new JSONResponse(\OC::$server->get(\OCA\Memories\Service\Music\MusicService::class)->status(), Http::STATUS_OK);
         });
     }
 

@@ -33,6 +33,7 @@ import staticConfig from '@services/static-config';
 import Help from './sections/Help.vue';
 import Actions from './sections/Actions.vue';
 import Cleanup from './sections/Cleanup.vue';
+import Music from './sections/Music.vue';
 import Exif from './sections/Exif.vue';
 import Indexing from './sections/Indexing.vue';
 import FileSupport from './sections/FileSupport.vue';
@@ -65,6 +66,7 @@ export default defineComponent({
       markRaw(Help),
       markRaw(Actions),
       markRaw(Cleanup),
+      markRaw(Music),
       markRaw(Exif),
       markRaw(Indexing),
       markRaw(FileSupport),

@@ -104,6 +104,16 @@ final class SystemConfig
         // Run in read-only config mode
         'memories.readonly' => false,
 
+        // Background music for the videos made from photos (CristianCasapu fork)
+        'memories.music.enabled' => false,
+        // providers to try, in order: jamendo, freesound, mubert (only configured ones are used)
+        'memories.music.providers' => 'jamendo,freesound,mubert',
+        'memories.music.jamendo_client_id' => '',
+        'memories.music.freesound_token' => '',
+        'memories.music.mubert_token' => '',
+        // loudness of the music under the video, 0.1 .. 1
+        'memories.music.volume' => 0.8,
+
         // Memories only provides an admin interface for these
         'enabledPreviewProviders' => [],
         'preview_max_x' => 4096,

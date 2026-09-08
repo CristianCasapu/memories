@@ -148,7 +148,7 @@ export default defineComponent({
           showError(this.t('memories', 'Group not found (it may have changed); go back and reload'));
           return;
         }
-        await dav.createBurstVideo(group.files.map((f) => f.fileid));
+        _m.modals.createVideo(group.files.map((f) => f.fileid));
       } finally {
         this.cleaning = false;
       }

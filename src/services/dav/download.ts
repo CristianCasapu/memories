@@ -54,15 +54,15 @@ export function downloadFromUrl(url: string) {
  * Stitch photos into a short video (server side, ffmpeg); the file is saved next to the first photo.
  * Shows a success / error toast; resolves to the new file id or null.
  */
-export async function createBurstVideo(fileIds: number[], fps = 3): Promise<number | null> {
+export async function createBurstVideo(fileIds: number[], fps = 3, music = 'auto'): Promise<number | null> {
   try {
-    const res = await axios.post(API.BURST_VIDEO(), { fileids: fileIds, fps });
+    const res = await axios.post(API.BURST_VIDEO(), { fileids: fileIds, fps, music });
     showSuccess(
       t('memories', 'Video "{name}" ({n} photos) saved in {folder}', {
         name: res.data.name,
         n: res.data.frames,
         folder: res.data.folder || '/',
-      }),
+      }) + (res.data.music?.credit ? ' — ' + t('memories', 'music: {credit}', { credit: res.data.music.credit }) : ''),
     );
     return res.data.fileid as number;
   } catch (error) {

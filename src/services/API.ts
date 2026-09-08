@@ -216,6 +216,10 @@ export class API {
     return gen(`/apps/recognize/api/faces/track`);
   }
 
+  static MUSIC_STATUS() {
+    return API.Q(gen(`${BASE}/music/status`), {});
+  }
+
   static BURST_VIDEO() {
     return gen(`${BASE}/burst/video`);
   }

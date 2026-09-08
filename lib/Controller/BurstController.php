@@ -29,10 +29,13 @@ final class BurstController extends GenericApiController
      * @param list<int> $fileids photos (any order; sorted by capture time)
      * @param float     $fps     frames per second (seconds per photo = 1/fps)
      */
+    /**
+     * @param string $music 'auto' (mood from the photos), 'none', or a mood id (see Service\Music\Mood)
+     */
     #[NoAdminRequired]
-    public function video(array $fileids = [], float $fps = 3.0, string $name = ''): Http\Response
+    public function video(array $fileids = [], float $fps = 3.0, string $name = '', string $music = 'auto'): Http\Response
     {
-        return Util::guardEx(function () use ($fileids, $fps, $name) {
+        return Util::guardEx(function () use ($fileids, $fps, $name, $music) {
             $ffmpeg = (string) SystemConfig::get('memories.vod.ffmpeg');
             if ('' === $ffmpeg || !is_executable($ffmpeg)) {
                 throw Exceptions::NotEnabled('ffmpeg (set memories.vod.ffmpeg)');
@@ -91,6 +94,26 @@ final class BurstController extends GenericApiController
                 throw new \Exception('ffmpeg failed: '.trim((string) $stderr));
             }
 
+            // background music, chosen by the mood of the photos (or the one asked for)
+            $credit = null;
+            $mood = null;
+            $musicService = \OC::$server->get(\OCA\Memories\Service\Music\MusicService::class);
+            if ('none' !== $music && $musicService->enabled()) {
+                try {
+                    $seconds = $n / $fps;
+                    $chosen = $musicService->mood($music, $ordered);
+                    $mood = $chosen['mood'];
+                    $track = $musicService->pick($mood, (int) ceil($seconds));
+                    if (null !== $track) {
+                        $out = $musicService->mux($ffmpeg, $out, $track, $seconds, $mood);
+                        $credit = $track->toArray();
+                    }
+                } catch (\Throwable $e) {
+                    // the video is worth more than the music: save it silent
+                    $this->logger->warning('Burst video: music failed, saving without', ['exception' => $e]);
+                }
+            }
+
             // save next to the first photo
             $parent = $first->getParent();
             $base = '' !== trim($name) ? trim($name) : pathinfo($first->getName(), PATHINFO_FILENAME).'-burst';
@@ -107,6 +130,8 @@ final class BurstController extends GenericApiController
                 'name' => $file->getName(),
                 'folder' => $userFolder->getRelativePath($parent->getPath()),
                 'frames' => $n,
+                'music' => $credit,
+                'mood' => $mood,
             ], Http::STATUS_OK);
         });
     }

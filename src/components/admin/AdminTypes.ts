@@ -20,6 +20,12 @@ export type ISystemConfig = {
   'memories.vod.connect': string;
   'memories.vod.external': boolean;
   'memories.vod.qf': number;
+  'memories.music.enabled': boolean;
+  'memories.music.providers': string;
+  'memories.music.jamendo_client_id': string;
+  'memories.music.freesound_token': string;
+  'memories.music.mubert_token': string;
+  'memories.music.volume': number;
   'memories.video_default_quality': string;
 
   'memories.vod.vaapi': boolean;

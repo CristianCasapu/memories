@@ -61,6 +61,8 @@ return [
         ['name' => 'Events#rebuild', 'url' => '/api/events/rebuild', 'verb' => 'POST'],
         ['name' => 'Events#createAlbum', 'url' => '/api/events/{eventId}/album', 'verb' => 'POST'],
         ['name' => 'Burst#video', 'url' => '/api/burst/video', 'verb' => 'POST'],
+        ['name' => 'Admin#musicTest', 'url' => '/api/admin/music-test', 'verb' => 'POST'],
+        ['name' => 'Admin#musicStatus', 'url' => '/api/music/status', 'verb' => 'GET'],
 
         ['name' => 'Tags#set', 'url' => '/api/tags/set/{id}', 'verb' => 'PATCH'],
 

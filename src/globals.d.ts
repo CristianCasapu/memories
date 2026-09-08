@@ -37,6 +37,8 @@ declare global {
       editMetadata: (photos: IPhoto[], sections?: number[]) => void;
       tagFaces: (photo: IPhoto) => void;
       shareAsAlbum: (source: IPhoto[] | (() => Promise<IPhoto[]>), defaultName?: string) => void;
+      /** pace + background music, then the video (CristianCasapu fork) */
+      createVideo: (fileIds: number[]) => void;
       albumEdit: (user: string, name: string) => void;
       albumDelete: (user?: string, name?: string) => void;
       updateAlbums: (photos: IPhoto[]) => void;
