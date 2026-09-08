@@ -38,7 +38,7 @@
 
         <!-- real cluster -->
         <template v-if="isTogether">
-          <NcActionButton :aria-label="t('memories', 'Add another person')" @click="refs.togetherModal.open()" close-after-click>
+          <NcActionButton :aria-label="t('memories', 'Add another person')" @click="refs().togetherModal.open()" close-after-click>
             {{ t('memories', 'Add another person') }}
             <template #icon> <TogetherIcon :size="20" /> </template>
           </NcActionButton>
@@ -51,7 +51,7 @@
           <NcActionButton
             v-if="routeIsRecognize"
             :aria-label="t('memories', 'Together with …')"
-            @click="refs.togetherModal.open()"
+            @click="refs().togetherModal.open()"
             close-after-click
           >
             {{ t('memories', 'Together with …') }}
@@ -205,20 +205,11 @@ export default defineComponent({
     }
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.progressTimer) window.clearInterval(this.progressTimer);
   },
 
   computed: {
-    refs() {
-      return this.$refs as {
-        editModal: InstanceType<typeof FaceEditModal>;
-        deleteModal: InstanceType<typeof FaceDeleteModal>;
-        mergeModal: InstanceType<typeof FaceMergeModal>;
-        togetherModal: InstanceType<typeof FaceTogetherModal>;
-      };
-    },
-
     name() {
       return this.$route.params.name?.toString() || '';
     },
@@ -272,6 +263,15 @@ export default defineComponent({
   },
 
   methods: {
+    refs() {
+      return this.$refs as {
+        editModal: InstanceType<typeof FaceEditModal>;
+        deleteModal: InstanceType<typeof FaceDeleteModal>;
+        mergeModal: InstanceType<typeof FaceMergeModal>;
+        togetherModal: { open: () => void };
+      };
+    },
+
     refs() {
       return this.$refs as {
         editModal: InstanceType<typeof FaceEditModal>;

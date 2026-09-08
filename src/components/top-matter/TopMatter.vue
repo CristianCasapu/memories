@@ -50,7 +50,7 @@ export default defineComponent({
         case _m.routes.Folders.name:
           return markRaw(FolderTopMatter);
         case _m.routes.FolderShare.name:
-          return this.initstate.shareType === 'folder' ? FolderTopMatter : GenericTopMatter;
+          return this.initstate.shareType === 'folder' ? markRaw(FolderTopMatter) : markRaw(GenericTopMatter);
         case _m.routes.Albums.name:
           return markRaw(AlbumTopMatter);
         case _m.routes.Places.name:
@@ -58,14 +58,14 @@ export default defineComponent({
         case _m.routes.Tags.name:
         case _m.routes.Similar.name:
         case _m.routes.Events.name:
-          return ClusterTopMatter;
+          return markRaw(ClusterTopMatter);
         case _m.routes.Recognize.name:
         case _m.routes.FaceRecognition.name:
-          return FaceTopMatter;
+          return markRaw(FaceTopMatter);
         case _m.routes.PeopleReview.name:
           return null; // has its own header
         default:
-          return GenericTopMatter;
+          return markRaw(GenericTopMatter);
       }
     },
   },

@@ -3,14 +3,14 @@
     <div class="sheet">
       <div class="head">
         <span class="title">{{ t('memories', 'Menu') }}</span>
-        <NcButton type="tertiary" :aria-label="t('memories', 'Close')" @click="close">
+        <NcButton variant="tertiary" :aria-label="t('memories', 'Close')" @click="close">
           <template #icon> <CloseIcon :size="20" /> </template>
         </NcButton>
       </div>
 
       <div class="section-title">{{ t('memories', 'Memories') }}</div>
       <div class="grid">
-        <router-link v-for="item in items" :key="item.name" :to="{ name: item.name }" class="entry" @click.native="close">
+        <router-link v-for="item in items" :key="item.name" :to="{ name: item.name }" class="entry" @click="close">
           <component :is="item.icon" :size="24" />
           <span>{{ item.title }}</span>
         </router-link>
@@ -18,7 +18,7 @@
           <CogIcon :size="24" />
           <span>{{ t('memories', 'Settings') }}</span>
         </a>
-        <router-link :to="{ name: 'people-review' }" class="entry" @click.native="close" v-if="hasRecognize">
+        <router-link :to="{ name: 'people-review' }" class="entry" @click="close" v-if="hasRecognize">
           <ReviewIcon :size="24" />
           <span>{{ t('memories', 'Review unnamed people') }}</span>
         </router-link>
@@ -39,7 +39,7 @@
 import { defineComponent, type PropType } from 'vue';
 
 import { loadState } from '@nextcloud/initial-state';
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
+import NcButton from '@nextcloud/vue/components/NcButton';
 
 import CloseIcon from 'vue-material-design-icons/Close.vue';
 import CogIcon from 'vue-material-design-icons/Cog.vue';

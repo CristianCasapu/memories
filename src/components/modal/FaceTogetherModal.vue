@@ -9,7 +9,7 @@
     </div>
 
     <template #buttons>
-      <NcButton @click="close" class="button" type="error">
+      <NcButton @click="close" class="button" variant="error">
         {{ t('memories', 'Cancel') }}
       </NcButton>
     </template>
@@ -19,7 +19,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
+import NcButton from '@nextcloud/vue/components/NcButton';
 
 import Modal from './Modal.vue';
 import ModalMixin from './ModalMixin';

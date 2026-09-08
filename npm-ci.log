@@ -1,0 +1,14 @@
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@nextcloud/files@4.0.0',
+npm warn EBADENGINE   required: { node: '^24.0.0' },
+npm warn EBADENGINE   current: { node: 'v22.21.1', npm: '11.8.0' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@nextcloud/initial-state@2.2.0',
+npm warn EBADENGINE   required: { node: '^20.0.0', npm: '^10.0.0' },
+npm warn EBADENGINE   current: { node: 'v22.21.1', npm: '11.8.0' }
+npm warn EBADENGINE }
+npm warn deprecated sourcemap-codec@1.4.8: Please use @jridgewell/sourcemap-codec instead
+npm warn deprecated source-map@0.8.0-beta.0: The work that was done in this beta branch won't be included in future versions
+
+added 946 packages in 7s

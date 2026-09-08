@@ -69,7 +69,7 @@ export const routes: { [key in RouteId]: RouteRecordRaw } = {
     path: '/search/:q*',
     component: Timeline,
     name: 'search',
-    props: (route: Route) => ({
+    props: (route: RouteLocationNormalized) => ({
       rootTitle: route.params.q ? t('memories', 'Search: {query}', { query: String(route.params.q) }) : t('memories', 'Search'),
     }),
   },
@@ -92,7 +92,7 @@ export const routes: { [key in RouteId]: RouteRecordRaw } = {
     path: '/thisday',
     component: Timeline,
     name: 'thisday',
-    props: (route: Route) => ({
+    props: (route: RouteLocationNormalized) => ({
       rootTitle: route.query.week ? t('memories', 'This week in past years') : t('memories', 'On this day'),
     }),
   },
@@ -136,14 +136,14 @@ export const routes: { [key in RouteId]: RouteRecordRaw } = {
     path: '/similar/:name*',
     component: ClusterView,
     name: 'similar',
-    props: (route: Route) => ({ rootTitle: t('memories', 'Similar photos') }),
+    props: (route: RouteLocationNormalized) => ({ rootTitle: t('memories', 'Similar photos') }),
   },
 
   Events: {
     path: '/events/:name*',
     component: ClusterView,
     name: 'events',
-    props: (route: Route) => ({ rootTitle: t('memories', 'Events') }),
+    props: (route: RouteLocationNormalized) => ({ rootTitle: t('memories', 'Events') }),
   },
 
   FolderShare: {

@@ -57,11 +57,11 @@ export default defineComponent({
 
   computed: {
     user() {
-      return this.overrideUser ?? this.$route.params.user;
+      return this.overrideUser ?? this.$route.params.user?.toString();
     },
 
     name() {
-      return this.overrideName ?? this.$route.params.name;
+      return this.overrideName ?? this.$route.params.name?.toString();
     },
 
     owned() {

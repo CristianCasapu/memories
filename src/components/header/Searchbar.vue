@@ -28,7 +28,7 @@
             v-if="config.recognize_enabled && !routeIsPublic"
             class="cluster semantic"
             :to="{ name: 'search', params: { q: prompt.trim() } }"
-            @click.native="select()"
+            @click="select()"
           >
             <div class="icon"><ImageSearchIcon :size="22" /></div>
             {{ t('memories', 'Search photos for "{query}"', { query: prompt.trim() }) }}
@@ -42,7 +42,7 @@
         </template>
 
         <template v-for="cluster of clustersResult">
-          <router-link class="cluster" :to="clusterTarget(cluster)" @click.native="select()">
+          <router-link class="cluster" :to="clusterTarget(cluster)" @click="select()">
             <div class="icon">
               <AlbumIcon v-if="clusterIs.album(cluster)" :size="22" />
               <LocationIcon v-else-if="clusterIs.place(cluster)" :size="22" />

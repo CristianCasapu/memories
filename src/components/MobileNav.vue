@@ -13,7 +13,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, markRaw, type PropType } from 'vue';
 
 import * as nativex from '@native';
 

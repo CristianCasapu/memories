@@ -44,36 +44,36 @@
         </template>
         <template v-else-if="!selected">{{ t('memories', 'Click a face to name it') }}</template>
 
-        <NcButton v-if="!drawing && !draft" type="secondary" @click="drawing = true">
+        <NcButton v-if="!drawing && !draft" variant="secondary" @click="drawing = true">
           <template #icon> <PlusIcon :size="18" /> </template>
           {{ t('memories', 'Add a face') }}
         </NcButton>
-        <NcButton v-if="drawing || draft" type="tertiary" @click="cancelDraw">{{ t('memories', 'Cancel') }}</NcButton>
-        <NcButton v-if="ignoredCount && !drawing" @click="unignore" type="tertiary">
+        <NcButton v-if="drawing || draft" variant="tertiary" @click="cancelDraw">{{ t('memories', 'Cancel') }}</NcButton>
+        <NcButton v-if="ignoredCount && !drawing" @click="unignore" variant="tertiary">
           {{ t('memories', 'Restore ignored faces') }}
         </NcButton>
       </div>
 
       <div class="editor" v-if="draft">
         <NcTextField
-          :value.sync="draftName"
+          v-model="draftName"
           :label="t('memories', 'Name')"
           :placeholder="t('memories', 'Existing person or a new name')"
           list="memories-face-names"
           @keydown.enter="addFace"
         />
         <div class="buttons">
-          <NcButton type="primary" :disabled="busy" @click="addFace">
+          <NcButton variant="primary" :disabled="busy" @click="addFace">
             {{ busy ? t('memories', 'Looking for the face …') : t('memories', 'Add face') }}
           </NcButton>
-          <NcButton type="tertiary" :disabled="busy" @click="cancelDraw">{{ t('memories', 'Cancel') }}</NcButton>
+          <NcButton variant="tertiary" :disabled="busy" @click="cancelDraw">{{ t('memories', 'Cancel') }}</NcButton>
         </div>
         <span class="hint">{{ t('memories', 'The face is detected inside the box so it can be recognized in other photos too. This takes a few seconds.') }}</span>
       </div>
 
       <div class="editor" v-if="selected && !draft">
         <NcTextField
-          :value.sync="name"
+          v-model="name"
           :label="t('memories', 'Name')"
           :placeholder="t('memories', 'Existing person or a new name')"
           list="memories-face-names"
@@ -83,13 +83,13 @@
           <option v-for="p in people" :key="p.cluster_id" :value="p.name" />
         </datalist>
         <div class="buttons">
-          <NcButton type="primary" :disabled="busy || !name.trim()" @click="assign">
+          <NcButton variant="primary" :disabled="busy || !name.trim()" @click="assign">
             {{ t('memories', 'Assign') }}
           </NcButton>
-          <NcButton v-if="selected.cluster_id" type="secondary" :disabled="busy" @click="detach">
+          <NcButton v-if="selected.cluster_id" variant="secondary" :disabled="busy" @click="detach">
             {{ t('memories', 'Unassign') }}
           </NcButton>
-          <NcButton type="tertiary" :disabled="busy" @click="ignore">
+          <NcButton variant="tertiary" :disabled="busy" @click="ignore">
             {{ t('memories', 'Not a face') }}
           </NcButton>
         </div>
@@ -97,7 +97,7 @@
     </div>
 
     <template #buttons>
-      <NcButton @click="close" class="button" type="secondary">
+      <NcButton @click="close" class="button" variant="secondary">
         {{ t('memories', 'Close') }}
       </NcButton>
     </template>
@@ -105,14 +105,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, defineAsyncComponent } from 'vue';
 
 import axios from '@nextcloud/axios';
 import { showError, showSuccess } from '@nextcloud/dialogs';
 
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
+import NcButton from '@nextcloud/vue/components/NcButton';
 import PlusIcon from 'vue-material-design-icons/Plus.vue';
-const NcTextField = () => import('@nextcloud/vue/dist/Components/NcTextField.js');
+const NcTextField = defineAsyncComponent(() => import('@nextcloud/vue/components/NcTextField'));
 
 import Modal from './Modal.vue';
 import ModalMixin from './ModalMixin';
@@ -226,7 +226,7 @@ export default defineComponent({
       return '?';
     },
 
-    boxStyle(face: IFaceBox) {
+    boxStyle(face: { x: number; y: number; width: number; height: number }) {
       return {
         left: `${face.x * 100}%`,
         top: `${face.y * 100}%`,

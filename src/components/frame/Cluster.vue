@@ -105,9 +105,9 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 
-import NcCounterBubble from '@nextcloud/vue/dist/Components/NcCounterBubble.js';
-import NcActions from '@nextcloud/vue/dist/Components/NcActions.js';
-import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js';
+import NcCounterBubble from '@nextcloud/vue/components/NcCounterBubble';
+import NcActions from '@nextcloud/vue/components/NcActions';
+import NcActionButton from '@nextcloud/vue/components/NcActionButton';
 
 import axios from '@nextcloud/axios';
 import { API } from '@services/API';
@@ -126,6 +126,7 @@ import plussvg from '@assets/plus.svg';
 
 import * as nativex from '@native';
 import * as dav from '@services/dav';
+import * as utils from '@services/utils';
 
 import type { ICluster } from '@typings';
 

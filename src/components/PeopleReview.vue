@@ -9,11 +9,11 @@
       </NcActions>
       <span class="title">{{ t('memories', 'Review unnamed people') }}</span>
       <div class="right">
-        <NcButton type="secondary" :disabled="busy" @click="track">
+        <NcButton variant="secondary" :disabled="busy" @click="track">
           <template #icon> <TrackIcon :size="20" /> </template>
           {{ t('memories', 'Find people in bursts') }}
         </NcButton>
-        <NcButton type="tertiary" :disabled="busy" @click="refresh">
+        <NcButton variant="tertiary" :disabled="busy" @click="refresh">
           <template #icon> <RefreshIcon :size="20" /> </template>
         </NcButton>
       </div>
@@ -63,23 +63,23 @@
           </span>
           <span v-else>
             {{ t('memories', 'Might be {name} (distance {d})', { name: person.suggestion.title, d: person.suggestion.distance }) }}
-            <NcButton type="primary" :disabled="busy" @click="merge(person, person.suggestion.cluster_id, person.suggestion.title)">
+            <NcButton variant="primary" :disabled="busy" @click="merge(person, person.suggestion.cluster_id, person.suggestion.title)">
               {{ t('memories', 'It is {name}', { name: person.suggestion.title }) }}
             </NcButton>
           </span>
         </div>
         <div class="actions">
           <NcTextField
-            :value.sync="names[person.cluster_id]"
+            v-model="names[person.cluster_id]"
             :label="t('memories', 'Name')"
             :placeholder="t('memories', 'Name this person')"
             list="memories-review-names"
             @keydown.enter="rename(person)"
           />
-          <NcButton type="secondary" :disabled="busy || !(names[person.cluster_id] || '').trim()" @click="rename(person)">
+          <NcButton variant="secondary" :disabled="busy || !(names[person.cluster_id] || '').trim()" @click="rename(person)">
             {{ t('memories', 'Name') }}
           </NcButton>
-          <NcButton type="tertiary" :disabled="busy" @click="ignore(person)">
+          <NcButton variant="tertiary" :disabled="busy" @click="ignore(person)">
             {{ t('memories', 'Not a person') }}
           </NcButton>
         </div>
@@ -93,16 +93,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, defineAsyncComponent } from 'vue';
 
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
 import { showError, showSuccess } from '@nextcloud/dialogs';
 
-import NcActions from '@nextcloud/vue/dist/Components/NcActions.js';
-import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js';
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
-const NcTextField = () => import('@nextcloud/vue/dist/Components/NcTextField.js');
+import NcActions from '@nextcloud/vue/components/NcActions';
+import NcActionButton from '@nextcloud/vue/components/NcActionButton';
+import NcButton from '@nextcloud/vue/components/NcButton';
+const NcTextField = defineAsyncComponent(() => import('@nextcloud/vue/components/NcTextField'));
 
 import { API } from '@services/API';
 import * as utils from '@services/utils';

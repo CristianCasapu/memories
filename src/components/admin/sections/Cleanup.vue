@@ -15,28 +15,28 @@
     <div v-if="!cleanup" class="muted">{{ loading ? t('memories', 'Loading …') : t('memories', 'Could not load the cleanup status') }}</div>
 
     <template v-else>
-      <NcCheckboxRadioSwitch :checked.sync="cleanup.config.enabled" @update:checked="save()" type="switch">
+      <NcCheckboxRadioSwitch v-model="cleanup.config.enabled" @update:model-value="save()" type="switch">
         {{ t('memories', 'Automatic cleanup (background job)') }}
       </NcCheckboxRadioSwitch>
-      <NcCheckboxRadioSwitch :checked.sync="cleanup.config.systemTmp" @update:checked="save()" type="switch">
+      <NcCheckboxRadioSwitch v-model="cleanup.config.systemTmp" @update:model-value="save()" type="switch">
         {{ t('memories', 'Also clean Nextcloud-related files in the system temporary directory') }}
       </NcCheckboxRadioSwitch>
-      <NcCheckboxRadioSwitch :checked.sync="cleanup.config.expireTrash" @update:checked="save()" type="switch">
+      <NcCheckboxRadioSwitch v-model="cleanup.config.expireTrash" @update:model-value="save()" type="switch">
         {{ t('memories', 'Run the trash bin expiration (Nextcloud retention rules)') }}
       </NcCheckboxRadioSwitch>
-      <NcCheckboxRadioSwitch :checked.sync="cleanup.config.expireVersions" @update:checked="save()" type="switch">
+      <NcCheckboxRadioSwitch v-model="cleanup.config.expireVersions" @update:model-value="save()" type="switch">
         {{ t('memories', 'Run the file versions expiration (Nextcloud retention rules)') }}
       </NcCheckboxRadioSwitch>
 
       <div class="fields">
         <NcTextField
-          :value.sync="cleanup.config.tmpMaxAgeHours"
+          v-model="cleanup.config.tmpMaxAgeHours"
           type="number"
           :label="t('memories', 'Delete temporary files older than (hours)')"
           @change="save()"
         />
         <NcTextField
-          :value.sync="cleanup.config.vodMaxAgeDays"
+          v-model="cleanup.config.vodMaxAgeDays"
           type="number"
           :label="t('memories', 'Delete transcode cache older than (days)')"
           @change="save()"
@@ -44,9 +44,9 @@
       </div>
 
       <div class="buttons">
-        <NcButton type="primary" :disabled="busy" @click="run(false)">{{ t('memories', 'Run cleanup now') }}</NcButton>
-        <NcButton type="secondary" :disabled="busy" @click="run(true)">{{ t('memories', 'Dry run (report only)') }}</NcButton>
-        <NcButton type="tertiary" :disabled="busy" @click="refresh()">{{ t('memories', 'Refresh') }}</NcButton>
+        <NcButton variant="primary" :disabled="busy" @click="run(false)">{{ t('memories', 'Run cleanup now') }}</NcButton>
+        <NcButton variant="secondary" :disabled="busy" @click="run(true)">{{ t('memories', 'Dry run (report only)') }}</NcButton>
+        <NcButton variant="tertiary" :disabled="busy" @click="refresh()">{{ t('memories', 'Refresh') }}</NcButton>
         <span class="muted" v-if="busy">{{ t('memories', 'Working …') }}</span>
       </div>
 
@@ -120,15 +120,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, defineAsyncComponent } from 'vue';
 
 import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
 import { showError, showSuccess } from '@nextcloud/dialogs';
 
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js';
-const NcTextField = () => import('@nextcloud/vue/dist/Components/NcTextField.js');
+import NcButton from '@nextcloud/vue/components/NcButton';
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch';
+const NcTextField = defineAsyncComponent(() => import('@nextcloud/vue/components/NcTextField'));
 
 import { translate as t } from '@services/l10n';
 import * as utils from '@services/utils';

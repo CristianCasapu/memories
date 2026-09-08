@@ -1,0 +1,47 @@
+src/components/MobileMenu.vue(6,19): error TS2322: Type '"tertiary"' is not assignable to type 'ButtonType | undefined'.
+src/components/PeopleReview.vue(12,19): error TS2322: Type '"secondary"' is not assignable to type 'ButtonType | undefined'.
+src/components/PeopleReview.vue(16,19): error TS2322: Type '"tertiary"' is not assignable to type 'ButtonType | undefined'.
+src/components/PeopleReview.vue(66,23): error TS2322: Type '"primary"' is not assignable to type 'ButtonType | undefined'.
+src/components/PeopleReview.vue(79,21): error TS2322: Type '"secondary"' is not assignable to type 'ButtonType | undefined'.
+src/components/PeopleReview.vue(82,21): error TS2322: Type '"tertiary"' is not assignable to type 'ButtonType | undefined'.
+src/components/Timeline.vue(657,35): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/components/Timeline.vue(664,37): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/components/admin/sections/Cleanup.vue(47,19): error TS2322: Type '"primary"' is not assignable to type 'ButtonType | undefined'.
+src/components/admin/sections/Cleanup.vue(48,19): error TS2322: Type '"secondary"' is not assignable to type 'ButtonType | undefined'.
+src/components/admin/sections/Cleanup.vue(49,19): error TS2322: Type '"tertiary"' is not assignable to type 'ButtonType | undefined'.
+src/components/frame/Cluster.vue(203,43): error TS2304: Cannot find name 'utils'.
+src/components/frame/Cluster.vue(213,30): error TS2304: Cannot find name 'utils'.
+src/components/frame/Cluster.vue(217,58): error TS2304: Cannot find name 'utils'.
+src/components/frame/Cluster.vue(264,61): error TS2304: Cannot find name 'utils'.
+src/components/frame/Cluster.vue(279,61): error TS2304: Cannot find name 'utils'.
+src/components/modal/AlbumCreateModal.vue(59,43): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/components/modal/AlbumDeleteModal.vue(88,50): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/components/modal/FaceTagModal.vue(33,62): error TS2345: Argument of type '{ x: number; y: number; width: number; height: number; }' is not assignable to parameter of type 'IFaceBox'.
+  Type '{ x: number; y: number; width: number; height: number; }' is missing the following properties from type 'IFaceBox': id, cluster_id, title, ignored
+src/components/modal/FaceTagModal.vue(47,45): error TS2322: Type '"secondary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/FaceTagModal.vue(51,43): error TS2322: Type '"tertiary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/FaceTagModal.vue(52,69): error TS2322: Type '"tertiary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/FaceTagModal.vue(66,21): error TS2322: Type '"primary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/FaceTagModal.vue(69,21): error TS2322: Type '"tertiary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/FaceTagModal.vue(86,21): error TS2322: Type '"primary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/FaceTagModal.vue(89,48): error TS2322: Type '"secondary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/FaceTagModal.vue(92,21): error TS2322: Type '"tertiary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/FaceTagModal.vue(100,47): error TS2322: Type '"secondary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/FaceTogetherModal.vue(12,47): error TS2322: Type '"error"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/ShareAsAlbumModal.vue(25,47): error TS2322: Type '"secondary"' is not assignable to type 'ButtonType | undefined'.
+src/components/modal/ShareAsAlbumModal.vue(28,48): error TS2322: Type '"primary"' is not assignable to type 'ButtonType | undefined'.
+src/components/top-matter/AlbumTopMatter.vue(266,45): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/components/top-matter/FaceTopMatter.vue(213,5): error TS7023: 'refs' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+src/components/top-matter/GenericTopMatter.vue(47,84): error TS2345: Argument of type 'string | symbol' is not assignable to parameter of type 'string'.
+  Type 'symbol' is not assignable to type 'string'.
+src/components/top-matter/GenericTopMatter.vue(48,31): error TS2345: Argument of type 'string | symbol' is not assignable to parameter of type 'string'.
+  Type 'symbol' is not assignable to type 'string'.
+src/router.ts(72,20): error TS2304: Cannot find name 'Route'.
+src/router.ts(95,20): error TS2304: Cannot find name 'Route'.
+src/router.ts(139,20): error TS2304: Cannot find name 'Route'.
+src/router.ts(146,20): error TS2304: Cannot find name 'Route'.

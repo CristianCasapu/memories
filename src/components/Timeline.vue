@@ -654,14 +654,14 @@ export default defineComponent({
       if (this.routeIsEvents) {
         const name = this.$route.params.name;
         if (!name) throw new Error('Invalid events route');
-        set(DaysFilterType.EVENT, name);
+        set(DaysFilterType.EVENT, String(name));
       }
 
       // Duplicate / near-duplicate group
       if (this.routeIsSimilar) {
         const name = this.$route.params.name;
         if (!name) throw new Error('Invalid similar route');
-        set(DaysFilterType.SIMILAR, name);
+        set(DaysFilterType.SIMILAR, String(name));
       }
 
       // Albums

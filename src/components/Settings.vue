@@ -29,13 +29,13 @@
           {{ t('memories', 'Show past photos on top of timeline') }}
         </NcCheckboxRadioSwitch>
 
-        <NcCheckboxRadioSwitch :checked.sync="config.weekly_recap" @update:checked="updateWeeklyRecap" type="switch">
+        <NcCheckboxRadioSwitch v-model="config.weekly_recap" @update:model-value="updateWeeklyRecap" type="switch">
           {{ t('memories', 'Weekly notification with your memories from this week in past years') }}
         </NcCheckboxRadioSwitch>
 
         <NcCheckboxRadioSwitch
-          :checked.sync="config.stack_raw_files"
-          @update:checked="updateStackRawFiles"
+          v-model="config.stack_raw_files"
+          @update:model-value="updateStackRawFiles"
           type="switch"
         >
           {{ t('memories', 'Stack RAW files with same name') }}

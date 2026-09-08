@@ -251,12 +251,19 @@ export default defineComponent({
   },
 
   methods: {
+    refs() {
+      return this.$refs as {
+        createModal: InstanceType<typeof AlbumCreateModal>;
+        deleteModal: InstanceType<typeof AlbumDeleteModal>;
+      };
+    },
+
     /** /albums/user/name?share=1 (after "Share as album" / person album): open the share dialog */
     openShareFromQuery() {
       if (!this.$route.query.share || this.isAlbumList) return;
       const { user, name } = this.$route.params;
       this.$router.replace({ ...this.$route, query: {} } as any).catch(() => {});
-      setTimeout(() => _m.modals.albumShare(user, name), 300);
+      setTimeout(() => _m.modals.albumShare(String(user), String(name)), 300);
     },
 
     back() {

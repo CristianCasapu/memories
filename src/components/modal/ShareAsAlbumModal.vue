@@ -11,7 +11,7 @@
       </div>
 
       <NcTextField
-        :value.sync="name"
+        v-model="name"
         :label="t('memories', 'Name of the album')"
         :placeholder="t('memories', 'Name of the album')"
         autofocus
@@ -22,10 +22,10 @@
     </div>
 
     <template #buttons>
-      <NcButton @click="close" class="button" type="secondary">
+      <NcButton @click="close" class="button" variant="secondary">
         {{ t('memories', 'Cancel') }}
       </NcButton>
-      <NcButton @click="submit" class="button" type="primary" :disabled="busy || loading || !name.trim() || !photos.length">
+      <NcButton @click="submit" class="button" variant="primary" :disabled="busy || loading || !name.trim() || !photos.length">
         {{ t('memories', 'Create album and share') }}
       </NcButton>
     </template>
@@ -33,13 +33,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, defineAsyncComponent } from 'vue';
 
 import { showError, showSuccess } from '@nextcloud/dialogs';
 
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
-const NcTextField = () => import('@nextcloud/vue/dist/Components/NcTextField.js');
-const NcProgressBar = () => import('@nextcloud/vue/dist/Components/NcProgressBar.js');
+import NcButton from '@nextcloud/vue/components/NcButton';
+const NcTextField = defineAsyncComponent(() => import('@nextcloud/vue/components/NcTextField'));
+const NcProgressBar = defineAsyncComponent(() => import('@nextcloud/vue/components/NcProgressBar'));
 
 import Modal from './Modal.vue';
 import ModalMixin from './ModalMixin';

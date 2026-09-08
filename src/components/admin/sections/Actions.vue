@@ -21,7 +21,7 @@ import axios from '@nextcloud/axios';
 import { generateUrl } from '@nextcloud/router';
 import { showError } from '@nextcloud/dialogs';
 
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js';
+import NcButton from '@nextcloud/vue/components/NcButton';
 
 import { translate as t } from '@services/l10n';
 
@@ -69,14 +69,14 @@ export default defineComponent({
   methods: {
     async run(a: IAction) {
       this.busy = a.id;
-      this.$set(this.results, a.id, '…');
+      this.results[a.id] = '…';
       try {
         const res = await axios.post(generateUrl(a.url), {});
-        this.$set(this.results, a.id, res.data.message ?? JSON.stringify(res.data));
+        this.results[a.id] = res.data.message ?? JSON.stringify(res.data);
       } catch (error: any) {
         console.error(error);
         const msg = error?.response?.data?.message || String(error);
-        this.$set(this.results, a.id, msg);
+        this.results[a.id] = msg;
         showError(msg);
       } finally {
         this.busy = '';
