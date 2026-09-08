@@ -7,6 +7,7 @@ export type ISystemConfig = {
   'memories.index.mode': string;
   'memories.index.path': string;
   'memories.index.path.blacklist': string;
+  'memories.takeout.import': boolean;
 
   'memories.gis_type': number;
 

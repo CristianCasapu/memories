@@ -37,6 +37,9 @@ final class SystemConfig
         // Blacklist file or folder paths by regex
         'memories.index.path.blacklist' => '\/@(Recycle|eaDir)\/',
 
+        // Google Takeout sidecars (photo.jpg.supplemental-metadata.json) fill what EXIF lacks at index time
+        'memories.takeout.import' => true,
+
         // Places database type identifier
         'memories.gis_type' => -1,
 

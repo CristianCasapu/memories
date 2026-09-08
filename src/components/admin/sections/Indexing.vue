@@ -124,6 +124,24 @@
     </div>
 
     <br />
+    <h3>{{ t('memories', 'Google Takeout') }}</h3>
+    <p>
+      {{
+        t(
+          'memories',
+          'Google Photos exports a JSON sidecar next to every photo (photo.jpg.supplemental-metadata.json). When a photo is indexed and its EXIF lacks the date, the location or the description, they are taken from the sidecar, together with the people named there and the favourite mark. Nothing is written into the photo. For photos indexed before their sidecars arrived, run: occ memories:takeout-import [user] [--folder …]',
+        )
+      }}
+    </p>
+    <NcCheckboxRadioSwitch
+      :model-value="config['memories.takeout.import']"
+      @update:model-value="update('memories.takeout.import', $event)"
+      type="switch"
+    >
+      {{ t('memories', 'Import Google Takeout sidecars when indexing') }}
+    </NcCheckboxRadioSwitch>
+
+    <br />
 
     <div>
       {{ t('memories', 'For advanced usage, perform a run of indexing by running:') }}

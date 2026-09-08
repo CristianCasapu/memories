@@ -6,6 +6,7 @@ namespace OCA\Memories\Db;
 
 use OCA\Memories\Exif;
 use OCA\Memories\Service\Index;
+use OCA\Memories\Service\Takeout;
 use OCA\Memories\Util;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\Files\File;
@@ -94,6 +95,21 @@ final class TimelineWrite
             throw new \Exception('No EXIF data could be read');
         }
 
+        // Google Takeout sidecar next to the photo: fills what EXIF lacks (nothing is written to the file)
+        $takeout = null;
+        $takeoutApplied = [];
+        if (Takeout::enabled()) {
+            try {
+                $sidecar = Takeout::findSidecar($file);
+                $takeout = null !== $sidecar ? Takeout::parse($sidecar) : null;
+                if (null !== $takeout) {
+                    $takeoutApplied = Takeout::applyBeforeLocation($exif, $takeout);
+                }
+            } catch (\Throwable $e) {
+                $this->logger->debug('Takeout sidecar ignored for '.$file->getPath().': '.$e->getMessage());
+            }
+        }
+
         // Check if MIMEType was not detected
         if (empty($exif['MIMEType'] ?? null)) {
             throw new \Exception('No MIMEType in EXIF data');
@@ -119,6 +135,17 @@ final class TimelineWrite
         // This also modifies the exif array in-place to set the LocationTZID
         // and drop the GPS data if it is not valid
         [$lat, $lon, $mapCluster] = $this->processExifLocation($fileId, $exif, $prevRow);
+
+        // The time from the sidecar, in the zone of the place, when EXIF has no date
+        if (null !== $takeout) {
+            $takeoutApplied = array_merge($takeoutApplied, Takeout::applyAfterLocation($exif, $takeout));
+            if ($takeout['favorited'] && \OC::$server->get(Takeout::class)->favourite($file)) {
+                $takeoutApplied[] = 'favorite';
+            }
+            if (\count($takeoutApplied) > 0) {
+                $exif[Takeout::MARKER] = implode(',', $takeoutApplied);
+            }
+        }
 
         // Get date parameters (after setting timezone offset)
         $dateTaken = Exif::getDateTaken($file, $exif);

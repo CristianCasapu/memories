@@ -61,6 +61,8 @@ final class ExifFields
         // Editable Metadata
         'Title' => true,
         'Description' => true,
+        'PersonInImage' => true,
+        'GoogleTakeout' => true,
         'Label' => true,
         'Artist' => true,
         'Copyright' => true,
