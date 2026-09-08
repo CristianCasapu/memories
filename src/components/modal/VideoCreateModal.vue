@@ -670,7 +670,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .clip-form {
-  max-height: 72vh;
+  max-height: min(72vh, calc(100vh - 260px));
   overflow-y: auto;
   padding-right: 4px;
 }

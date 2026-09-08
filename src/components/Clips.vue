@@ -41,6 +41,7 @@
             :src="thumb(clip)"
             :alt="clip.result_name"
             loading="lazy"
+            @error="thumbFallback($event, clip)"
           />
           <div class="placeholder" v-else>
             <VideoIcon :size="40" />
@@ -257,6 +258,15 @@ export default defineComponent({
 
     thumb(clip: IClip): string {
       return API.Q(API.IMAGE_PREVIEW(clip.result_fileid!), { c: clip.result_etag, x: 512, y: 512, a: 1 });
+    },
+
+    /** No preview for the video (yet): show the first photo of the clip instead */
+    thumbFallback(event: Event, clip: IClip) {
+      const img = event.target as HTMLImageElement;
+      const first = clip.file_ids?.[0];
+      if (!first || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      img.src = API.Q(API.IMAGE_PREVIEW(first), { x: 512, y: 512, a: 1 });
     },
 
     asPhoto(clip: IClip): IPhoto {
