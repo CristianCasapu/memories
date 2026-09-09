@@ -117,21 +117,7 @@ final class Exif
         unset($exif['SourceFile'], $exif['FileName'], $exif['ExifToolVersion'], $exif['Directory'], $exif['FileSize'], $exif['FileModifyDate'], $exif['FileAccessDate'], $exif['FileInodeChangeDate'], $exif['FilePermissions'], $exif['ThumbnailImage']);
 
         // Ignore zero dates
-        $dateFields = [
-            'DateTimeOriginal',
-            'SubSecDateTimeOriginal',
-            'CreateDate',
-            'ModifyDate',
-            'TrackCreateDate',
-            'TrackModifyDate',
-            'MediaCreateDate',
-            'MediaModifyDate',
-        ];
-        foreach ($dateFields as $field) {
-            if (\array_key_exists($field, $exif) && \is_string($exif[$field]) && str_starts_with($exif[$field], '0000:00:00')) {
-                unset($exif[$field]);
-            }
-        }
+        self::sanitizeDates($exif);
 
         return $exif;
     }
@@ -159,12 +145,22 @@ final class Exif
      */
     public static function parseExifDate(array $exif): \DateTime
     {
-        // Get date from exif
-        $exifDate = $exif['DateTimeOriginal'] ?? $exif['CreateDate'] ?? null;
+        // Ignore zero dates
+        self::sanitizeDates($exif);
 
-        // For videos, prefer CreateDate for timezone (QuickTimeUTC=1)
+        // Get date from exif
+        $exifDate = $exif['SubSecDateTimeOriginal']
+            ?? $exif['DateTimeOriginal']
+            ?? $exif['SubSecCreateDate']
+            ?? $exif['CreateDate']
+            ?? null;
+
+        // For videos, prefer ContentCreateDate for timezone (QuickTimeUTC=1)
         if (preg_match('/^video\/\w+/', (string) ($exif['MIMEType'] ?? null))) {
-            $exifDate = $exif['CreateDate'] ?? $exifDate;
+            $exifDate = $exif['ContentCreateDate']
+                ?? $exif['CreationDate']
+                ?? $exif['CreateDate']
+                ?? $exifDate;
         }
 
         // Check if we have a date
@@ -192,12 +188,12 @@ final class Exif
         // https://github.com/pulsejet/memories/issues/485
 
         $formats = [
-            'Y:m:d H:i', // 2023:03:05 18:58
-            'Y:m:d H:iO', // 2023:03:05 18:58+05:00
-            'Y:m:d H:i:s', // 2023:03:05 18:58:17
-            'Y:m:d H:i:sO', // 2023:03:05 10:58:17+05:00
-            'Y:m:d H:i:s.u', // 2023:03:05 10:58:17.000
             'Y:m:d H:i:s.uO', // 2023:03:05 10:58:17.000Z
+            'Y:m:d H:i:s.u', // 2023:03:05 10:58:17.000
+            'Y:m:d H:i:sO', // 2023:03:05 10:58:17+05:00
+            'Y:m:d H:i:s', // 2023:03:05 18:58:17
+            'Y:m:d H:iO', // 2023:03:05 18:58+05:00
+            'Y:m:d H:i', // 2023:03:05 18:58
         ];
 
         /** @var \DateTime $dt */
@@ -287,15 +283,16 @@ final class Exif
         $width = $exif[self::EXIF_KEY_IMAGE_WIDTH] ?? 0;
         $height = $exif[self::EXIF_KEY_IMAGE_HEIGHT] ?? 0;
 
+        // Sanity check the dimensions before using them
+        if ($width <= 0 || $height <= 0 || $width > 100000 || $height > 100000) {
+            return [0, 0];
+        }
+
         // Check if image is rotated and we need to swap width and height
         $rotation = $exif[self::EXIF_KEY_ROTATION] ?? 0;
         $orientation = $exif[self::EXIF_KEY_ORIENTATION] ?? 0;
         if (\in_array($orientation, [5, 6, 7, 8], true) || \in_array($rotation, [90, 270], true)) {
             return [$height, $width];
-        }
-
-        if ($width <= 0 || $height <= 0 || $width > 100000 || $height > 100000) {
-            return [0, 0];
         }
 
         return [$width, $height];
@@ -513,6 +510,37 @@ final class Exif
             throw new \Exception('Exiftool output is not an array with at least one element');
         }
 
-        return $json[0];
+        $exif = $json[0];
+        if (empty($exif['Make'] ?? null) && !empty($exif['UserData_mak'] ?? null)) {
+            $exif['Make'] = $exif['UserData_mak'];
+        }
+        if (empty($exif['Model'] ?? null) && !empty($exif['UserData_mod'] ?? null)) {
+            $exif['Model'] = $exif['UserData_mod'];
+        }
+
+        return $exif;
+    }
+
+    private static function sanitizeDates(array &$exif): void
+    {
+        $dateFields = [
+            'DateTimeOriginal',
+            'SubSecDateTimeOriginal',
+            'ContentCreateDate',
+            'CreateDate',
+            'ModifyDate',
+            'TrackCreateDate',
+            'TrackModifyDate',
+            'MediaCreateDate',
+            'MediaModifyDate',
+        ];
+        foreach ($dateFields as $field) {
+            if (!\array_key_exists($field, $exif)) {
+                continue;
+            }
+            if (!\is_string($exif[$field]) || str_starts_with($exif[$field], '0000:00:00')) {
+                unset($exif[$field]);
+            }
+        }
     }
 }

@@ -10,7 +10,7 @@ use OCA\Memories\Util;
 final class BinExt
 {
     public const EXIFTOOL_VER = '13.44';
-    public const GOVOD_VER = '0.2.7';
+    public const GOVOD_VER = '0.2.9';
     public const NX_VER_MIN = '1.1';
 
     /** Exiftool environment is initialized in this process */
@@ -315,14 +315,13 @@ final class BinExt
         // Kill the transcoder in case it's running
         self::pkill(self::getName('go-vod'));
 
-        // Start transcoder
-        // We need init to own this process, there's no easy way to do this
+        // Start transcoder directly with no shell; init owns it once this request ends
         $pipes = [];
-        proc_open(['sh', '-c', "nohup {$transcoder} {$configFile} &"], [
+        proc_open([$transcoder, $configFile], [
             0 => ['file', '/dev/null', 'r'],
             1 => ['file', $logFile, 'a'],
             2 => ['file', $logFile, 'a'],
-        ], $pipes);
+        ], $pipes, null, null, ['bypass_shell' => true]);
 
         // wait for 500ms
         usleep(500000);

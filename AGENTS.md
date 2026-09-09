@@ -54,6 +54,16 @@ Very important.
 - Never run `occ` in spec.
 - Put helpers bottom of spec, after all tests.
 
+## GitHub Interaction
+- Only for *GitHub*, not general Git stuff.
+- Use `gh` CLI, prompt user if not installed.
+- View/list: `gh issue view <num>`, `gh issue list --label "<label>"`, `gh label list`.
+- Edit labels: `gh issue edit <num> --add-label "<label>" --remove-label "<label>"`.
+  - `bug`, `feature`, `regression`, `performance`, `android`, 
+  - `duplicate`, `wontfix`, `needs details`, `documentation`
+- Triage issues with `needs triage` label.
+  - Don't relabel unless confirmed bug or regression.
+
 ## Key Subsystems & Architecture
 
 ### Overview
@@ -98,6 +108,6 @@ Very important.
 - VA-API and NVENC hardware acceleration supported.
 
 ### Frontend (`src/`)
-- Vue 2 + Webpack, built to `js/`.
+- Vue 3 + Webpack, built to `js/`.
 - History mode under `/apps/memories`.
 - Routes in `src/router.ts`.

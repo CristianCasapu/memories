@@ -339,12 +339,13 @@ final class RecognizeBackend extends Backend
             // "A|B" (people together): the first person represents the cluster
             $faceName = trim(explode('|', $faceName)[0]);
 
-            // Get cluster ID
+            // Get cluster ID for the current user
             $nameField = is_numeric($faceName) ? 'rfc.id' : 'rfc.title';
             $query = $this->tq->getBuilder();
             $query->select('id')
                 ->from('recognize_face_clusters', 'rfc')
                 ->where($query->expr()->eq($nameField, $query->createNamedParameter($faceName)))
+                ->andWhere($query->expr()->eq('rfc.user_id', $query->createNamedParameter(Util::getUID())))
             ;
 
             if ($id = $query->executeQuery()->fetchOne()) {

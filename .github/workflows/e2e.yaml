@@ -2,9 +2,13 @@ name: e2e
 
 on:
   push:
-    branches:
-      - master
-      - pulsejet/*
+    paths-ignore:
+      - 'docs/**'
+      - 'go-vod/**'
+      - 'android/**'
+      - 'mkdocs.yml'
+      - '**.md'
+  pull_request:
     paths-ignore:
       - 'docs/**'
       - 'go-vod/**'
@@ -174,13 +178,13 @@ jobs:
           NC_VERSION: ${{ matrix.server-versions }}
           NC_DB_PORT: 4444
           NC_REDIS_PORT: 6379
-          E2E_VIDEO: 1
+          E2E_VIDEO: ${{ github.event_name == 'push' && '1' || '0' }}
         run: |
           make -C apps/${{ env.APP_NAME }} e2e
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
-        if: always()
+        if: ${{ always() && github.event_name != 'pull_request' }}
         with:
           name: report-${{ matrix.databases }}-${{ matrix.php-versions }}-${{ matrix.server-versions }}
           path: apps/${{ env.APP_NAME }}/playwright-report
@@ -188,6 +192,7 @@ jobs:
 
       - name: Upload Playwright videos
         uses: actions/upload-artifact@v7
+        if: ${{ github.event_name != 'pull_request' }}
         with:
           path: apps/${{ env.APP_NAME }}/video-${{ matrix.databases }}-${{ matrix.php-versions }}-${{ matrix.server-versions }}.mp4
           retention-days: 3

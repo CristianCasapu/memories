@@ -17,6 +17,7 @@ import { defineComponent, markRaw, type PropType } from 'vue';
 
 import * as nativex from '@native';
 
+import UserConfig from '@mixins/UserConfig';
 import { translate as t } from '@services/l10n';
 
 import ImageMultipleIcon from 'vue-material-design-icons/ImageMultiple.vue';
@@ -43,13 +44,18 @@ export default defineComponent({
     },
   },
 
+  mixins: [UserConfig],
+
   computed: {
     links() {
-      return [
+      const links = [
         { to: '/', icon: markRaw(ImageMultipleIcon), text: t('memories', 'Photos') },
         { to: '/explore', icon: markRaw(SearchIcon), text: t('memories', 'Explore') },
-        { to: '/albums', icon: markRaw(AlbumIcon), text: t('memories', 'Albums') },
       ];
+      if (this.config.albums_enabled) {
+        links.push({ to: '/albums', icon: markRaw(AlbumIcon), text: t('memories', 'Albums') });
+      }
+      return links;
     },
   },
 
@@ -108,7 +114,7 @@ export default defineComponent({
     flex: 1 1 0px;
     opacity: 0.75;
 
-    :deep(span.material-design-icon) {
+    span.material-design-icon {
       border-radius: 20px;
       padding: 4px;
       max-width: 70px;
@@ -118,7 +124,7 @@ export default defineComponent({
     &.router-link-exact-active {
       opacity: 1;
 
-      :deep(span.material-design-icon) {
+      span.material-design-icon {
         background: var(--color-primary-element-light);
       }
     }

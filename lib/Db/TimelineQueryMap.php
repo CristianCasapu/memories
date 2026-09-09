@@ -70,7 +70,7 @@ trait TimelineQueryMap
                 (float) $row['lat'],
                 (float) $row['lon'],
             ],
-            'count' => (float) $row['count'],
+            'count' => (int) $row['count'],
         ], $res);
     }
 
@@ -156,7 +156,13 @@ trait TimelineQueryMap
 
         // FETCH coordinates
         $coords = $this->executeQueryWithCTEs($query)->fetch();
+        if (!$coords) {
+            return null;
+        }
 
-        return $coords ?: null;
+        return [
+            'lat' => (float) $coords['lat'],
+            'lon' => (float) $coords['lon'],
+        ];
     }
 }

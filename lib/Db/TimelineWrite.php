@@ -25,11 +25,15 @@ final class TimelineWrite
     use TimelineWritePlaces;
 
     public function __construct(
-        protected IDBConnection $connection,
+        IDBConnection $connection,
         protected LivePhoto $livePhoto,
         protected ILockingProvider $lockingProvider,
-        protected LoggerInterface $logger,
-    ) {}
+        LoggerInterface $logger,
+    ) {
+        // These are declared in traits, don't redeclare.
+        $this->connection = $connection;
+        $this->logger = $logger;
+    }
 
     /**
      * Process a file to insert Exif data into the database.
@@ -129,7 +133,7 @@ final class TimelineWrite
         }
 
         // Video parameters
-        $videoDuration = round((float) ($isvideo ? ($exif['Duration'] ?? $exif['TrackDuration'] ?? 0) : 0));
+        $videoDuration = (int) round((float) ($isvideo ? ($exif['Duration'] ?? $exif['TrackDuration'] ?? 0) : 0));
 
         // Process location data
         // This also modifies the exif array in-place to set the LocationTZID
@@ -161,7 +165,7 @@ final class TimelineWrite
         // We need to use the local time in UTC for the dayId
         // This way two photos in different timezones on the same date locally
         // end up in the same dayId group
-        $dayId = floor($dateLocalUtc / 86400);
+        $dayId = (int) floor($dateLocalUtc / 86400);
 
         // Get size of image
         [$w, $h] = Exif::getDimensions($exif);
@@ -292,7 +296,7 @@ final class TimelineWrite
      */
     private function getCurrentRow(int $fileId): ?array
     {
-        $fetch = function (string $table) use ($fileId): false|null|array {
+        $fetch = function (string $table) use ($fileId): false|array {
             $query = $this->connection->getQueryBuilder();
 
             return $query->select('*')
@@ -318,7 +322,7 @@ final class TimelineWrite
         foreach ($exif as $key => $value) {
             // Truncate any fields > 2048 chars
             if (\is_string($value) && \strlen($value) > 2048) {
-                $value = substr($value, 0, 2048);
+                $value = mb_strcut($value, 0, 2048);
             }
 
             // Only keep fields in the whitelist

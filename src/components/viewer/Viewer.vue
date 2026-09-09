@@ -108,7 +108,7 @@ type IViewerAction = {
   if: boolean;
 };
 
-const SLIDESHOW_MS = 5000;
+const DEFAULT_SLIDESHOW_MS = 5000;
 const SIDEBAR_DEBOUNCE_MS = 350;
 const BODY_VIEWER_VIDEO = 'viewer-video';
 const BODY_VIEWER_FULLY_OPENED = 'viewer-fully-opened';
@@ -852,7 +852,7 @@ export default defineComponent({
         const photo = this.list[idx];
 
         // Something went really wrong
-        console.assert(photo, 'Missing photo for index', index, 'and global anchor', this.globalAnchor);
+        console.assert(!!photo, 'Missing photo for index', index, 'and global anchor', this.globalAnchor);
         if (!photo) return {};
 
         // Get index of current day in dayIds lisst
@@ -1263,7 +1263,7 @@ export default defineComponent({
       setTimeout(() => this.setUiVisible(false), 1);
 
       // Start slideshow
-      this.slideshowTimer = window.setTimeout(this.slideshowTimerFired, SLIDESHOW_MS);
+      this.slideshowTimer = window.setTimeout(this.slideshowTimerFired, this.getSlideshowMs());
     },
 
     /**
@@ -1299,8 +1299,17 @@ export default defineComponent({
     resetSlideshowTimer() {
       if (this.slideshowTimer) {
         window.clearTimeout(this.slideshowTimer);
-        this.slideshowTimer = window.setTimeout(this.slideshowTimerFired, SLIDESHOW_MS);
+        this.slideshowTimer = window.setTimeout(this.slideshowTimerFired, this.getSlideshowMs());
       }
+    },
+
+    /**
+     * Get the slideshow interval in milliseconds from user config
+     */
+    getSlideshowMs() {
+      const secs = Number(this.config.slideshow_duration);
+      if (!Number.isFinite(secs)) return DEFAULT_SLIDESHOW_MS;
+      return utils.clamp(Math.round(secs), 1, 60) * 1000;
     },
 
     /**
@@ -1420,9 +1429,11 @@ export default defineComponent({
   transition: transform 0.75s ease !important;
 }
 
-.inner,
-.inner:deep(.pswp) {
+.inner {
   width: inherit;
+  :deep(.pswp) {
+    width: inherit;
+  }
 
   :deep(.pswp__top-bar) {
     background: linear-gradient(0deg, transparent, rgba(0, 0, 0, 0.3));
@@ -1450,38 +1461,38 @@ export default defineComponent({
 :deep(.pswp) {
   contain: strict;
 
-  :deep(.pswp__zoom-wrap) {
+  .pswp__zoom-wrap {
     width: 100%;
   }
 
-  :deep(img.pswp__img) {
+  img.pswp__img {
     object-fit: contain;
   }
 
-  :deep(.pswp__button) {
+  .pswp__button {
     color: white;
 
     &,
-    :deep(*) {
+    * {
       cursor: pointer;
     }
   }
 
-  :deep(.pswp__icn-shadow) {
+  .pswp__icn-shadow {
     display: none;
   }
 
   // Hide arrows on mobile
   @media (max-width: 768px) {
-    :deep(.pswp__button--arrow) {
+    .pswp__button--arrow {
       opacity: 0 !important;
     }
   }
 
   // Prevent the popper from overlapping with the sidebar
-  > :deep(div > .v-popper__wrapper) {
+  > div > .v-popper__wrapper {
     overflow: visible !important;
-    > :deep(.v-popper__inner) {
+    > .v-popper__inner {
       transform: translateX(-20px);
     }
   }

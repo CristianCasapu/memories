@@ -93,6 +93,17 @@
           {{ t('memories', 'Show metadata in slideshow') }}
         </NcCheckboxRadioSwitch>
 
+        <NcTextField
+          :label="t('memories', 'Slideshow Duration (1-60 seconds)')"
+          :label-visible="true"
+          :model-value="config.slideshow_duration"
+          type="number"
+          min="1"
+          max="60"
+          step="1"
+          @update:model-value="updateSlideshowDuration"
+        />
+
         <div class="radio-group">
           <div class="title">{{ t('memories', 'High resolution image loading behavior') }}</div>
           <NcCheckboxRadioSwitch
@@ -196,7 +207,7 @@
           max="7"
           step="1"
           @input="updateOnThisDayRange"
-          :helper-text="t('memories', 'Number of days before and after each anniversary to include')"
+          :helper-text="t('memories', 'Number of days before and after each anniversary')"
         />
 
         <NcTextField
@@ -262,7 +273,7 @@ export default defineComponent({
   data: () => ({
     localFolders: [] as nativex.LocalFolderConfig[],
     names: {
-      header: t('memories', 'Memories Settings'),
+      header: t('memories', 'Settings'),
       general: t('memories', 'General'),
       viewer: t('memories', 'Photo Viewer'),
       onthisday: t('memories', 'On This Day'),
@@ -409,6 +420,13 @@ export default defineComponent({
       await this.updateSetting('metadata_in_slideshow', 'metadataInSlideshow');
     },
 
+    async updateSlideshowDuration(val: string | number) {
+      const n = typeof val === 'number' ? val : parseFloat(val);
+      if (!Number.isFinite(n)) return;
+      this.config.slideshow_duration = Math.min(60, Math.max(1, Math.round(n)));
+      await this.updateSetting('slideshow_duration', 'slideshowDuration');
+    },
+
     // On This Day settings
     async updateOnThisDayRange() {
       await this.updateSetting('onthisday_day_range', 'onthisdayDayRange');
@@ -468,35 +486,42 @@ export default defineComponent({
   :deep(.app-settings__content) {
     // Fix weirdness when focusing on toggle input on mobile
     position: relative;
-  }
 
-  :deep(input[readonly]) {
-    cursor: pointer;
-    user-select: none;
-  }
+    .app-settings-section__content {
+      padding: 6px 6px;
+      margin-block-start: 0;
+      gap: 2px;
+    }
 
-  :deep(.app-settings-section) {
-    margin-bottom: 20px !important;
+    .input-field,
+    .radio-group {
+      margin-left: 8px;
+      margin-right: 12px;
+      margin-top: 1em;
+    }
+
+    .input-field__helper-text-message {
+      font-size: 0.8em;
+    }
+
+    input[readonly] {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    @media (max-width: 600px) {
+      &,
+      & .app-settings-section__content {
+        padding: 0;
+      }
+      .input-field {
+        width: calc(100% - 22px);
+      }
+    }
   }
 
   :deep(#sign-out) {
     margin-top: 10px;
-  }
-
-  :deep(.checkbox-radio-switch__label) {
-    padding: 1px 14px; // was 4px 14px, make it more compact
-  }
-
-  :deep(.radio-group) {
-    margin-top: 6px;
-
-    :deep(.title) {
-      font-weight: 500;
-    }
-
-    :deep(.checkbox-radio-switch-radio) {
-      margin: 2px 16px; // indent for radio button
-    }
   }
 }
 </style>
