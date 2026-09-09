@@ -32,15 +32,6 @@
         </NcActionButton>
 
         <NcActionButton
-          :aria-label="routeIsPublic ? t('memories', 'Share link') : t('memories', 'Share as album')"
-          @click="shareView($route, routeIsPublic ? '' : folderName)"
-          close-after-click
-        >
-          {{ routeIsPublic ? t('memories', 'Share link') : t('memories', 'Share as album') }}
-          <template #icon> <ShareIcon :size="20" /> </template>
-        </NcActionButton>
-
-        <NcActionButton
           v-if="!routeIsPublic"
           :aria-label="t('memories', 'Upload files')"
           @click="upload()"
@@ -61,6 +52,23 @@
           <template #icon> <UploadIcon :size="20" /> </template>
         </NcActionButton>
 
+        <NcActionButton @click="toggleRecursive" close-after-click>
+          {{ recursive ? t('memories', 'Folder view') : t('memories', 'Timeline view') }}
+          <template #icon>
+            <FoldersIcon v-if="recursive" :size="20" />
+            <TimelineIcon v-else :size="20" />
+          </template>
+        </NcActionButton>
+
+        <NcActionButton
+          :aria-label="routeIsPublic ? t('memories', 'Share link') : t('memories', 'Share as album')"
+          @click="shareView($route, routeIsPublic ? '' : folderName)"
+          close-after-click
+        >
+          {{ routeIsPublic ? t('memories', 'Share link') : t('memories', 'Share as album') }}
+          <template #icon> <ShareIcon :size="20" /> </template>
+        </NcActionButton>
+
         <NcActionButton
           v-if="!initstate.noDownload"
           :aria-label="t('memories', 'Download all photos')"
@@ -72,14 +80,6 @@
             recursive ? t('memories', 'Download all photos (with subfolders)') : t('memories', 'Download all photos')
           }}
           <template #icon> <DownloadIcon :size="20" /> </template>
-        </NcActionButton>
-
-        <NcActionButton @click="toggleRecursive" close-after-click>
-          {{ recursive ? t('memories', 'Folder view') : t('memories', 'Timeline view') }}
-          <template #icon>
-            <FoldersIcon v-if="recursive" :size="20" />
-            <TimelineIcon v-else :size="20" />
-          </template>
         </NcActionButton>
       </NcActions>
     </div>

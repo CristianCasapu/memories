@@ -95,15 +95,6 @@
           <template #icon> <PlusIcon :size="20" /> </template>
         </NcActionButton>
         <NcActionButton
-          v-if="!isAlbumList"
-          :aria-label="t('memories', 'Make a clip from this album')"
-          @click="makeClip()"
-          close-after-click
-        >
-          {{ t('memories', 'Make a clip from this album') }}
-          <template #icon> <ClipIcon :size="20" /> </template>
-        </NcActionButton>
-        <NcActionButton
           :aria-label="t('memories', 'Share album')"
           :title="t('memories', 'Share album')"
           @click="openShareModal()"
@@ -132,6 +123,15 @@
         >
           {{ t('memories', 'Edit album details') }}
           <template #icon> <EditIcon :size="20" /> </template>
+        </NcActionButton>
+        <NcActionButton
+          v-if="!isAlbumList"
+          :aria-label="t('memories', 'Make a clip from this album')"
+          @click="makeClip()"
+          close-after-click
+        >
+          {{ t('memories', 'Make a clip from this album') }}
+          <template #icon> <ClipIcon :size="20" /> </template>
         </NcActionButton>
         <NcActionButton
           :aria-label="t('memories', 'Remove album')"
