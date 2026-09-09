@@ -133,6 +133,23 @@
           {{ t('memories', 'Make a clip from this album') }}
           <template #icon> <ClipIcon :size="20" /> </template>
         </NcActionButton>
+        <!-- album of a person: the same photo order as on the person itself -->
+        <NcActionCheckbox
+          v-if="isPersonAlbum"
+          :aria-label="t('memories', 'Best photos first')"
+          :model-value="sortByProminence"
+          @change="toggleProminence"
+        >
+          {{ t('memories', 'Best photos first (large, sharp, well lit, facing the camera)') }}
+        </NcActionCheckbox>
+        <NcActionCheckbox
+          v-if="isPersonAlbum"
+          :aria-label="t('memories', 'Only in the foreground')"
+          :model-value="onlySubjects"
+          @change="toggleSubjects"
+        >
+          {{ t('memories', 'Only where they are in the foreground (in focus, not in the background)') }}
+        </NcActionCheckbox>
         <NcActionButton
           :aria-label="t('memories', 'Remove album')"
           :title="t('memories', 'Remove album')"
@@ -166,6 +183,8 @@ import axios from '@nextcloud/axios';
 import AlbumCreateModal from '@components/modal/AlbumCreateModal.vue';
 import ClipIcon from 'vue-material-design-icons/MovieOpenPlay.vue';
 import AlbumDeleteModal from '@components/modal/AlbumDeleteModal.vue';
+
+import { generateUrl } from '@nextcloud/router';
 
 import { downloadWithHandle } from '@services/dav';
 import { API } from '@services/API';
@@ -211,7 +230,27 @@ export default defineComponent({
 
   mixins: [UserConfig],
 
+  data: () => ({
+    /** null until known; whether this album follows a person and how it is ordered */
+    personAlbum: null as null | { person: boolean; prominence: boolean; subjects: boolean },
+  }),
+
   computed: {
+    /** This album is kept in sync with a recognized person (see PersonAlbums) */
+    isPersonAlbum(): boolean {
+      return !this.isAlbumList && !!this.personAlbum?.person;
+    },
+
+    /** ?sort=prominence: the best photos of the person first inside every day */
+    sortByProminence(): boolean {
+      return this.$route.query.sort === 'prominence';
+    },
+
+    /** ?subjects=1: only the photos the person was photographed in */
+    onlySubjects(): boolean {
+      return this.$route.query.subjects === '1';
+    },
+
     isAlbumList(): boolean {
       return !this.$route.params.name?.toString();
     },
@@ -259,6 +298,13 @@ export default defineComponent({
     '$route.query.share'() {
       this.openShareFromQuery();
     },
+
+    '$route.params.name': {
+      immediate: true,
+      handler() {
+        this.loadPersonAlbum();
+      },
+    },
   },
 
   methods: {
@@ -281,6 +327,87 @@ export default defineComponent({
       const { user, name } = this.$route.params;
       this.$router.replace({ ...this.$route, query: {} } as any).catch(() => {});
       setTimeout(() => _m.modals.albumShare(String(user), String(name)), 300);
+    },
+
+    /**
+     * Find out whether this album follows a person, and open it in the order that
+     * was picked on the person (unless the URL already says how to order it).
+     */
+    async loadPersonAlbum() {
+      this.personAlbum = null;
+      if (this.isAlbumList) return;
+
+      const user = String(this.$route.params.user ?? '');
+      const name = String(this.$route.params.name ?? '');
+      if (!user || !name) return;
+
+      try {
+        const url = API.Q(generateUrl('/apps/memories/api/person-albums/album'), { user, name });
+        const { data } = await axios.get(url);
+        this.personAlbum = data;
+        if (!data.person) return;
+
+        const query = this.$route.query;
+        if (query.sort !== undefined || query.subjects !== undefined) {
+          // came from the person (or a link): that order becomes the album's order
+          if (this.sortByProminence !== data.prominence || this.onlySubjects !== data.subjects) {
+            this.storeOrder(this.sortByProminence, this.onlySubjects);
+          }
+        } else if (data.prominence || data.subjects) {
+          this.$router
+            .replace({
+              ...this.$route,
+              query: {
+                ...query,
+                ...(data.prominence ? { sort: 'prominence' } : {}),
+                ...(data.subjects ? { subjects: '1' } : {}),
+              },
+            } as any)
+            .catch(() => {});
+        }
+      } catch (error) {
+        this.personAlbum = null;
+      }
+    },
+
+    /** Remember the order on the album, so it opens the same way next time */
+    async storeOrder(prominence: boolean, subjects: boolean) {
+      if (this.personAlbum) {
+        this.personAlbum = { person: true, prominence, subjects };
+      }
+
+      try {
+        await axios.post(generateUrl('/apps/memories/api/person-albums/album'), {
+          user: String(this.$route.params.user ?? ''),
+          name: String(this.$route.params.name ?? ''),
+          prominence,
+          subjects,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
+    toggleProminence() {
+      const query = { ...this.$route.query };
+      if (this.sortByProminence) {
+        delete query.sort;
+      } else {
+        query.sort = 'prominence';
+      }
+      this.storeOrder(!this.sortByProminence, this.onlySubjects);
+      this.$router.replace({ ...this.$route, query } as any).catch(() => {});
+    },
+
+    toggleSubjects() {
+      const query = { ...this.$route.query };
+      if (this.onlySubjects) {
+        delete query.subjects;
+      } else {
+        query.subjects = '1';
+      }
+      this.storeOrder(this.sortByProminence, !this.onlySubjects);
+      this.$router.replace({ ...this.$route, query } as any).catch(() => {});
     },
 
     back() {

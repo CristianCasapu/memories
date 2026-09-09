@@ -671,6 +671,14 @@ export default defineComponent({
           throw new Error('Invalid album route');
         }
         set(DaysFilterType.ALBUM, `${user}/${name}`);
+
+        // the album of a person keeps the photo order picked on the person
+        if (this.$route.query.sort === 'prominence') {
+          set(DaysFilterType.SORT, 'prominence');
+        }
+        if (this.$route.query.subjects === '1') {
+          set(DaysFilterType.SUBJECTS, '1');
+        }
       }
 
       // People
@@ -868,10 +876,6 @@ export default defineComponent({
         if (this.isMonthView) head.ismonth = true;
 
         // Special headers
-        if (day.dayid === this.c.PROMINENCE_DAYID) {
-          // one virtual day holding all the photos of the person, best first
-          head.name = this.t('memories', 'Best photos of this person first');
-        }
         if (this.routeIsThisDay && (!prevDay || Math.abs(prevDay.dayid - day.dayid) > 30)) {
           // thisday view with new year title
           head.size = 67;

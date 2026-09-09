@@ -407,7 +407,11 @@ export default defineComponent({
       this.finding = true;
       try {
         const clusterId = await this.resolveClusterId();
-        const res = await axios.post(generateUrl(`/apps/memories/api/person-albums/${clusterId}`), {});
+        const res = await axios.post(generateUrl(`/apps/memories/api/person-albums/${clusterId}`), {
+          // the album opens the same way this person is being looked at
+          prominence: this.sortByProminence,
+          subjects: this.onlySubjects,
+        });
         this.personAlbum = res.data;
         showSuccess(
           this.t(
@@ -425,9 +429,13 @@ export default defineComponent({
       }
     },
 
+    /** Open the album of this person, ordered the way the person is ordered right now */
     openPersonAlbum() {
       if (!this.personAlbum) return;
-      this.$router.push({ name: 'albums', params: { user: utils.uid!, name: this.personAlbum.name } });
+      const query: Record<string, string> = {};
+      if (this.sortByProminence) query.sort = 'prominence';
+      if (this.onlySubjects) query.subjects = '1';
+      this.$router.push({ name: 'albums', params: { user: utils.uid!, name: this.personAlbum.name }, query });
     },
 
     /**

@@ -122,10 +122,7 @@ trait TimelineQueryDays
         // JOIN with mimetypes to get the mimetype
         $query->join('f', 'mimetypes', 'mimetypes', $query->expr()->eq('f.mimetype', 'mimetypes.id'));
 
-        if ($prominence) {
-            // All days at once, best photos of the person first (see RecognizeBackend: 'prominence' column)
-            $query->addOrderBy('prominence', 'DESC');
-        } elseif ($monthView) {
+        if ($monthView) {
             // Convert monthIds to dayIds
             $query->andWhere($query->expr()->orX(...array_map(fn ($monthId) => $query->expr()->andX(
                 $query->expr()->gte('m.dayid', $query->createNamedParameter($monthId, IQueryBuilder::PARAM_INT)),
@@ -138,6 +135,13 @@ trait TimelineQueryDays
 
         // Add favorite field
         $this->addFavoriteTag($query);
+
+        // Best photos of the person first, inside each day. The days themselves stay in
+        // date order, so the scrollbar keeps working (see RecognizeBackend: 'prominence').
+        if ($prominence) {
+            $query->addOrderBy('m.dayid', 'DESC');
+            $query->addOrderBy('prominence', 'DESC');
+        }
 
         // Group and sort by date taken
         $query->addOrderBy('m.datetaken', 'DESC');
@@ -166,9 +170,6 @@ trait TimelineQueryDays
         // Post process the day in-place
         foreach ($day as &$photo) {
             $this->postProcessDayPhoto($photo, $monthView);
-            if ($prominence) {
-                $photo['dayid'] = TimelineQuery::PROMINENCE_DAYID;
-            }
         }
 
         // Reverse order if needed

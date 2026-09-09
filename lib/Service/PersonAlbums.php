@@ -30,9 +30,12 @@ final class PersonAlbums
     /**
      * Create (or reuse) the album for a Recognize cluster of the user and link it.
      *
-     * @return array{album_id:int, name:string, cluster_id:int, added:int}
+     * The photo order the user picked on the person ("best photos first", "only in the
+     * foreground") is kept with the album, so the album opens the same way.
+     *
+     * @return array{album_id:int, name:string, cluster_id:int, added:int, prominence:bool, subjects:bool}
      */
-    public function create(string $uid, int $clusterId): array
+    public function create(string $uid, int $clusterId, bool $prominence = false, bool $subjects = false): array
     {
         if (!self::isAvailable()) {
             throw new \RuntimeException('The Photos app (albums) is not available');
@@ -56,18 +59,65 @@ final class PersonAlbums
             $this->link($uid, $clusterId, $album->getId());
         }
 
+        $this->setOptions($album->getId(), $prominence, $subjects);
+
         $added = $this->syncOne($uid, $clusterId, $album->getId());
 
-        return ['album_id' => $album->getId(), 'name' => $album->getTitle(), 'cluster_id' => $clusterId, 'added' => $added];
+        return [
+            'album_id' => $album->getId(),
+            'name' => $album->getTitle(),
+            'cluster_id' => $clusterId,
+            'added' => $added,
+            'prominence' => $prominence,
+            'subjects' => $subjects,
+        ];
     }
 
     /**
-     * @return null|array{album_id:int, name:string, cluster_id:int, last_sync:int}
+     * The photo order stored for an album, or null if the album does not follow a person.
+     *
+     * @return null|array{album_id:int, uid:string, cluster_id:int, prominence:bool, subjects:bool}
+     */
+    public function getForAlbum(int $albumId): ?array
+    {
+        $query = $this->db->getQueryBuilder();
+        $query->select('uid', 'cluster_id', 'sort_prominence', 'only_subjects')
+            ->from('memories_person_albums')
+            ->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)))
+        ;
+        $row = $query->executeQuery()->fetch();
+        if (!$row) {
+            return null;
+        }
+
+        return [
+            'album_id' => $albumId,
+            'uid' => (string) $row['uid'],
+            'cluster_id' => (int) $row['cluster_id'],
+            'prominence' => (bool) $row['sort_prominence'],
+            'subjects' => (bool) $row['only_subjects'],
+        ];
+    }
+
+    /** Remember how the album of a person should be ordered and filtered. */
+    public function setOptions(int $albumId, bool $prominence, bool $subjects): void
+    {
+        $query = $this->db->getQueryBuilder();
+        $query->update('memories_person_albums')
+            ->set('sort_prominence', $query->createNamedParameter($prominence ? 1 : 0, IQueryBuilder::PARAM_INT))
+            ->set('only_subjects', $query->createNamedParameter($subjects ? 1 : 0, IQueryBuilder::PARAM_INT))
+            ->where($query->expr()->eq('album_id', $query->createNamedParameter($albumId, IQueryBuilder::PARAM_INT)))
+            ->executeStatement()
+        ;
+    }
+
+    /**
+     * @return null|array{album_id:int, name:string, cluster_id:int, last_sync:int, prominence:bool, subjects:bool}
      */
     public function getForCluster(string $uid, int $clusterId): ?array
     {
         $query = $this->db->getQueryBuilder();
-        $query->select('pa.album_id', 'pa.cluster_id', 'pa.last_sync', 'a.name')
+        $query->select('pa.album_id', 'pa.cluster_id', 'pa.last_sync', 'pa.sort_prominence', 'pa.only_subjects', 'a.name')
             ->from('memories_person_albums', 'pa')
             ->leftJoin('pa', 'photos_albums', 'a', $query->expr()->eq('a.album_id', 'pa.album_id'))
             ->where($query->expr()->eq('pa.uid', $query->createNamedParameter($uid)))
@@ -84,7 +134,14 @@ final class PersonAlbums
             return null;
         }
 
-        return ['album_id' => (int) $row['album_id'], 'name' => (string) $row['name'], 'cluster_id' => (int) $row['cluster_id'], 'last_sync' => (int) $row['last_sync']];
+        return [
+            'album_id' => (int) $row['album_id'],
+            'name' => (string) $row['name'],
+            'cluster_id' => (int) $row['cluster_id'],
+            'last_sync' => (int) $row['last_sync'],
+            'prominence' => (bool) $row['sort_prominence'],
+            'subjects' => (bool) $row['only_subjects'],
+        ];
     }
 
     public function unlink(string $uid, int $clusterId): void

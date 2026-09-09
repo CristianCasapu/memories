@@ -27,6 +27,7 @@ use OCA\Memories\Db\AlbumsQuery;
 use OCA\Memories\Db\SQL;
 use OCA\Memories\Db\TimelineQuery;
 use OCA\Memories\Exceptions;
+use OCA\Memories\Service\PersonAlbums;
 use OCA\Memories\Util;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IRequest;
@@ -81,6 +82,9 @@ final class AlbumsBackend extends Backend
             $query->expr()->eq('paf.album_id', $query->createNamedParameter($album['album_id'])),
             $query->expr()->eq('paf.file_id', 'm.fileid'),
         ));
+
+        // "Album of this person": keep the photo order picked on the person
+        $this->transformPersonOrder($query, $aggregate, (int) $album['album_id']);
 
         // Since we joined to the album, otherwise this is unsafe
         $this->tq->allowEmptyRoot();
@@ -212,6 +216,64 @@ final class AlbumsBackend extends Backend
     public function getClusterIdFrom(array $photo): int
     {
         return (int) $photo['album_id'];
+    }
+
+    /**
+     * An album that follows a recognized person can be ordered like the person itself:
+     * ?sort=prominence (best photos of the person first, inside each day) and
+     * ?subjects=1 (only the photos the person was photographed in).
+     */
+    private function transformPersonOrder(IQueryBuilder &$query, bool $aggregate, int $albumId): void
+    {
+        $prominence = 'prominence' === $this->request->getParam('sort');
+        $subjects = (bool) $this->request->getParam('subjects');
+        if (!$prominence && !$subjects) {
+            return;
+        }
+
+        $link = Util::recognizeIsEnabled()
+            ? \OC::$server->get(PersonAlbums::class)->getForAlbum($albumId)
+            : null;
+
+        // Not the album of a person: nothing to order by. The days query still expects
+        // the column whenever ?sort=prominence was asked for, so give it a constant.
+        if (null === $link) {
+            if ($prominence && !$aggregate) {
+                $query->selectAlias(SQL::literal($query, 0, \PDO::PARAM_INT), 'prominence');
+            }
+
+            return;
+        }
+
+        // Parameters live on the outer query: the subqueries are inlined as raw SQL
+        $cluster = $query->createNamedParameter($link['cluster_id'], IQueryBuilder::PARAM_INT);
+        $uid = $query->createNamedParameter($link['uid']);
+
+        // Faces of this person in this photo
+        $detections = static function (IQueryBuilder $sq) use ($cluster, $uid): IQueryBuilder {
+            return $sq->from('recognize_face_detections', 'rfd')
+                ->where($sq->expr()->eq('rfd.file_id', 'm.fileid'))
+                ->andWhere($sq->expr()->eq('rfd.cluster_id', $cluster))
+                ->andWhere($sq->expr()->eq('rfd.user_id', $uid))
+            ;
+        };
+
+        if ($subjects) {
+            $sq = $this->tq->getBuilder();
+            $sq->select($sq->expr()->literal(1));
+            $detections($sq)->andWhere($sq->expr()->orX(
+                $sq->expr()->isNull('rfd.subject'),
+                $sq->expr()->gte('rfd.subject', $query->createNamedParameter(RecognizeBackend::subjectThreshold())),
+            ));
+            $query->andWhere(SQL::exists($query, $sq));
+        }
+
+        if ($prominence && !$aggregate) {
+            $sq = $this->tq->getBuilder();
+            $sq->select($sq->createFunction('MAX(COALESCE(rfd.quality, 0))'));
+            $detections($sq);
+            $query->selectAlias($query->createFunction('COALESCE(('.$sq->getSQL().'), 0)'), 'prominence');
+        }
     }
 
     private function getUID(): string

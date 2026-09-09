@@ -17,9 +17,6 @@ export const constants = Object.freeze({
   MIME_RAW: 'image/x-dcraw',
   FORBIDDEN_EDIT_MIMES: ['image/bmp', 'image/x-dcraw', 'video/MP2T'], // Exif.php
 
-  /** dayid of the single virtual day used when a person's photos are sorted by prominence */
-  PROMINENCE_DAYID: 1,
-
   ALBUM_SORT_FLAGS: {
     DESCENDING: 1 << 0, // default true
     LAST_UPDATE: 1 << 1, // default

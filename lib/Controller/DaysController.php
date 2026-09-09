@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace OCA\Memories\Controller;
 
 use OCA\Memories\ClustersBackend;
-use OCA\Memories\Db\TimelineQuery;
 use OCA\Memories\Util;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -45,12 +44,6 @@ final class DaysController extends GenericApiController
                 $this->isReverse(),
                 $this->getTransformations(),
             );
-
-            // Sorted by prominence: everything in one virtual day, best photos first
-            if ($this->isProminence()) {
-                $count = array_sum(array_map(static fn ($d) => (int) $d['count'], $list));
-                $list = $count > 0 ? [['dayid' => TimelineQuery::PROMINENCE_DAYID, 'count' => $count]] : [];
-            }
 
             // Preload some day responses
             $this->preloadDays($list);
@@ -200,10 +193,14 @@ final class DaysController extends GenericApiController
         }
     }
 
-    /** ?sort=prominence on a person: best photos of the person first (Recognize fork scores) */
+    /**
+     * ?sort=prominence: inside every day, the best photos of the person come first
+     * (Recognize fork scores). Works on a person and on the album of a person.
+     */
     private function isProminence(): bool
     {
-        return 'prominence' === $this->request->getParam('sort') && null !== $this->request->getParam('recognize');
+        return 'prominence' === $this->request->getParam('sort')
+            && (null !== $this->request->getParam('recognize') || null !== $this->request->getParam('albums'));
     }
 
     private function isRecursive(): bool

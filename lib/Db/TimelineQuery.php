@@ -19,9 +19,6 @@ final class TimelineQuery
     use TimelineQueryNativeX;
     use TimelineQuerySingleItem;
 
-    /** dayid of the virtual day that holds a person's photos when sorted by prominence */
-    public const PROMINENCE_DAYID = 1;
-
     public const TIMELINE_SELECT = [
         'm.datetaken', 'm.dayid',
         'm.w', 'm.h', 'm.liveid',
