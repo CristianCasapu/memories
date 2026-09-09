@@ -168,6 +168,9 @@ declare module '@typings' {
     GPSAltitude?: number;
     GPSLatitude?: number;
     GPSLongitude?: number;
+
+    /** People named in the picture (XMP-iptcExt), e.g. from a Google Takeout sidecar */
+    PersonInImage?: string | string[];
   }
 
   export type IShare = {

@@ -920,7 +920,7 @@ export default defineComponent({
     /**
      * Share the currently selected photos
      */
-    shareAsAlbumSelection(selection: Selection) {
+    async shareAsAlbumSelection(selection: Selection) {
       const defaultName =
         this.routeIsPeople && this.$route.params.name && !/^\d+$/.test(String(this.$route.params.name))
           ? String(this.$route.params.name)
@@ -929,7 +929,7 @@ export default defineComponent({
       this.clear();
     },
 
-    shareSelection(selection: Selection) {
+    async shareSelection(selection: Selection) {
       _m.modals.sharePhotos(selection.photosNoDupFileId());
     },
 
