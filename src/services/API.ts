@@ -36,6 +36,8 @@ export const enum DaysFilterType {
   EVENT = 'events',
   /** photo order inside a person: 'prominence' = best photos of the person first (Recognize fork) */
   SORT = 'sort',
+  /** only the photos in which the person is in the foreground and in focus (Recognize fork) */
+  SUBJECTS = 'subjects',
 
   FACE_RECT = 'facerect',
   RECURSIVE = 'recursive',
@@ -226,6 +228,18 @@ export class API {
 
   static CLIP_REMOVE(id: number) {
     return gen(`${BASE}/clips/{id}/remove`, { id });
+  }
+
+  static STORIES() {
+    return gen(`${BASE}/stories`);
+  }
+
+  static STORY(id: number) {
+    return gen(`${BASE}/stories/{id}`, { id });
+  }
+
+  static STORY_SEEN(id: number) {
+    return gen(`${BASE}/stories/{id}/seen`, { id });
   }
 
   static VIDEO_JOBS() {

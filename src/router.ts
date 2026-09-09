@@ -9,6 +9,7 @@ import SplitTimeline from '@components/SplitTimeline.vue';
 import ClusterView from '@components/ClusterView.vue';
 import PeopleReview from '@components/PeopleReview.vue';
 import Clips from '@components/Clips.vue';
+import Stories from '@components/Stories.vue';
 import NativeXSetup from '@native/Setup.vue';
 
 import { translate as t } from '@services/l10n';
@@ -25,6 +26,7 @@ export type RouteId =
   | 'Favorites'
   | 'Videos'
   | 'Clips'
+  | 'Stories'
   | 'Albums'
   | 'Archive'
   | 'ThisDay'
@@ -72,6 +74,13 @@ export const routes: { [key in RouteId]: RouteRecordRaw } = {
     component: Clips,
     name: 'clips',
     props: (route: RouteLocationNormalized) => ({ rootTitle: t('memories', 'Clips') }),
+  },
+
+  Stories: {
+    path: '/stories',
+    component: Stories,
+    name: 'stories',
+    props: (route: RouteLocationNormalized) => ({ rootTitle: t('memories', 'Stories') }),
   },
 
   Search: {

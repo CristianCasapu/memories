@@ -119,10 +119,22 @@ final class RecognizeBackend extends Backend
         }
 
         // Join with detections
-        $query->innerJoin('m', 'recognize_face_detections', 'rfd', $query->expr()->andX(
+        $detectionQuery = $query->expr()->andX(
             $query->expr()->eq('rfd.file_id', 'm.fileid'),
             $clusterQuery,
-        ));
+        );
+
+        // ?subjects=1: only the photos this person was photographed in — the face is in focus
+        // and in front, not somebody in the background (Recognize fork: rfd.subject).
+        // A face that was never weighed keeps its place rather than disappearing.
+        if ($this->request->getParam('subjects')) {
+            $detectionQuery->add($query->expr()->orX(
+                $query->expr()->isNull('rfd.subject'),
+                $query->expr()->gte('rfd.subject', $query->createNamedParameter(self::subjectThreshold())),
+            ));
+        }
+
+        $query->innerJoin('m', 'recognize_face_detections', 'rfd', $detectionQuery);
 
         // Additional people that must also be in the photo
         foreach (\array_slice($together, 1) as $i => $other) {
@@ -138,6 +150,14 @@ final class RecognizeBackend extends Backend
                 $query->expr()->eq($d.'.cluster_id', $c.'.id'),
             ));
         }
+    }
+
+    /** From which score Recognize counts a face as one of the people the picture is about. */
+    public static function subjectThreshold(): float
+    {
+        $value = (float) \OC::$server->get(\OCP\IConfig::class)->getAppValue('recognize', 'faces.subjectThreshold', '0.55');
+
+        return $value > 0.0 && $value <= 1.0 ? $value : 0.55;
     }
 
     #[\Override]

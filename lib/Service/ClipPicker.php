@@ -167,6 +167,10 @@ final class ClipPicker
     /**
      * The most prominent face of every photo (0 when the photo has no scored face).
      *
+     * Faces that belong to the surroundings — small, behind the people the picture was taken
+     * of, outside the focus — are left out, so a photo does not look good just because
+     * somebody happened to walk past sharply in the background.
+     *
      * @param list<int> $fileIds
      *
      * @return array<int, float>
@@ -176,12 +180,17 @@ final class ClipPicker
         $scores = [];
 
         try {
+            $threshold = \OCA\Memories\ClustersBackend\RecognizeBackend::subjectThreshold();
             foreach (array_chunk($fileIds, 500) as $chunk) {
                 $query = $this->db->getQueryBuilder();
                 $query->select('file_id')
                     ->selectAlias($query->func()->max('quality'), 'q')
                     ->from('recognize_face_detections')
                     ->where($query->expr()->in('file_id', $query->createNamedParameter($chunk, IQueryBuilder::PARAM_INT_ARRAY)))
+                    ->andWhere($query->expr()->orX(
+                        $query->expr()->isNull('subject'),
+                        $query->expr()->gte('subject', $query->createNamedParameter($threshold)),
+                    ))
                     ->groupBy('file_id')
                 ;
                 foreach ($query->executeQuery()->fetchAll() as $row) {

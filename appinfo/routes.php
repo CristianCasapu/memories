@@ -18,6 +18,7 @@ return [
         ['name' => 'Page#favorites', 'url' => '/favorites', 'verb' => 'GET'],
         ['name' => 'Page#videos', 'url' => '/videos', 'verb' => 'GET'],
         ['name' => 'Page#clips', 'url' => '/clips', 'verb' => 'GET'],
+        ['name' => 'Page#stories', 'url' => '/stories', 'verb' => 'GET'],
         ['name' => 'Page#archive', 'url' => '/archive', 'verb' => 'GET'],
         ['name' => 'Page#thisday', 'url' => '/thisday', 'verb' => 'GET'],
         ['name' => 'Page#map', 'url' => '/map', 'verb' => 'GET'],
@@ -76,6 +77,14 @@ return [
         ['name' => 'VideoJobs#pick', 'url' => '/api/clips/pick', 'verb' => 'POST'],
         ['name' => 'VideoJobs#musicPick', 'url' => '/api/clips/music', 'verb' => 'GET'],
         ['name' => 'VideoJobs#removeWithFile', 'url' => '/api/clips/{id}/remove', 'verb' => 'POST'],
+
+        // stories: photos shown one after the other, full screen
+        ['name' => 'Stories#list', 'url' => '/api/stories', 'verb' => 'GET'],
+        ['name' => 'Stories#create', 'url' => '/api/stories', 'verb' => 'POST'],
+        ['name' => 'Stories#photos', 'url' => '/api/stories/{id}', 'verb' => 'GET'],
+        ['name' => 'Stories#rename', 'url' => '/api/stories/{id}', 'verb' => 'PATCH'],
+        ['name' => 'Stories#delete', 'url' => '/api/stories/{id}', 'verb' => 'DELETE'],
+        ['name' => 'Stories#seen', 'url' => '/api/stories/{id}/seen', 'verb' => 'POST'],
 
         ['name' => 'Tags#set', 'url' => '/api/tags/set/{id}', 'verb' => 'PATCH'],
 

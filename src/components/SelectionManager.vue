@@ -50,6 +50,7 @@ import ShareIcon from 'vue-material-design-icons/ShareVariant.vue';
 import StarIcon from 'vue-material-design-icons/Star.vue';
 import DownloadIcon from 'vue-material-design-icons/Download.vue';
 import VideoIcon from 'vue-material-design-icons/MovieOpenPlay.vue';
+import StoryIcon from 'vue-material-design-icons/MotionPlayOutline.vue';
 import DeleteIcon from 'vue-material-design-icons/TrashCanOutline.vue';
 import EditFileIcon from 'vue-material-design-icons/FileEdit.vue';
 import ArchiveIcon from 'vue-material-design-icons/PackageDown.vue';
@@ -236,6 +237,16 @@ export default defineComponent({
         if: () =>
           this.selection.size >= 2 &&
           this.selection.size <= 200 &&
+          [...this.selection.values()].every((p) => !(p.flag & this.c.FLAG_IS_VIDEO)),
+      },
+      {
+        name: t('memories', 'Create a story'),
+        icon: markRaw(StoryIcon),
+        callback: this.createStorySelection.bind(this),
+        if: () =>
+          this.selection.size >= 2 &&
+          this.selection.size <= 200 &&
+          !this.routeIsPublic &&
           [...this.selection.values()].every((p) => !(p.flag & this.c.FLAG_IS_VIDEO)),
       },
       {
@@ -862,6 +873,12 @@ export default defineComponent({
       const fileIds = selection.photosNoDupFileId().map((p) => p.fileid);
       this.clear();
       _m.modals.createVideo(fileIds);
+    },
+
+    async createStorySelection(selection: Selection) {
+      const fileIds = selection.photosNoDupFileId().map((p) => p.fileid);
+      this.clear();
+      _m.modals.createStory(fileIds);
     },
 
     async downloadSelection(selection: Selection) {

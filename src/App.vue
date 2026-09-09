@@ -81,6 +81,7 @@
       <FaceTagModal />
       <ShareAsAlbumModal />
       <VideoCreateModal />
+      <StoryCreateModal />
       <AddToAlbumModal />
       <NodeShareModal />
       <ShareModal />
@@ -117,6 +118,7 @@ import EditMetadataModal from '@components/modal/EditMetadataModal.vue';
 import FaceTagModal from '@components/modal/FaceTagModal.vue';
 import ShareAsAlbumModal from '@components/modal/ShareAsAlbumModal.vue';
 import VideoCreateModal from '@components/modal/VideoCreateModal.vue';
+import StoryCreateModal from '@components/modal/StoryCreateModal.vue';
 import AddToAlbumModal from '@components/modal/AddToAlbumModal.vue';
 import NodeShareModal from '@components/modal/NodeShareModal.vue';
 import ShareModal from '@components/modal/ShareModal.vue';
@@ -144,6 +146,7 @@ import TagsIcon from 'vue-material-design-icons/Tag.vue';
 import SimilarIcon from 'vue-material-design-icons/ImageMultiple.vue';
 import EventsIcon from 'vue-material-design-icons/CalendarStar.vue';
 import ClipsIcon from 'vue-material-design-icons/MovieOpenPlay.vue';
+import StoriesIcon from 'vue-material-design-icons/MotionPlayOutline.vue';
 import MapIcon from 'vue-material-design-icons/Map.vue';
 import CogIcon from 'vue-material-design-icons/Cog.vue';
 import SearchIcon from 'vue-material-design-icons/Magnify.vue';
@@ -176,6 +179,7 @@ export default defineComponent({
     FaceTagModal,
     ShareAsAlbumModal,
     VideoCreateModal,
+    StoryCreateModal,
     AddToAlbumModal,
     NodeShareModal,
     ShareModal,
@@ -432,6 +436,11 @@ export default defineComponent({
           name: 'events',
           icon: EventsIcon,
           title: t('memories', 'Events'),
+        },
+        {
+          name: 'stories',
+          icon: StoriesIcon,
+          title: t('memories', 'Stories'),
         },
         {
           name: 'clips',

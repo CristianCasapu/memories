@@ -39,6 +39,8 @@ declare global {
       shareAsAlbum: (source: IPhoto[] | (() => Promise<IPhoto[]>), defaultName?: string) => void;
       /** pace + background music, then the video (CristianCasapu fork) */
       createVideo: (fileIds: number[], preset?: Record<string, any>) => void;
+      /** photos shown one after the other, full screen (CristianCasapu fork) */
+      createStory: (fileIds: number[]) => void;
       /** the person's videos in the making */
       videoJobs: () => void;
       albumEdit: (user: string, name: string) => void;

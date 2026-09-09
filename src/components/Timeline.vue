@@ -691,6 +691,10 @@ export default defineComponent({
         if (this.routeIsRecognize && this.$route.query.sort === 'prominence') {
           set(DaysFilterType.SORT, 'prominence');
         }
+        // only where the person is in the foreground (?subjects=1)
+        if (this.routeIsRecognize && this.$route.query.subjects === '1') {
+          set(DaysFilterType.SUBJECTS, '1');
+        }
       }
 
       // Places

@@ -68,6 +68,15 @@
         >
           {{ t('memories', 'Best photos first (large, sharp, well lit, facing the camera)') }}
         </NcActionCheckbox>
+        <!-- any person: only the photos taken of them, not the ones they walked into -->
+        <NcActionCheckbox
+          v-if="name && routeIsRecognize && !routeIsRecognizeUnassigned"
+          :aria-label="t('memories', 'Only in the foreground')"
+          :model-value="onlySubjects"
+          @change="toggleSubjects"
+        >
+          {{ t('memories', 'Only where they are in the foreground (in focus, not in the background)') }}
+        </NcActionCheckbox>
         <template v-if="isReal">
           <NcActionButton
             v-if="routeIsRecognize"
@@ -262,6 +271,11 @@ export default defineComponent({
       return this.$route.query.sort === 'prominence';
     },
 
+    /** ?subjects=1: only the photos this person was photographed in */
+    onlySubjects(): boolean {
+      return this.$route.query.subjects === '1';
+    },
+
     isReal() {
       return this.name && this.name !== this.c.FACE_NULL && !this.isTogether;
     },
@@ -314,6 +328,16 @@ export default defineComponent({
         delete query.sort;
       } else {
         query.sort = 'prominence';
+      }
+      this.$router.replace({ ...this.$route, query } as any).catch(() => {});
+    },
+
+    toggleSubjects() {
+      const query = { ...this.$route.query };
+      if (this.onlySubjects) {
+        delete query.subjects;
+      } else {
+        query.subjects = '1';
       }
       this.$router.replace({ ...this.$route, query } as any).catch(() => {});
     },
