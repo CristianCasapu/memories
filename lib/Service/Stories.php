@@ -269,7 +269,7 @@ final class Stories
     }
 
     /**
-     * Events of the last month that are big enough to be worth a story.
+     * Events of the last three months that are big enough to be worth a story.
      *
      * @return array<string, array{title: string, subtitle: string, fileids: list<int>}>
      */
@@ -279,7 +279,7 @@ final class Stories
         $query->select('id', 'title', 'place', 'start', 'end', 'count')
             ->from('memories_events')
             ->where($query->expr()->eq('uid', $query->createNamedParameter($uid)))
-            ->andWhere($query->expr()->gte('end', $query->createNamedParameter(time() - 31 * 86400, IQueryBuilder::PARAM_INT)))
+            ->andWhere($query->expr()->gte('end', $query->createNamedParameter(time() - 92 * 86400, IQueryBuilder::PARAM_INT)))
             ->andWhere($query->expr()->gte('count', $query->createNamedParameter(self::MIN_PHOTOS * 2, IQueryBuilder::PARAM_INT)))
             ->orderBy('end', 'DESC')
             ->setMaxResults(5)
