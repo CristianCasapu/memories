@@ -111,6 +111,24 @@
             </template>
           </NcButton>
           <NcButton
+            v-if="shortcloudAvailable"
+            class="manage-collaborators__public-link-button"
+            :aria-label="t('memories', 'Copy the short link')"
+            :disabled="publicLink.id === ''"
+            @click="copyShortLink"
+          >
+            <template v-if="shortLinkCopied">
+              {{ t('memories', 'Short link copied!') }}
+            </template>
+            <template v-else>
+              {{ t('memories', 'Copy short link') }}
+            </template>
+            <template #icon>
+              <Check v-if="shortLinkCopied" />
+              <LinkVariant v-else />
+            </template>
+          </NcButton>
+          <NcButton
             variant="tertiary"
             :aria-label="t('memories', 'Delete the public link')"
             :disabled="publicLink.id === ''"
@@ -144,6 +162,7 @@ import Magnify from 'vue-material-design-icons/Magnify.vue';
 import Close from 'vue-material-design-icons/Close.vue';
 import Check from 'vue-material-design-icons/Check.vue';
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue';
+import LinkVariant from 'vue-material-design-icons/LinkVariant.vue';
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue';
 import Earth from 'vue-material-design-icons/Earth.vue';
 import XLoadingIcon from '@components/XLoadingIcon.vue';
@@ -177,6 +196,7 @@ export default defineComponent({
     Close,
     AccountGroup,
     ContentCopy,
+    LinkVariant,
     Check,
     Earth,
     NcButton,
@@ -214,6 +234,7 @@ export default defineComponent({
     errorFetchingCollaborators: null,
     randomId: Math.random().toString().substring(2, 10),
     publicLinkCopied: false,
+    shortLinkCopied: false,
     config: {
       minSearchStringLength: parseInt(window.OC.config['sharing.minSearchStringLength'], 10) || 0,
     },
@@ -243,6 +264,11 @@ export default defineComponent({
 
     publicLink(): Collaborator {
       return this.availableCollaborators[ShareType.Link];
+    },
+
+    /** The Shortcloud app (short links) is installed and enabled */
+    shortcloudAvailable(): boolean {
+      return Boolean((window as any).OC?.appswebroots?.shortcloud);
     },
   },
   watch: {
@@ -409,6 +435,25 @@ export default defineComponent({
       this.publicLinkCopied = true;
       await new Promise((resolve) => setTimeout(resolve, 2000));
       this.publicLinkCopied = false;
+    },
+
+    /** Copy the Shortcloud short link of the public album link (created on demand) */
+    async copyShortLink() {
+      try {
+        const res = await axios.post(generateOcsUrl(`apps/shortcloud/api/v1/album/${this.publicLink.id}`));
+        const link: string = res.data?.ocs?.data?.shortUrl;
+        if (!link) throw new Error('no short link');
+        if (nativex.has()) {
+          return await nativex.shareUrl(link);
+        }
+        await navigator.clipboard.writeText(link);
+        this.shortLinkCopied = true;
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        this.shortLinkCopied = false;
+      } catch (e) {
+        console.error(e);
+        showError(this.t('memories', 'Failed to get the short link.'));
+      }
     },
 
     selectEntity(collaboratorKey: string) {
